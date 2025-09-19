@@ -1,0 +1,435 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-6">
+  <!-- En-tête -->
+  <div class="flex justify-between items-center">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">📋 Gestion des Assignations</h1>
+      <p class="text-gray-500">Planifiez et organisez les équipes Maihlili SPV</p>
+    </div>
+    {% if current_user.is_manager %}
+    <button onclick="showCreateAssignmentModal()" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center gap-2 shadow-lg">
+      ➕ Nouvelle assignation
+    </button>
+    {% endif %}
+  </div>
+
+  <!-- Filtres et statistiques -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <!-- Stats -->
+      <div class="text-center">
+        <div class="text-2xl font-bold text-blue-600">{{ assignments|length }}</div>
+        <div class="text-sm text-gray-500">Assignations totales</div>
+      </div>
+      <div class="text-center">
+        <div class="text-2xl font-bold text-green-600">{{ assignments_today }}</div>
+        <div class="text-sm text-gray-500">Aujourd'hui</div>
+      </div>
+      <div class="text-center">
+        <div class="text-2xl font-bold text-purple-600">{{ assignments_week }}</div>
+        <div class="text-sm text-gray-500">Cette semaine</div>
+      </div>
+      <div class="text-center">
+        <div class="text-2xl font-bold text-orange-600">{{ conflicts or 0 }}</div>
+        <div class="text-sm text-gray-500">Conflits</div>
+      </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="mt-6 pt-6 border-t border-gray-200">
+      <div class="flex flex-wrap gap-4 items-center">
+        <div class="flex items-center gap-2">
+          <label class="text-sm font-medium text-gray-700">Filtrer par :</label>
+        </div>
+        <select id="filterEmployee" class="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+          <option value="">Tous les employés</option>
+          {% for emp in employees %}
+          <option value="{{ emp.id }}">{{ emp.full_name }}</option>
+          {% endfor %}
+        </select>
+        <select id="filterShift" class="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+          <option value="">Tous les services</option>
+          {% for shift in shifts %}
+          <option value="{{ shift.id }}">{{ shift.name }}</option>
+          {% endfor %}
+        </select>
+        <input type="date" id="filterDate" class="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+        <button onclick="resetFilters()" class="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
+          🔄 Reset
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vue en calendrier rapide -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+      📅 Vue rapide - Semaine courante
+    </h3>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b">
+            <th class="text-left py-2 px-3 font-medium text-gray-700">Employé</th>
+            <th class="text-center py-2 px-3 font-medium text-gray-700">Lun</th>
+            <th class="text-center py-2 px-3 font-medium text-gray-700">Mar</th>
+            <th class="text-center py-2 px-3 font-medium text-gray-700">Mer</th>
+            <th class="text-center py-2 px-3 font-medium text-gray-700">Jeu</th>
+            <th class="text-center py-2 px-3 font-medium text-gray-700">Ven</th>
+            <th class="text-center py-2 px-3 font-medium text-gray-700">Sam</th>
+            <th class="text-center py-2 px-3 font-medium text-gray-700">Dim</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for emp in employees %}
+          <tr class="border-b hover:bg-gray-50">
+            <td class="py-3 px-3 font-medium">
+              <div class="flex items-center gap-2">
+                <span>{{ emp.avatar or '👤' }}</span>
+                {{ emp.full_name }}
+              </div>
+            </td>
+            {% for day in range(7) %}
+            <td class="py-3 px-3 text-center">
+              <!-- Ici vous pourriez afficher les assignations par jour -->
+              <div class="text-xs space-y-1" id="employee-{{ emp.id }}-day-{{ day }}">
+                <!-- Les assignations seront ajoutées par JavaScript -->
+              </div>
+            </td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Liste détaillée des assignations -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+    <div class="p-6 border-b border-gray-200">
+      <h3 class="text-lg font-semibold">Toutes les assignations</h3>
+    </div>
+    
+    <div class="overflow-x-auto">
+      {% if assignments %}
+      <table class="w-full">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="text-left py-3 px-4 font-medium text-gray-700">Employé</th>
+            <th class="text-left py-3 px-4 font-medium text-gray-700">Service</th>
+            <th class="text-left py-3 px-4 font-medium text-gray-700">Début</th>
+            <th class="text-left py-3 px-4 font-medium text-gray-700">Fin</th>
+            <th class="text-left py-3 px-4 font-medium text-gray-700">Durée</th>
+            <th class="text-left py-3 px-4 font-medium text-gray-700">Statut</th>
+            {% if current_user.is_manager %}
+            <th class="text-right py-3 px-4 font-medium text-gray-700">Actions</th>
+            {% endif %}
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+          {% for assignment in assignments %}
+          <tr class="hover:bg-gray-50 assignment-row" 
+              data-employee="{{ assignment.employee.id }}" 
+              data-shift="{{ assignment.shift.id }}">
+            <td class="py-4 px-4">
+              <div class="flex items-center gap-3">
+                <span class="text-xl">👤</span>
+                <div>
+                  <div class="font-medium text-gray-800">{{ assignment.employee.full_name }}</div>
+                  <div class="text-sm text-gray-500">{{ assignment.employee.position or 'Employé' }}</div>
+                </div>
+              </div>
+            </td>
+            <td class="py-4 px-4">
+              <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+                    style="background-color: {{ assignment.shift.color }}20; color: {{ assignment.shift.color }};">
+                <span class="w-2 h-2 rounded-full mr-2" style="background-color: {{ assignment.shift.color }};"></span>
+                {{ assignment.shift.name }}
+              </span>
+            </td>
+            <td class="py-4 px-4">
+              <div class="text-sm">
+                <div class="font-medium">{{ assignment.start.strftime('%d/%m/%Y') }}</div>
+                <div class="text-gray-500">{{ assignment.start.strftime('%H:%M') }}</div>
+              </div>
+            </td>
+            <td class="py-4 px-4">
+              <div class="text-sm">
+                <div class="font-medium">{{ assignment.end.strftime('%d/%m/%Y') }}</div>
+                <div class="text-gray-500">{{ assignment.end.strftime('%H:%M') }}</div>
+              </div>
+            </td>
+            <td class="py-4 px-4">
+              {% set duration = assignment.end - assignment.start %}
+              <span class="font-medium text-blue-600">
+                {{ "%.1f"|format(duration.total_seconds() / 3600) }}h
+              </span>
+            </td>
+            <td class="py-4 px-4">
+              {% set now = moment.now() if moment else assignment.start %}
+              {% if assignment.start > now %}
+                <span class="inline-flex px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
+                  📅 Programmé
+                </span>
+              {% elif assignment.start <= now <= assignment.end %}
+                <span class="inline-flex px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                  ✅ En cours
+                </span>
+              {% else %}
+                <span class="inline-flex px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">
+                  🏁 Terminé
+                </span>
+              {% endif %}
+            </td>
+            {% if current_user.is_manager %}
+            <td class="py-4 px-4 text-right">
+              <div class="flex justify-end gap-2">
+                <button onclick="editAssignment({{ assignment.id }})" 
+                        class="text-blue-600 hover:text-blue-800 p-2 rounded-lg hover:bg-blue-50" 
+                        title="Modifier">
+                  ✏️
+                </button>
+                <button onclick="duplicateAssignment({{ assignment.id }})" 
+                        class="text-green-600 hover:text-green-800 p-2 rounded-lg hover:bg-green-50" 
+                        title="Dupliquer">
+                  📋
+                </button>
+                <button onclick="deleteAssignment({{ assignment.id }})" 
+                        class="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50" 
+                        title="Supprimer">
+                  🗑️
+                </button>
+              </div>
+            </td>
+            {% endif %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="text-center py-12 text-gray-500">
+        <div class="text-6xl mb-4">📋</div>
+        <h3 class="text-lg font-medium mb-2">Aucune assignation</h3>
+        <p>Commencez par créer votre première assignation</p>
+        {% if current_user.is_manager %}
+        <button onclick="showCreateAssignmentModal()" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+          Créer une assignation
+        </button>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Modal Créer Assignation -->
+{% if current_user.is_manager %}
+<div id="createAssignmentModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-xl p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+    <div class="flex justify-between items-center mb-6">
+      <h3 class="text-xl font-semibold">➕ Nouvelle assignation</h3>
+      <button onclick="hideCreateAssignmentModal()" class="text-gray-500 hover:text-gray-700 text-xl">✕</button>
+    </div>
+    
+    <form id="createAssignmentForm" class="space-y-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label class="block text-sm font-medium mb-2">Employé *</label>
+          <select name="employee_id" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required>
+            <option value="">Sélectionner un employé</option>
+            {% for emp in employees %}
+            <option value="{{ emp.id }}">{{ emp.full_name }} - {{ emp.position or 'Employé' }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium mb-2">Service *</label>
+          <select name="shift_id" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required>
+            <option value="">Sélectionner un service</option>
+            {% for shift in shifts %}
+            <option value="{{ shift.id }}" data-color="{{ shift.color }}">
+              {{ shift.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="space-y-4">
+          <h4 class="font-medium text-gray-700">📅 Début</h4>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm font-medium mb-2">Date</label>
+              <input type="date" name="start_date" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-2">Heure</label>
+              <input type="time" name="start_time" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required>
+            </div>
+          </div>
+        </div>
+        
+        <div class="space-y-4">
+          <h4 class="font-medium text-gray-700">🏁 Fin</h4>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm font-medium mb-2">Date</label>
+              <input type="date" name="end_date" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-2">Heure</label>
+              <input type="time" name="end_time" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div>
+        <label class="block text-sm font-medium mb-2">Notes (optionnel)</label>
+        <textarea name="notes" rows="3" placeholder="Remarques, instructions spéciales..."
+                  class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
+      </div>
+      
+      <div class="flex gap-4 pt-6 border-t">
+        <button type="button" onclick="hideCreateAssignmentModal()" 
+                class="flex-1 px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium">
+          Annuler
+        </button>
+        <button type="submit" 
+                class="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
+          🎯 Créer l'assignation
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<script>
+// Filtres
+function resetFilters() {
+    document.getElementById('filterEmployee').value = '';
+    document.getElementById('filterShift').value = '';
+    document.getElementById('filterDate').value = '';
+    showAllAssignments();
+}
+
+function showAllAssignments() {
+    document.querySelectorAll('.assignment-row').forEach(row => {
+        row.style.display = '';
+    });
+}
+
+// Filtrage en temps réel
+document.getElementById('filterEmployee').addEventListener('change', applyFilters);
+document.getElementById('filterShift').addEventListener('change', applyFilters);
+document.getElementById('filterDate').addEventListener('change', applyFilters);
+
+function applyFilters() {
+    const empFilter = document.getElementById('filterEmployee').value;
+    const shiftFilter = document.getElementById('filterShift').value;
+    const dateFilter = document.getElementById('filterDate').value;
+    
+    document.querySelectorAll('.assignment-row').forEach(row => {
+        let show = true;
+        
+        if (empFilter && row.dataset.employee !== empFilter) show = false;
+        if (shiftFilter && row.dataset.shift !== shiftFilter) show = false;
+        // Date filter would need more complex logic
+        
+        row.style.display = show ? '' : 'none';
+    });
+}
+
+{% if current_user.is_manager %}
+// Modals
+function showCreateAssignmentModal() {
+    document.getElementById('createAssignmentModal').classList.remove('hidden');
+}
+
+function hideCreateAssignmentModal() {
+    document.getElementById('createAssignmentModal').classList.add('hidden');
+    document.getElementById('createAssignmentForm').reset();
+}
+
+// Auto-compléter la date de fin
+document.querySelector('input[name="start_date"]').addEventListener('change', function() {
+    const endDate = document.querySelector('input[name="end_date"]');
+    if (!endDate.value) {
+        endDate.value = this.value;
+    }
+});
+
+// Soumission du formulaire
+document.getElementById('createAssignmentForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const startDate = formData.get('start_date');
+    const startTime = formData.get('start_time');
+    const endDate = formData.get('end_date');
+    const endTime = formData.get('end_time');
+    
+    formData.set('start', `${startDate}T${startTime}`);
+    formData.set('end', `${endDate}T${endTime}`);
+    
+    fetch('/assignments', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (response.ok) {
+            hideCreateAssignmentModal();
+            location.reload();
+        } else {
+            throw new Error('Erreur lors de la création');
+        }
+    })
+    .catch(error => {
+        alert('Erreur: ' + error.message);
+    });
+});
+
+// Actions sur les assignations
+function editAssignment(id) {
+    // À implémenter
+    alert('Fonctionnalité de modification à venir');
+}
+
+function duplicateAssignment(id) {
+    if (confirm('Voulez-vous dupliquer cette assignation ?')) {
+        fetch(`/api/assignments/${id}/duplicate`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erreur: ' + data.error);
+            }
+        });
+    }
+}
+
+function deleteAssignment(id) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer cette assignation ?')) {
+        fetch(`/api/assignments/${id}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erreur: ' + data.error);
+            }
+        });
+    }
+}
+{% endif %}
+</script>
+{% endblock %}

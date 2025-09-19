@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-6">
+  <div class="flex justify-between items-center">
+    <h1 class="text-2xl font-bold text-gray-800">👤 Gestion des Employés</h1>
+    {% if current_user.is_manager %}
+    <button onclick="showAddEmployeeModal()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+      ➕ Ajouter un employé
+    </button>
+    {% endif %}
+  </div>
+
+  <div class="space-y-4">
+    {% for emp in employees %}
+    <div class="bg-white p-4 rounded-lg border border-gray-200 flex items-center justify-between hover:shadow">
+      <div class="flex items-center gap-4">
+        <div class="text-2xl">👤</div>
+        <div>
+          <p class="font-medium text-gray-800">{{ emp.full_name }}</p>
+          <p class="text-sm text-gray-500">{{ emp.position or 'Poste non défini' }}</p>
+          {% if emp.user %}
+          <p class="text-xs text-blue-600">✉️ {{ emp.user.email }}</p>
+          {% endif %}
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-3">
+        <span class="px-2 py-1 text-xs rounded-full {% if emp.status == 'active' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+          {% if emp.status == 'active' %}Actif{% else %}Absent{% endif %}
+        </span>
+        
+        {% if current_user.is_manager %}
+        <button onclick="editEmployee({{ emp.id }}, '{{ emp.full_name }}', '{{ emp.position or '' }}')" 
+                class="text-blue-600 hover:text-blue-800 px-2 py-1 text-sm">
+          ✏️ Modifier
+        </button>
+        <button onclick="deleteEmployee({{ emp.id }})" 
+                class="text-red-600 hover:text-red-800 px-2 py-1 text-sm">
+          🗑️ Supprimer
+        </button>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+    
+    {% if not employees %}
+    <div class="text-center py-12 text-gray-500">
+      <div class="text-6xl mb-4">👤</div>
+      <h3 class="text-lg font-medium mb-2">Aucun employé</h3>
+      <p>Commencez par ajouter des employés à votre équipe</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% if current_user.is_manager %}
+<div id="addEmployeeModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-semibold">Ajouter un employé</h3>
+      <button onclick="hideAddEmployeeModal()" class="text-gray-500 hover:text-gray-700">✖️</button>
+    </div>
+    
+    <form id="addEmployeeForm" method="POST" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium mb-2">Nom complet *</label>
+        <input type="text" name="full_name" required
+               class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500">
+      </div>
+      
+      <div>
+        <label class="block text-sm font-medium mb-2">Poste</label>
+        <input type="text" name="position" 
+               placeholder="Ex: Technicien, Responsable..."
+               class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500">
+      </div>
+      
+      <div>
+        <label class="block text-sm font-medium mb-2">Email (optionnel)</label>
+        <input type="email" name="email" 
+               placeholder="email@example.com"
+               class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500">
+      </div>
+      
+      <div class="flex gap-3 pt-4">
+        <button type="button" onclick="hideAddEmployeeModal()" 
+                class="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+          Annuler
+        </button>
+        <button type="submit" 
+                class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+          Ajouter
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="editEmployeeModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-semibold">Modifier l'employé</h3>
+      <button onclick="hideEditEmployeeModal()" class="text-gray-500 hover:text-gray-700">✖️</button>
+    </div>
+    
+    <form id="editEmployeeForm" class="space-y-4">
+      <input type="hidden" name="employee_id" id="edit_employee_id">
+      
+      <div>
+        <label class="block text-sm font-medium mb-2">Nom complet *</label>
+        <input type="text" name="full_name" id="edit_full_name" required
+               class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+      </div>
+      
+      <div>
+        <label class="block text-sm font-medium mb-2">Poste</label>
+        <input type="text" name="position" id="edit_position"
+               placeholder="Ex: Technicien, Responsable..."
+               class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+      </div>
+      
+      <div class="flex gap-3 pt-4">
+        <button type="button" onclick="hideEditEmployeeModal()" 
+                class="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+          Annuler
+        </button>
+        <button type="submit" 
+                class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+          Sauvegarder
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<script>
+{% if current_user.is_manager %}
+// Fonctions pour les modals
+function showAddEmployeeModal() {
+    document.getElementById('addEmployeeModal').classList.remove('hidden');
+}
+
+function hideAddEmployeeModal() {
+    document.getElementById('addEmployeeModal').classList.add('hidden');
+    document.getElementById('addEmployeeForm').reset();
+}
+
+function editEmployee(id, name, position) {
+    document.getElementById('edit_employee_id').value = id;
+    document.getElementById('edit_full_name').value = name;
+    document.getElementById('edit_position').value = position || '';
+    document.getElementById('editEmployeeModal').classList.remove('hidden');
+}
+
+function hideEditEmployeeModal() {
+    document.getElementById('editEmployeeModal').classList.add('hidden');
+}
+
+function deleteEmployee(id) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer cet employé ?')) {
+        fetch(`/api/employees/${id}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erreur: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            alert('Erreur lors de la suppression');
+        });
+    }
+}
+
+// Gestion du formulaire de modification
+document.getElementById('editEmployeeForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const employeeId = formData.get('employee_id');
+    
+    fetch(`/api/employees/${employeeId}`, {
+        method: 'PUT',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            hideEditEmployeeModal();
+            location.reload();
+        } else {
+            alert('Erreur: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        alert('Erreur lors de la modification');
+    });
+});
+{% endif %}
+</script>
+{% endblock %}

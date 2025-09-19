@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Maihlili SPV</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            // Couleurs exactes du logo Maihlili (bleu pur)
+            'maihlili': {
+              50: '#EEF2FF',
+              100: '#E0E7FF', 
+              200: '#C7D2FE',
+              300: '#A5B4FC',
+              400: '#818CF8',
+              500: '#4F46E5', // Bleu exact de votre logo
+              600: '#4338CA', 
+              700: '#3730A3',
+              800: '#312E81',
+              900: '#1E1B4B'
+            },
+            'nouveau-bleu': {
+                50: '#E6E9FF',
+                100: '#C8CEFF',
+                200: '#AAAEFF',
+                300: '#8C8FFF',
+                400: '#6E71FF',
+                500: '#3055ff', // Le nouveau bleu
+                600: '#2A4CE5',
+                700: '#2343CC',
+                800: '#1D3AAA',
+                900: '#163188'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* -------------------------------------------------------------------------------------------------- */
+    /* Couleurs & Thème Maihlili SPV                                                                       */
+    /* -------------------------------------------------------------------------------------------------- */
+    :root {
+      /* Couleurs Claires */
+      --color-bg-light: #f9fafb;
+      --color-text-light: #1f2937;
+      --color-text-subtle-light: #6b7280;
+      --color-border-light: #e5e7eb;
+      --color-card-bg-light: #fff0f8;
+    }
+
+    [data-theme="dark"] {
+      /* Couleurs Sombres pour le tableau de bord uniquement */
+      --color-bg-dark-dashboard: #1f2937;
+      --color-text-dark-dashboard: #f9fafb;
+      --color-text-subtle-dark-dashboard: #9ca3af;
+      --color-border-dark-dashboard: #374151;
+      --color-card-bg-dark-dashboard: #2d3748;
+      
+      /* Couleurs pour la sidebar en mode sombre (bleu) */
+      --color-bg-dark-sidebar: #3055ff;
+      --color-text-dark-sidebar: #f9fafb;
+      --color-text-subtle-dark-sidebar: #c7d2fe;
+      --color-border-dark-sidebar: rgba(255, 255, 255, 0.1);
+      --color-card-bg-dark-sidebar: #2a4ce5;
+    }
+
+    body {
+      background-color: var(--color-bg-light);
+      color: var(--color-text-light);
+      transition: background-color 0.5s ease, color 0.5s ease;
+    }
+    
+    .card {
+      background-color: var(--color-card-bg-light);
+      border: 1px solid var(--color-border-light);
+      transition: background-color 0.5s ease, border-color 0.5s ease;
+    }
+
+    /* Styles pour la zone de contenu principale en mode sombre */
+    [data-theme="dark"] main {
+        background-color: var(--color-bg-dark-dashboard);
+        color: var(--color-text-dark-dashboard);
+    }
+    
+    /* Correction pour les cartes et éléments 'bg-white' dans le dashboard */
+    [data-theme="dark"] main .bg-white {
+        background-color: var(--color-card-bg-dark-dashboard);
+        border-color: var(--color-border-dark-dashboard);
+    }
+    
+    /* Styles pour la sidebar en mode sombre */
+    [data-theme="dark"] aside {
+        background: var(--color-bg-dark-sidebar);
+        color: var(--color-text-dark-sidebar);
+        border-color: var(--color-border-dark-sidebar);
+    }
+    
+    [data-theme="dark"] aside .card {
+        background: var(--color-card-bg-dark-sidebar);
+        border: 1px solid var(--color-border-dark-sidebar);
+    }
+
+    /* Couleurs du texte dans le contenu principal */
+    [data-theme="dark"] main .text-gray-800 { color: var(--color-text-dark-dashboard); }
+    [data-theme="dark"] main .text-gray-500 { color: var(--color-text-subtle-dark-dashboard); }
+    [data-theme="dark"] main .border-gray-200 { border-color: var(--color-border-dark-dashboard); }
+    
+    /* Couleurs du texte dans la sidebar */
+    [data-theme="dark"] aside .text-gray-800 { color: var(--color-text-dark-sidebar); }
+    [data-theme="dark"] aside .text-gray-500 { color: var(--color-text-subtle-dark-sidebar); }
+    [data-theme="dark"] aside .border-gray-200 { border-color: var(--color-border-dark-sidebar); }
+
+    /* -------------------------------------------------------------------------------------------------- */
+    /* Logos                                                                                              */
+    /* -------------------------------------------------------------------------------------------------- */
+    .logo-dark { display: none; }
+    .logo-light { display: inline-block; }
+    [data-theme="dark"] .logo-light { display: none; }
+    [data-theme="dark"] .logo-dark { display: inline-block; }
+
+    /* -------------------------------------------------------------------------------------------------- */
+    /* Animations & Scrollbar                                                                             */
+    /* -------------------------------------------------------------------------------------------------- */
+    * { transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease; }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: rgba(79, 70, 229, 0.1); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #4F46E5 0%, #4338CA 100%); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #4338CA 0%, #3730A3 100%); }
+    [data-theme="dark"] ::-webkit-scrollbar-track { background: #374151; }
+    [data-theme="dark"] ::-webkit-scrollbar-thumb { background: #6b7280; }
+    [data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+    
+    /* Style du bouton de thème */
+    .theme-toggle {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 8px 32px rgba(79, 70, 229, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 1000;
+      font-size: 1.5rem;
+    }
+
+    [data-theme="dark"] .theme-toggle {
+      background: #374151;
+      border-color: #4b5563;
+      color: #E0E7FF;
+      box-shadow: 0 8px 32px rgba(30, 27, 75, 0.5);
+    }
+
+    /* Couleurs du menu en mode sombre */
+    [data-theme="dark"] .nav-link {
+        color: var(--color-text-subtle-dark-sidebar);
+    }
+    [data-theme="dark"] .nav-link:hover {
+        background-color: var(--color-card-bg-dark-sidebar);
+        color: var(--color-text-dark-sidebar);
+    }
+  </style>
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/main.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 flex min-h-screen" data-theme="light">
+
+  <aside class="w-64 card shadow-lg flex flex-col">
+    <div class="p-6 border-b border-gray-200">
+      <div class="flex items-center justify-center">
+        <a href="{{ url_for('index') }}" class="flex items-center space-x-2">
+          <img src="{{ url_for('static', filename='images/maihlili-logo-light.png') }}" alt="Logo Maihlili clair" class="h-32 logo-light">
+          <img src="{{ url_for('static', filename='images/maihlili-logo-dark.png') }}" alt="Logo Maihlili sombre" class="h-32 logo-dark">
+        </a>
+      </div>
+    </div>
+    
+    <nav class="flex-1 p-4 space-y-1">
+      {% if current_user.is_authenticated %}
+        <a href="{{ url_for('index') if current_user.is_manager else url_for('employee_dashboard') }}" 
+           class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-maihlili-50 hover:text-maihlili-700 text-maihlili-600 font-medium">
+           <span class="text-lg">📊</span> Planning
+        </a>
+        {% if current_user.is_manager %}
+          <a href="{{ url_for('show_employees') }}" 
+             class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-green-50 hover:text-green-700 text-green-600 font-medium">
+            <span class="text-lg">👥</span> Employés
+          </a>
+          <a href="{{ url_for('manage_teams') }}" 
+             class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 hover:text-blue-700 text-blue-600 font-medium">
+            <span class="text-lg">🏢</span> Équipes
+          </a>
+          <a href="{{ url_for('show_shifts') }}" 
+             class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-purple-50 hover:text-purple-700 text-purple-600 font-medium">
+            <span class="text-lg">🕐</span> Services
+          </a>
+          <a href="{{ url_for('assignments') }}" 
+             class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-orange-50 hover:text-orange-700 text-orange-600 font-medium">
+            <span class="text-lg">📋</span> Assignations
+          </a>
+        {% endif %}
+        <a href="{{ url_for('settings') }}" 
+           class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 hover:text-gray-700 text-gray-600 font-medium">
+          <span class="text-lg">⚙️</span> Paramètres
+        </a>
+      {% else %}
+        <a href="{{ url_for('login') }}" 
+           class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-maihlili-50 hover:text-maihlili-700 text-maihlili-600 font-medium">
+          <span class="text-lg">🔐</span> Connexion
+        </a>
+        <a href="{{ url_for('register') }}" 
+           class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-green-50 hover:text-green-700 text-green-600 font-medium">
+          <span class="text-lg">📝</span> Inscription
+        </a>
+      {% endif %}
+    </nav>
+
+    {% if current_user.is_authenticated %}
+    <div class="p-4 border-t border-gray-200">
+      <div class="user-profile flex items-center gap-3 p-3 rounded-lg card">
+        <div class="w-10 h-10 bg-gradient-to-br from-maihlili-500 to-maihlili-600 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-md">
+          {{ current_user.username[0].upper() }}
+        </div>
+        <div class="flex-1">
+          <p class="text-sm font-semibold text-gray-800">{{ current_user.username }}</p>
+          <p class="text-xs text-gray-500">
+            {% if current_user.is_admin %}⚡ Administrateur
+            {% elif current_user.is_manager %}👑 Manager
+            {% else %}👤 Employé{% endif %}
+          </p>
+        </div>
+      </div>
+      <a href="{{ url_for('logout') }}" 
+         class="nav-link flex items-center gap-3 p-2 rounded-lg hover:bg-red-50 hover:text-red-700 text-red-600 text-sm mt-3 font-medium">
+        <span class="text-base">🚪</span> Déconnexion
+      </a>
+    </div>
+    {% endif %}
+  </aside>
+
+  <main class="flex-1 p-6">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul class="mb-4">
+          {% for msg in messages %}
+            <li class="bg-gradient-to-r from-maihlili-100 to-maihlili-50 border border-maihlili-200 text-maihlili-700 px-4 py-3 rounded-lg mb-2 shadow-sm">
+              <span class="font-medium">ℹ️</span> {{ msg }}
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <button class="theme-toggle" id="themeToggle">
+    🌙
+  </button>
+
+  <script>
+    const themeToggle = document.getElementById('themeToggle');
+    const body = document.body;
+    
+    // Récupérer le thème sauvegardé
+    const savedTheme = localStorage.getItem('maihlili-theme') || 'light';
+    body.setAttribute('data-theme', savedTheme);
+    updateThemeToggle(savedTheme);
+    
+    function toggleTheme() {
+      const currentTheme = body.getAttribute('data-theme');
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+      
+      body.setAttribute('data-theme', newTheme);
+      localStorage.setItem('maihlili-theme', newTheme);
+      updateThemeToggle(newTheme);
+    }
+    
+    function updateThemeToggle(theme) {
+      if (theme === 'light') {
+        themeToggle.textContent = '🌙';
+        themeToggle.title = 'Passer en mode sombre';
+      } else {
+        themeToggle.textContent = '☀️';
+        themeToggle.title = 'Passer en mode clair';
+      }
+    }
+
+    themeToggle.addEventListener('click', toggleTheme);
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const currentPath = window.location.pathname;
+      const navLinks = document.querySelectorAll('.nav-link');
+      
+      navLinks.forEach(link => {
+        if (link.getAttribute('href') === currentPath) {
+          link.classList.add('bg-maihlili-100', 'text-maihlili-800', 'shadow-sm');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

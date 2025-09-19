@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-6">
+  <div class="flex justify-between items-center">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">👥 Gestion des Équipes</h1>
+      <p class="text-gray-500">Organisez vos employés en équipes pour un meilleur management</p>
+    </div>
+    {% if current_user.is_manager %}
+    <button onclick="showCreateTeamModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+      ➕ Créer une équipe
+    </button>
+    {% endif %}
+  </div>
+
+  <!-- Liste des équipes -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    {% for team in teams %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div class="flex justify-between items-start mb-4">
+        <div>
+          <h3 class="text-lg font-semibold text-gray-800">{{ team.name }}</h3>
+          {% if team.description %}
+          <p class="text-sm text-gray-500 mt-1">{{ team.description }}</p>
+          {% endif %}
+        </div>
+        <div class="flex gap-2">
+          <button onclick="editTeam({{ team.id }}, '{{ team.name }}', '{{ team.description or '' }}')" 
+                  class="text-blue-600 hover:text-blue-800 p-1">
+            ✏️
+          </button>
+          <button onclick="deleteTeam({{ team.id }})" 
+                  class="text-red-600 hover:text-red-800 p-1">
+            🗑️
+          </button>
+        </div>
+      </div>
+
+      <!-- Informations de l'équipe -->
+      <div class="space-y-3">
+        <div class="flex items-center justify-between text-sm">
+          <span class="text-gray-600">👤 Manager :</span>
+          <span class="font-medium">
+            {% if team.manager %}
+              {{ team.manager.full_name }}
+            {% else %}
+              Non assigné
+            {% endif %}
+          </span>
+        </div>
+        
+        <div class="flex items-center justify-between text-sm">
+          <span class="text-gray-600">📊 Membres :</span>
+          <span class="font-medium text-blue-600">{{ team.members|length }} employés</span>
+        </div>
+        
+        <div class="flex items-center justify-between text-sm">
+          <span class="text-gray-600">📅 Créée le :</span>
+          <span class="text-gray-500">{{ team.created_at.strftime('%d/%m/%Y') if team.created_at else 'N/A' }}</span>
+        </div>
+      </div>
+
+      <!-- Membres de l'équipe -->
+      {% if team.members %}
+      <div class="mt-4 pt-4 border-t border-gray-200">
+        <h4 class="text-sm font-medium text-gray-700 mb-3">Membres de l'équipe :</h4>
+        <div class="space-y-2">
+          {% for member in team.members %}
+          <div class="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
+            <div class="flex items-center gap-3">
+              <span>👤</span>
+              <div>
+                <div class="text-sm font-medium">{{ member.full_name }}</div>
+                <div class="text-xs text-gray-500">{{ member.position or 'Employé' }}</div>
+              </div>
+            </div>
+            <button onclick="removeFromTeam({{ member.id }}, {{ team.id }})" 
+                    class="text-red-500 hover:text-red-700 text-sm">
+              ❌
+            </button>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Boutons d'action -->
+      <div class="mt-4 pt-4 border-t border-gray-200 flex gap-2">
+        <button onclick="assignEmployees({{ team.id }})" 
+                class="flex-1 bg-green-100 text-green-700 px-3 py-2 rounded-lg hover:bg-green-200 text-sm">
+          👥 Assigner des employés
+        </button>
+        <button onclick="viewTeamPlanning({{ team.id }})" 
+                class="flex-1 bg-blue-100 text-blue-700 px-3 py-2 rounded-lg hover:bg-blue-200 text-sm">
+          📅 Planning équipe
+        </button>
+      </div>
+    </div>
+    {% endfor %}
+    
+    {% if not teams %}
+    <div class="col-span-2 text-center py-12 text-gray-500">
+      <div class="text-6xl mb-4">👥</div>
+      <h3 class="text-lg font-medium mb-2">Aucune équipe</h3>
+      <p>Créez votre première équipe pour mieux organiser vos employés</p>
+      {% if current_user.is_manager %}
+      <button onclick="showCreateTeamModal()" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+        Créer une équipe
+      </button>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Modal Créer Équipe -->
+{% if current_user.is_manager %}
+<div id="createTeamModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-semibold">Créer une équipe</h3>
+      <button onclick="hideCreateTeamModal()" class="text-gray-500 hover:text-gray-700">✕</button>
+    </div>
+    
+    <form id="createTeamForm" method="POST" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium mb-2">Nom de l'équipe *</label>
+        <input type="text" name="name" required
+               placeholder="Ex: Équipe Matin, Service Client..."
+               class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+      </div>
+      
+      <div>
+        <label class="block text-sm font-medium mb-2">Description</label>
+        <textarea name="description" rows="3"
+                  placeholder="Description de l'équipe, missions..."
+                  class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
+      </div>
+      
+      <div class="flex gap-3 pt-4">
+        <button type="button" onclick="hideCreateTeamModal()" 
+                class="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+          Annuler
+        </button>
+        <button type="submit" 
+                class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+          Créer
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Assigner Employés -->
+<div id="assignEmployeesModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-xl p-6 w-full max-w-lg mx-4">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-semibold">Assigner des employés</h3>
+      <button onclick="hideAssignEmployeesModal()" class="text-gray-500 hover:text-gray-700">✕</button>
+    </div>
+    
+    <div class="space-y-4">
+      <div class="max-h-60 overflow-y-auto">
+        <div class="space-y-2" id="employeesList">
+          <!-- Les employés seront ajoutés par JavaScript -->
+        </div>
+      </div>
+      
+      <div class="flex gap-3 pt-4 border-t">
+        <button onclick="hideAssignEmployeesModal()" 
+                class="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+          Annuler
+        </button>
+        <button onclick="saveEmployeeAssignments()" 
+                class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+          Assigner
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<script>
+let selectedTeamId = null;
+
+{% if current_user.is_manager %}
+function showCreateTeamModal() {
+    document.getElementById('createTeamModal').classList.remove('hidden');
+}
+
+function hideCreateTeamModal() {
+    document.getElementById('createTeamModal').classList.add('hidden');
+    document.getElementById('createTeamForm').reset();
+}
+
+function editTeam(id, name, description) {
+    // À implémenter
+    alert('Fonctionnalité de modification à venir');
+}
+
+function deleteTeam(id) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer cette équipe ?')) {
+        fetch(`/api/teams/${id}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erreur: ' + data.error);
+            }
+        });
+    }
+}
+
+function assignEmployees(teamId) {
+    selectedTeamId = teamId;
+    // Charger la liste des employés non assignés
+    fetch('/api/unassigned-employees')
+    .then(response => response.json())
+    .then(employees => {
+        const list = document.getElementById('employeesList');
+        list.innerHTML = '';
+        
+        employees.forEach(emp => {
+            const div = document.createElement('div');
+            div.className = 'flex items-center gap-3 p-2 border rounded-lg';
+            div.innerHTML = `
+                <input type="checkbox" value="${emp.id}" class="employee-checkbox">
+                <span>👤</span>
+                <div>
+                    <div class="font-medium">${emp.full_name}</div>
+                    <div class="text-sm text-gray-500">${emp.position || 'Employé'}</div>
+                </div>
+            `;
+            list.appendChild(div);
+        });
+        
+        document.getElementById('assignEmployeesModal').classList.remove('hidden');
+    });
+}
+
+function hideAssignEmployeesModal() {
+    document.getElementById('assignEmployeesModal').classList.add('hidden');
+}
+
+function saveEmployeeAssignments() {
+    const checkboxes = document.querySelectorAll('.employee-checkbox:checked');
+    const employeeIds = Array.from(checkboxes).map(cb => cb.value);
+    
+    fetch(`/api/teams/${selectedTeamId}/assign`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({employee_ids: employeeIds})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            hideAssignEmployeesModal();
+            location.reload();
+        } else {
+            alert('Erreur: ' + data.error);
+        }
+    });
+}
+
+function removeFromTeam(employeeId, teamId) {
+    if (confirm('Retirer cet employé de l\'équipe ?')) {
+        fetch(`/api/teams/${teamId}/remove/${employeeId}`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erreur: ' + data.error);
+            }
+        });
+    }
+}
+
+function viewTeamPlanning(teamId) {
+    window.location.href = `/planning/team/${teamId}`;
+}
+{% endif %}
+</script>
+{% endblock %}

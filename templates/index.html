@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-6">
+  <!-- En-tête avec boutons d'action -->
+  {% if current_user.is_manager %}
+  <div class="flex justify-between items-center">
+    <h1 class="text-2xl font-bold text-gray-800">📅 Planning Maihlili SPV</h1>
+    <div class="flex gap-3">
+      <button onclick="showQuickAddModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2">
+        ➕ Nouvelle assignation
+      </button>
+      <a href="{{ url_for('assignments') }}" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+        📋 Gérer les assignations
+      </a>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Statistiques -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-500">Employés actifs</p>
+          <p class="text-2xl font-bold text-gray-800">{{ total_employees }}</p>
+        </div>
+        <div class="text-blue-500">👥</div>
+      </div>
+    </div>
+    
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-500">Services aujourd'hui</p>
+          <p class="text-2xl font-bold text-gray-800">{{ total_shifts_today }}</p>
+        </div>
+        <div class="text-green-500">🕐</div>
+      </div>
+    </div>
+    
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-500">Heures planifiées</p>
+          <p class="text-2xl font-bold text-gray-800">{{ total_hours }}h</p>
+        </div>
+        <div class="text-purple-500">📊</div>
+      </div>
+    </div>
+    
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-500">Conflits</p>
+          <p class="text-2xl font-bold text-red-600">{{ conflicts }}</p>
+        </div>
+        <div class="text-red-500">⚠️</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Calendrier -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div class="flex items-center justify-between mb-6">
+      <h3 class="text-lg font-semibold text-gray-800">Planning des équipes</h3>
+      <div class="flex gap-2">
+        <button onclick="calendar.changeView('dayGridMonth')" class="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200">Mois</button>
+        <button onclick="calendar.changeView('timeGridWeek')" class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">Semaine</button>
+        <button onclick="calendar.changeView('timeGridDay')" class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">Jour</button>
+      </div>
+    </div>
+    
+    <!-- Zone du calendrier -->
+    <div id="calendar" class="min-h-[600px]"></div>
+  </div>
+</div>
+
+<!-- Modal ajout rapide -->
+{% if current_user.is_manager %}
+<div id="quickAddModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-semibold">Nouvelle assignation</h3>
+      <button onclick="hideQuickAddModal()" class="text-gray-500 hover:text-gray-700">✕</button>
+    </div>
+    
+    <form id="quickAddForm" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium mb-2">Employé</label>
+        <select name="employee_id" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required>
+          <option value="">Sélectionner un employé</option>
+          <!-- Les options seront ajoutées par JavaScript -->
+        </select>
+      </div>
+      
+      <div>
+        <label class="block text-sm font-medium mb-2">Service</label>
+        <select name="shift_id" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required>
+          <option value="">Sélectionner un service</option>
+          <!-- Les options seront ajoutées par JavaScript -->
+        </select>
+      </div>
+      
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-sm font-medium mb-2">Date début</label>
+          <input type="date" name="start_date" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">Heure début</label>
+          <input type="time" name="start_time" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required>
+        </div>
+      </div>
+      
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-sm font-medium mb-2">Date fin</label>
+          <input type="date" name="end_date" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">Heure fin</label>
+          <input type="time" name="end_time" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required>
+        </div>
+      </div>
+      
+      <div class="flex gap-3 pt-4">
+        <button type="button" onclick="hideQuickAddModal()" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Annuler</button>
+        <button type="submit" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Créer</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<!-- Scripts FullCalendar -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/locales/fr.global.min.js"></script>
+
+<script>
+let calendar;
+
+document.addEventListener('DOMContentLoaded', function() {
+    const calendarEl = document.getElementById('calendar');
+    
+    calendar = new FullCalendar.Calendar(calendarEl, {
+        locale: 'fr',
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: '' // On utilise nos boutons custom
+        },
+        businessHours: {
+            daysOfWeek: [1, 2, 3, 4, 5],
+            startTime: '08:00',
+            endTime: '18:00',
+        },
+        events: '/api/events',
+        eventClick: function(info) {
+            {% if current_user.is_manager %}
+            if (confirm('Voulez-vous supprimer cette assignation ?')) {
+                fetch(`/api/assignments/${info.event.id}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        info.event.remove();
+                    } else {
+                        alert('Erreur: ' + data.error);
+                    }
+                });
+            }
+            {% endif %}
+        },
+        {% if current_user.is_manager %}
+        selectable: true,
+        select: function(info) {
+            // Pré-remplir les dates dans le modal
+            document.querySelector('input[name="start_date"]').value = info.startStr.split('T')[0];
+            document.querySelector('input[name="end_date"]').value = info.endStr.split('T')[0];
+            if (info.startStr.includes('T')) {
+                document.querySelector('input[name="start_time"]').value = info.startStr.split('T')[1].substring(0,5);
+            }
+            showQuickAddModal();
+        },
+        {% endif %}
+        eventDisplay: 'block',
+        dayMaxEvents: 3,
+        moreLinkClick: 'popover'
+    });
+    
+    calendar.render();
+    
+    // Charger les employés et shifts pour le modal
+    {% if current_user.is_manager %}
+    loadEmployeesAndShifts();
+    {% endif %}
+});
+
+{% if current_user.is_manager %}
+function showQuickAddModal() {
+    document.getElementById('quickAddModal').classList.remove('hidden');
+}
+
+function hideQuickAddModal() {
+    document.getElementById('quickAddModal').classList.add('hidden');
+    document.getElementById('quickAddForm').reset();
+}
+
+async function loadEmployeesAndShifts() {
+    // Simuler le chargement - vous pourriez créer des endpoints API pour ça
+    const employeeSelect = document.querySelector('select[name="employee_id"]');
+    const shiftSelect = document.querySelector('select[name="shift_id"]');
+    
+    // Ici vous pourriez faire des fetch() vers /api/employees et /api/shifts
+    // Pour l'instant, on utilise les données du template si disponibles
+    
+    employeeSelect.innerHTML = '<option value="">Sélectionner un employé</option>';
+    shiftSelect.innerHTML = '<option value="">Sélectionner un service</option>';
+    
+    // Vous pourriez passer ces données depuis le template
+}
+
+// Gestion du formulaire d'ajout rapide
+document.getElementById('quickAddForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const startDate = formData.get('start_date');
+    const startTime = formData.get('start_time');
+    const endDate = formData.get('end_date');
+    const endTime = formData.get('end_time');
+    
+    // Combiner date et heure
+    formData.set('start', `${startDate}T${startTime}`);
+    formData.set('end', `${endDate}T${endTime}`);
+    
+    fetch('/api/assignments', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            hideQuickAddModal();
+            calendar.refetchEvents();
+        } else {
+            alert('Erreur: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        alert('Erreur de connexion');
+    });
+});
+
+// Auto-compléter la date de fin
+document.querySelector('input[name="start_date"]').addEventListener('change', function() {
+    const endDate = document.querySelector('input[name="end_date"]');
+    if (!endDate.value) {
+        endDate.value = this.value;
+    }
+});
+{% endif %}
+</script>
+{% endblock %}

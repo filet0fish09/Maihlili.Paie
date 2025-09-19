@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-6">
+  <div class="flex justify-between items-center">
+    <h1 class="text-2xl font-bold text-gray-800">🕐 Gestion des Services & Horaires</h1>
+    {% if current_user.is_manager %}
+    <button onclick="showAddShiftModal()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">
+      ➕ Ajouter un service
+    </button>
+    {% endif %}
+  </div>
+
+  <!-- Liste des services -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    {% for shift in shifts %}
+    <div class="bg-white p-6 rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
+      <!-- En-tête du service -->
+      <div class="flex justify-between items-start mb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-4 h-4 rounded-full" style="background-color: {{ shift.color }};"></div>
+          <h3 class="font-semibold text-lg text-gray-800">{{ shift.name }}</h3>
+        </div>
+        {% if current_user.is_manager %}
+        <div class="flex gap-1">
+          <button onclick="editShift({{ shift.id }}, '{{ shift.name }}', '{{ shift.color }}', '{{ shift.start_time or '08:00' }}', '{{ shift.end_time or '16:00' }}')" 
+                  class="text-blue-600 hover:text-blue-800 p-1">
+            ✏️
+          </button>
+          <button onclick="deleteShift({{ shift.id }})" 
+                  class="text-red-600 hover:text-red-800 p-1">
+            🗑️
+          </button>
+        </div>
+        {% endif %}
+      </div>
+      
+      <!-- Informations du service -->
+      <div class="space-y-2">
+        <div class="flex items-center gap-2 text-sm text-gray-600">
+          <span>⏰</span>
+          <span>{{ shift.start_time or '08:00' }} - {{ shift.end_time or '16:00' }}</span>
+        </div>
+        
+        <div class="flex items-center gap-2 text-sm text-gray-600">
+          <span>⏱️</span>
+          <span>{{ shift.duration or '8' }}h de travail</span>
+        </div>
+        
+        <div class="flex items-center gap-2 text-sm text-gray-600">
+          <span>👥</span>
+          <span>{{ shift.employees_needed or 3 }} personnes requises</span>
+        </div>
+        
+        {% if shift.description %}
+        <div class="flex items-center gap-2 text-sm text-gray-600">
+          <span>📝</span>
+          <span>{{ shift.description }}</span>
+        </div>
+        {% endif %}
+      </div>
+      
+      <!-- Statistiques -->
+      <div class="mt-4 pt-4 border-t border-gray-100">
+        <div class="grid grid-cols-2 gap-4 text-center">
+          <div>
+            <p class="text-lg font-semibold text-green-600">0</p>
+            <p class="text-xs text-gray-500">Cette semaine</p>
+          </div>
+          <div>
+            <p class="text-lg font-semibold text-blue-600">0</p>
+            <p class="text-xs text-gray-500">Ce mois</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+    
+    {% if not shifts %}
+    <div class="col-span-full text-center py-12 text-gray-500">
+      <div class="text-6xl mb-4">🕐</div>
+      <h3 class="text-lg font-medium mb-2">Aucun service configuré</h3>
+      <p>Commencez par créer des types de services pour organiser le planning</p>
+      {% if current_user.is_manager %}
+      <button onclick="showAddShiftModal()" class="mt-4 bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700">
+        ➕ Créer le premier service
+      </button>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Modal Ajouter Service -->
+{% if current_user.is_manager %}
+<div id="addShiftModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-semibold">Ajouter un service</h3>
+      <button onclick="hideAddShiftModal()" class="text-gray-500 hover:text-gray-700">✕</button>
+    </div>
+    
+    <form id="addShiftForm" method="POST" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium mb-2">Nom du service *</label>
+        <input type="text" name="name" required
+               placeholder="Ex: Matin, Après-midi, Nuit..."
+               class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500">
+      </div>
+      
+      <div>
+        <label class="block text-sm font-medium mb-2">Couleur</label>
+        <div class="flex items-center gap-3">
+          <input type="color" name="color" value="#3788d8" 
+                 class="w-12 h-10 rounded border">
+          <span class="text-sm text-gray-500">Choisissez une couleur pour identifier ce service</span>
+        </div>
+      </div>
+      
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-sm font-medium mb-2">Heure début</label>
+          <input type="time" name="start_time" value="08:00"
+                 class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">Heure fin</label>
+          <input type="time" name="end_time" value="16:00"
+                 class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500">
+        </div>
+      </div>
+      
+      <div>
+        <label class="block text-sm font-medium mb-2">Nombre de personnes</label>
+        <input type="number" name="employees_needed" value="3" min="1"
+               class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500">
+      </div>
+      
+      <div>
+        <label class="block text-sm font-medium mb-2">Description (optionnel)</label>
+        <textarea name="description" rows="2" 
+                  placeholder="Détails sur ce service..."
+                  class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"></textarea>
+      </div>
+      
+      <div class="flex gap-3 pt-4">
+        <button type="button" onclick="hideAddShiftModal()" 
+                class="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+          Annuler
+        </button>
+        <button type="submit" 
+                class="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+          Créer
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Modifier Service -->
+<div id="editShiftModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-semibold">Modifier le service</h3>
+      <button onclick="hideEditShiftModal()" class="text-gray-500 hover:text-gray-700">✕</button>
+    </div>
+    
+    <form id="editShiftForm" class="space-y-4">
+      <input type="hidden" name="shift_id" id="edit_shift_id">
+      
+      <div>
+        <label class="block text-sm font-medium mb-2">Nom du service *</label>
+        <input type="text" name="name" id="edit_name" required
+               class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+      </div>
+      
+      <div>
+        <label class="block text-sm font-medium mb-2">Couleur</label>
+        <div class="flex items-center gap-3">
+          <input type="color" name="color" id="edit_color"
+                 class="w-12 h-10 rounded border">
+          <span class="text-sm text-gray-500">Couleur d'identification</span>
+        </div>
+      </div>
+      
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-sm font-medium mb-2">Heure début</label>
+          <input type="time" name="start_time" id="edit_start_time"
+                 class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2">Heure fin</label>
+          <input type="time" name="end_time" id="edit_end_time"
+                 class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+        </div>
+      </div>
+      
+      <div class="flex gap-3 pt-4">
+        <button type="button" onclick="hideEditShiftModal()" 
+                class="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+          Annuler
+        </button>
+        <button type="submit" 
+                class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+          Sauvegarder
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<script>
+{% if current_user.is_manager %}
+// Fonctions pour les modals
+function showAddShiftModal() {
+    document.getElementById('addShiftModal').classList.remove('hidden');
+}
+
+function hideAddShiftModal() {
+    document.getElementById('addShiftModal').classList.add('hidden');
+    document.getElementById('addShiftForm').reset();
+}
+
+function editShift(id, name, color, startTime, endTime) {
+    document.getElementById('edit_shift_id').value = id;
+    document.getElementById('edit_name').value = name;
+    document.getElementById('edit_color').value = color || '#3788d8';
+    document.getElementById('edit_start_time').value = startTime || '08:00';
+    document.getElementById('edit_end_time').value = endTime || '16:00';
+    document.getElementById('editShiftModal').classList.remove('hidden');
+}
+
+function hideEditShiftModal() {
+    document.getElementById('editShiftModal').classList.add('hidden');
+}
+
+function deleteShift(id) {
+    if (confirm('Êtes-vous sûr de vouloir supprimer ce service ?')) {
+        fetch(`/api/shifts/${id}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erreur: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            alert('Erreur lors de la suppression');
+        });
+    }
+}
+
+// Gestion du formulaire de modification
+document.getElementById('editShiftForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const shiftId = formData.get('shift_id');
+    
+    fetch(`/api/shifts/${shiftId}`, {
+        method: 'PUT',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            hideEditShiftModal();
+            location.reload();
+        } else {
+            alert('Erreur: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        alert('Erreur lors de la modification');
+    });
+});
+
+// Calculer automatiquement la durée
+function updateDuration() {
+    const startTime = document.querySelector('input[name="start_time"]').value;
+    const endTime = document.querySelector('input[name="end_time"]').value;
+    
+    if (startTime && endTime) {
+        const start = new Date(`2000-01-01 ${startTime}`);
+        const end = new Date(`2000-01-01 ${endTime}`);
+        const duration = (end - start) / (1000 * 60 * 60); // en heures
+        
+        if (duration > 0) {
+            console.log(`Durée calculée: ${duration}h`);
+        }
+    }
+}
+
+// Attacher les listeners
+document.querySelector('input[name="start_time"]').addEventListener('change', updateDuration);
+document.querySelector('input[name="end_time"]').addEventListener('change', updateDuration);
+{% endif %}
+</script>
+{% endblock %}
