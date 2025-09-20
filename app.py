@@ -10,6 +10,8 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "maihlili_secret_key_2024")
 db.init_app(app)
 
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "postgresql://maihlili_user:QTFCzRV63h8cdfLPdLOcyscZzwBYDhYY@dpg-d365v7nfte5s739fk2j0-a.oregon-postgres.render.com/maihlili_spv")
+
 login_manager = LoginManager()
 login_manager.login_view = "login"
 login_manager.init_app(app)
