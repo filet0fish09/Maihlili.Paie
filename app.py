@@ -1,16 +1,23 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, render_template, request, redirect, url_for, jsonify, flash
 from models import db, User, Employee, Shift, Assignment, Team
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from datetime import datetime, timedelta
 import os
 
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///maihlili_spv.db")
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "maihlili_secret_key_2024")
-db.init_app(app)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "postgresql://maihlili_user:QTFCzRV63h8cdfLPdLOcyscZzwBYDhYY@dpg-d365v7nfte5s739fk2j0-a.oregon-postgres.render.com/maihlili_spv")
+# Configuration pour Render avec PostgreSQL
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://maihlili_user:QTFCzRV63h8cdfLPdLOcyscZzwBYDhYY@dpg-d365v7nfte5s739fk2j0-a.oregon-postgres.render.com/maihlili_spv"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "maihlili_secret_key_2024_render")
+
+# Configuration spéciale pour Render
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "pool_pre_ping": True,
+    "pool_recycle": 300,
+}
+
+db.init_app(app)
 
 login_manager = LoginManager()
 login_manager.login_view = "login"
@@ -21,7 +28,7 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 def get_manageable_employees(user):
-    """Retourne les employÃ©s qu'un manager peut gÃ©rer"""
+    """Retourne les employés qu'un manager peut gérer"""
     if user.is_admin:
         return Employee.query.filter_by(is_active=True).all()
     
@@ -32,13 +39,13 @@ def get_manageable_employees(user):
     if not manager_employee:
         return []
     
-    # EmployÃ©s des Ã©quipes gÃ©rÃ©es par ce manager
+    # Employés des équipes gérées par ce manager
     managed_teams = Team.query.filter_by(manager_id=manager_employee.id).all()
     team_employees = []
     for team in managed_teams:
         team_employees.extend(team.members)
     
-    # EmployÃ©s sans Ã©quipe (si le manager peut les gÃ©rer)
+    # Employés sans équipe (si le manager peut les gérer)
     unassigned_employees = Employee.query.filter_by(team_id=None, is_active=True).all()
     
     all_employees = team_employees + unassigned_employees
@@ -56,26 +63,34 @@ def register():
         email = request.form.get("email", f"{username.lower().replace(' ', '')}@maihlili.com")
         password = request.form["password"]
         
-        # GÃ©rer les rÃ´les
+        # Gérer les rôles
         role = request.form.get("role", "employee")
         is_manager = (role in ["manager", "admin"])
         is_admin = (role == "admin")
 
         if User.query.filter_by(email=email).first():
-            return "Email dÃ©jÃ  utilisÃ©", 400
+            flash("Email déjà utilisé", "error")
+            return render_template("register.html")
 
-        # CrÃ©er l'utilisateur
-        user = User(username=username, email=email, is_manager=is_manager, is_admin=is_admin)
-        user.set_password(password)
-        db.session.add(user)
-        db.session.commit()
+        try:
+            # Créer l'utilisateur
+            user = User(username=username, email=email, is_manager=is_manager, is_admin=is_admin)
+            user.set_password(password)
+            db.session.add(user)
+            db.session.flush()
 
-        # CrÃ©er automatiquement l'employÃ© associÃ©
-        emp = Employee(full_name=username, user=user)
-        db.session.add(emp)
-        db.session.commit()
-        
-        return redirect(url_for("login"))
+            # Créer automatiquement l'employé associé
+            emp = Employee(full_name=username, user_id=user.id)
+            db.session.add(emp)
+            db.session.commit()
+            
+            flash("Compte créé avec succès", "success")
+            return redirect(url_for("login"))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash("Erreur lors de la création du compte", "error")
+            return render_template("register.html")
 
     return render_template("register.html")
 
@@ -92,15 +107,24 @@ def login():
         ).first()
             
         if user and user.check_password(password):
+            # Vérifier si l'employé est actif
+            if user.employee and not user.employee.is_active:
+                flash("Votre compte a été désactivé. Contactez votre manager.", "error")
+                return render_template("login.html")
+            
             login_user(user)
             
-            # Rediriger selon le rÃ´le
+            # Vérifier si c'est le mot de passe par défaut
+            if user.check_password("maihlili123"):
+                return redirect(url_for("force_password_change"))
+            
+            # Rediriger selon le rôle
             if user.is_manager:
                 return redirect(url_for("index"))  # Dashboard manager
             else:
-                return redirect(url_for("employee_dashboard"))  # Dashboard employÃ©
+                return redirect(url_for("employee_dashboard"))  # Dashboard employé
         
-        return "Nom d'utilisateur/email ou mot de passe incorrect", 400
+        flash("Nom d'utilisateur/email ou mot de passe incorrect", "error")
     
     return render_template("login.html")
 
@@ -110,6 +134,49 @@ def logout():
     logout_user()
     return redirect(url_for("login"))
 
+@app.route("/force-password-change", methods=["GET", "POST"])
+@login_required
+def force_password_change():
+    """Forcer le changement du mot de passe par défaut"""
+    if request.method == "POST":
+        current_password = request.form["current_password"]
+        new_password = request.form["new_password"]
+        confirm_password = request.form["confirm_password"]
+        
+        # Vérifier le mot de passe actuel
+        if not current_user.check_password(current_password):
+            return render_template("force_password_change.html", error="Mot de passe actuel incorrect")
+        
+        # Vérifier que le nouveau mot de passe n'est pas le défaut
+        if new_password == "maihlili123":
+            return render_template("force_password_change.html", error="Vous devez choisir un nouveau mot de passe différent")
+        
+        # Vérifier la confirmation
+        if new_password != confirm_password:
+            return render_template("force_password_change.html", error="Les mots de passe ne correspondent pas")
+        
+        # Vérifier la longueur minimale
+        if len(new_password) < 6:
+            return render_template("force_password_change.html", error="Le mot de passe doit contenir au moins 6 caractères")
+        
+        try:
+            # Changer le mot de passe
+            current_user.set_password(new_password)
+            db.session.commit()
+            
+            flash("Mot de passe modifié avec succès", "success")
+            
+            # Rediriger selon le rôle
+            if current_user.is_manager:
+                return redirect(url_for("index"))
+            else:
+                return redirect(url_for("employee_dashboard"))
+        except Exception as e:
+            db.session.rollback()
+            return render_template("force_password_change.html", error="Erreur lors du changement de mot de passe")
+    
+    return render_template("force_password_change.html")
+
 # --- Dashboard Principal ---
 
 @app.route("/")
@@ -118,14 +185,14 @@ def index():
     if not current_user.is_manager:
         return redirect(url_for("employee_dashboard"))
     
-    # Statistiques basÃ©es sur les employÃ©s gÃ©rables
+    # Statistiques basées sur les employés gérables
     manageable_employees = get_manageable_employees(current_user)
     manageable_ids = [emp.id for emp in manageable_employees]
     
     total_employees = len(manageable_employees)
     total_shifts_today = Shift.query.count()
     
-    # Assignations de cette semaine pour les employÃ©s gÃ©rables
+    # Assignations de cette semaine pour les employés gérables
     week_start = datetime.now() - timedelta(days=datetime.now().weekday())
     week_assignments = Assignment.query.filter(
         Assignment.employee_id.in_(manageable_ids) if manageable_ids else Assignment.id == -1,
@@ -142,7 +209,7 @@ def index():
                          conflicts=conflicts,
                          manageable_employees=manageable_employees)
 
-# --- Dashboard EmployÃ© ---
+# --- Dashboard Employé ---
 
 @app.route("/employee-dashboard")
 @login_required
@@ -150,14 +217,15 @@ def employee_dashboard():
     if current_user.is_manager:
         return redirect(url_for("index"))
     
-    # RÃ©cupÃ©rer seulement les assignations de cet employÃ©
+    # Récupérer seulement les assignations de cet employé
     employee = current_user.employee
     if not employee:
-        return "Profil employÃ© non trouvÃ©", 404
+        flash("Profil employé non trouvé", "error")
+        return redirect(url_for("login"))
     
     my_assignments = Assignment.query.filter_by(employee_id=employee.id).order_by(Assignment.start.desc()).all()
     
-    # Statistiques de l'employÃ©
+    # Statistiques de l'employé
     total_hours_week = 0
     assignments_week = 0
     next_shift = None
@@ -182,7 +250,7 @@ def employee_dashboard():
                          assignments_week=assignments_week,
                          next_shift=next_shift)
 
-# --- API Ã‰vÃ©nements ---
+# --- API Événements ---
 
 @app.get("/api/events")
 @login_required
@@ -191,7 +259,7 @@ def api_events():
     end_str = request.args.get("end")
     
     if current_user.is_manager:
-        # Manager : voir les assignations de ses employÃ©s
+        # Manager : voir les assignations de ses employés
         manageable_employees = get_manageable_employees(current_user)
         manageable_ids = [emp.id for emp in manageable_employees]
         if manageable_ids:
@@ -199,7 +267,7 @@ def api_events():
         else:
             return jsonify([])
     else:
-        # EmployÃ© : voir seulement ses assignations
+        # Employé : voir seulement ses assignations
         emp = current_user.employee
         if not emp:
             return jsonify([])
@@ -213,53 +281,82 @@ def api_events():
     events = [a.as_fullcalendar() for a in q.all()]
     return jsonify(events)
 
-# --- CRUD EmployÃ©s ---
+# --- CRUD Employés ---
 
 @app.route("/employees", methods=["GET", "POST"])
 @login_required
 def show_employees():
     if not current_user.is_manager:
-        return "AccÃ¨s refusÃ©", 403
+        flash("Accès refusé", "error")
+        return redirect(url_for("index"))
         
     if request.method == "POST":
         name = request.form["full_name"]
         position = request.form.get("position")
         email = request.form.get("email")
         team_id = request.form.get("team_id")
+        create_account = "create_account" in request.form
         
-        # CrÃ©er l'employÃ©
-        emp = Employee(
-            full_name=name, 
-            position=position,
-            team_id=int(team_id) if team_id else None
-        )
-        
-        # CrÃ©er un compte utilisateur si email fourni
-        if email:
-            if not User.query.filter_by(email=email).first():
+        try:
+            # Créer l'employé
+            emp = Employee(
+                full_name=name, 
+                position=position,
+                team_id=int(team_id) if team_id else None
+            )
+            
+            # Créer un compte utilisateur si demandé et email fourni
+            if create_account and email:
+                # Vérifier que l'email n'existe pas
+                if User.query.filter_by(email=email).first():
+                    flash("Un compte avec cet email existe déjà", "error")
+                    return redirect(url_for("show_employees"))
+                
+                # Créer le nom d'utilisateur
+                username = name.lower().replace(' ', '.').replace('é', 'e').replace('è', 'e').replace('à', 'a')
+                counter = 1
+                original_username = username
+                
+                while User.query.filter_by(username=username).first():
+                    username = f"{original_username}{counter}"
+                    counter += 1
+                
+                # Créer l'utilisateur
                 user = User(
-                    username=name.lower().replace(' ', ''),
+                    username=username,
                     email=email,
-                    is_manager=False
+                    is_manager=False,
+                    is_admin=False
                 )
-                user.set_password("motdepasse123")  # Mot de passe par dÃ©faut
+                user.set_password("maihlili123")  # Mot de passe par défaut
                 db.session.add(user)
-                db.session.flush()  # Pour obtenir l'ID
+                db.session.flush()
                 emp.user_id = user.id
-        
-        db.session.add(emp)
-        db.session.commit()
-        
-    # Afficher seulement les employÃ©s gÃ©rables
+                
+                flash(f"Employé créé avec compte utilisateur (nom d'utilisateur: {username})", "success")
+            else:
+                flash("Employé créé avec succès", "success")
+            
+            db.session.add(emp)
+            db.session.commit()
+            
+            return redirect(url_for("show_employees"))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash("Erreur lors de la création de l'employé", "error")
+            return redirect(url_for("show_employees"))
+    
+    # Afficher seulement les employés gérables
     employees = get_manageable_employees(current_user)
     
     # Ajouter des attributs pour l'affichage
     for e in employees:
-        e.avatar = 'ðŸ‘¤'
-        e.role = e.position or 'EmployÃ©'
+        e.avatar = '👤'
+        e.role = e.position or 'Employé'
         e.status = 'active' if e.is_active else 'absent'
         
-    # Ã‰quipes disponibles pour ce manager
+    # Équipes disponibles pour ce manager
     teams = []
     if current_user.is_admin:
         teams = Team.query.all()
@@ -268,41 +365,171 @@ def show_employees():
     
     return render_template("employees.html", employees=employees, teams=teams)
 
+# --- API Gestion des comptes ---
+
+@app.route("/api/employees/create-account", methods=["POST"])
+@login_required
+def create_employee_account():
+    """Créer un compte utilisateur pour un employé existant"""
+    if not current_user.is_manager:
+        return jsonify({"success": False, "error": "Accès refusé"}), 403
+    
+    try:
+        employee_id = request.form.get("employee_id")
+        email = request.form.get("email")
+        
+        if not employee_id or not email:
+            return jsonify({"success": False, "error": "Données manquantes"}), 400
+        
+        employee = Employee.query.get(employee_id)
+        if not employee:
+            return jsonify({"success": False, "error": "Employé non trouvé"}), 404
+        
+        # Vérifier les permissions
+        if not employee.can_be_managed_by(current_user):
+            return jsonify({"success": False, "error": "Vous ne pouvez pas créer de compte pour cet employé"}), 403
+        
+        # Vérifier si l'employé a déjà un compte
+        if employee.user:
+            return jsonify({"success": False, "error": "Cet employé a déjà un compte utilisateur"}), 400
+        
+        # Vérifier si l'email existe déjà
+        if User.query.filter_by(email=email).first():
+            return jsonify({"success": False, "error": "Un compte avec cet email existe déjà"}), 400
+        
+        # Créer le nom d'utilisateur basé sur le nom
+        username = employee.full_name.lower().replace(' ', '.').replace('é', 'e').replace('è', 'e').replace('à', 'a')
+        counter = 1
+        original_username = username
+        
+        # S'assurer que le nom d'utilisateur est unique
+        while User.query.filter_by(username=username).first():
+            username = f"{original_username}{counter}"
+            counter += 1
+        
+        # Créer le compte utilisateur
+        user = User(
+            username=username,
+            email=email,
+            is_manager=False,
+            is_admin=False
+        )
+        user.set_password("maihlili123")  # Mot de passe par défaut
+        
+        db.session.add(user)
+        db.session.flush()  # Pour obtenir l'ID
+        
+        # Associer l'employé au compte
+        employee.user_id = user.id
+        db.session.commit()
+        
+        return jsonify({
+            "success": True, 
+            "message": "Compte créé avec succès",
+            "username": username,
+            "email": email
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "error": "Erreur lors de la création du compte"}), 500
+
+@app.route("/api/employees/<int:employee_id>/reset-password", methods=["POST"])
+@login_required
+def reset_employee_password(employee_id):
+    """Réinitialiser le mot de passe d'un employé"""
+    if not current_user.is_manager:
+        return jsonify({"success": False, "error": "Accès refusé"}), 403
+    
+    try:
+        employee = Employee.query.get_or_404(employee_id)
+        
+        # Vérifier les permissions
+        if not employee.can_be_managed_by(current_user):
+            return jsonify({"success": False, "error": "Vous ne pouvez pas modifier cet employé"}), 403
+        
+        # Vérifier que l'employé a un compte
+        if not employee.user:
+            return jsonify({"success": False, "error": "Cet employé n'a pas de compte utilisateur"}), 400
+        
+        # Réinitialiser le mot de passe
+        employee.user.set_password("maihlili123")
+        db.session.commit()
+        
+        return jsonify({"success": True, "message": "Mot de passe réinitialisé"})
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "error": "Erreur lors de la réinitialisation"}), 500
+
+@app.route("/api/users/<int:user_id>/toggle", methods=["POST"])
+@login_required
+def toggle_user_account(user_id):
+    """Activer/désactiver un compte utilisateur"""
+    if not current_user.is_manager:
+        return jsonify({"success": False, "error": "Accès refusé"}), 403
+    
+    try:
+        user = User.query.get_or_404(user_id)
+        employee = user.employee
+        
+        if not employee or not employee.can_be_managed_by(current_user):
+            return jsonify({"success": False, "error": "Vous ne pouvez pas modifier ce compte"}), 403
+        
+        # Basculer le statut actif de l'employé
+        employee.is_active = not employee.is_active
+        db.session.commit()
+        
+        status = "activé" if employee.is_active else "désactivé"
+        return jsonify({"success": True, "message": f"Compte {status}"})
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "error": "Erreur lors de la modification"}), 500
+
 @app.route("/api/employees/<int:employee_id>", methods=["PUT"])
 @login_required
 def update_employee(employee_id):
     if not current_user.is_manager:
-        return jsonify({"success": False, "error": "AccÃ¨s refusÃ©"}), 403
+        return jsonify({"success": False, "error": "Accès refusé"}), 403
     
     employee = Employee.query.get_or_404(employee_id)
     
-    # VÃ©rifier que le manager peut modifier cet employÃ©
+    # Vérifier que le manager peut modifier cet employé
     if not employee.can_be_managed_by(current_user):
-        return jsonify({"success": False, "error": "Vous ne pouvez pas modifier cet employÃ©"}), 403
+        return jsonify({"success": False, "error": "Vous ne pouvez pas modifier cet employé"}), 403
     
-    employee.full_name = request.form.get("full_name", employee.full_name)
-    employee.position = request.form.get("position", employee.position)
-    
-    db.session.commit()
-    return jsonify({"success": True})
+    try:
+        employee.full_name = request.form.get("full_name", employee.full_name)
+        employee.position = request.form.get("position", employee.position)
+        
+        db.session.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "error": "Erreur lors de la modification"}), 500
 
 @app.route("/api/employees/<int:employee_id>", methods=["DELETE"])
 @login_required
 def delete_employee(employee_id):
     if not current_user.is_manager:
-        return jsonify({"success": False, "error": "AccÃ¨s refusÃ©"}), 403
+        return jsonify({"success": False, "error": "Accès refusé"}), 403
     
     employee = Employee.query.get_or_404(employee_id)
     
-    # VÃ©rifier que le manager peut supprimer cet employÃ©
+    # Vérifier que le manager peut supprimer cet employé
     if not employee.can_be_managed_by(current_user):
-        return jsonify({"success": False, "error": "Vous ne pouvez pas supprimer cet employÃ©"}), 403
+        return jsonify({"success": False, "error": "Vous ne pouvez pas supprimer cet employé"}), 403
     
-    # DÃ©sactiver plutÃ´t que supprimer
-    employee.is_active = False
-    db.session.commit()
-    
-    return jsonify({"success": True})
+    try:
+        # Désactiver plutôt que supprimer
+        employee.is_active = False
+        db.session.commit()
+        
+        return jsonify({"success": True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "error": "Erreur lors de la suppression"}), 500
 
 # --- CRUD Shifts ---
 
@@ -310,7 +537,8 @@ def delete_employee(employee_id):
 @login_required
 def show_shifts():
     if not current_user.is_manager:
-        return "AccÃ¨s refusÃ©", 403
+        flash("Accès refusé", "error")
+        return redirect(url_for("index"))
         
     if request.method == "POST":
         name = request.form["name"]
@@ -318,14 +546,19 @@ def show_shifts():
         start_time = request.form.get("start_time", "08:00")
         end_time = request.form.get("end_time", "16:00")
         
-        shift = Shift(
-            name=name, 
-            color=color,
-            start_time=start_time,
-            end_time=end_time
-        )
-        db.session.add(shift)
-        db.session.commit()
+        try:
+            shift = Shift(
+                name=name, 
+                color=color,
+                start_time=start_time,
+                end_time=end_time
+            )
+            db.session.add(shift)
+            db.session.commit()
+            flash("Service créé avec succès", "success")
+        except Exception as e:
+            db.session.rollback()
+            flash("Erreur lors de la création du service", "error")
         
     shifts = Shift.query.all()
     
@@ -342,35 +575,45 @@ def show_shifts():
 @login_required
 def delete_shift(shift_id):
     if not current_user.is_manager:
-        return jsonify({"success": False, "error": "AccÃ¨s refusÃ©"}), 403
+        return jsonify({"success": False, "error": "Accès refusé"}), 403
     
-    shift = Shift.query.get_or_404(shift_id)
-    db.session.delete(shift)
-    db.session.commit()
-    
-    return jsonify({"success": True})
+    try:
+        shift = Shift.query.get_or_404(shift_id)
+        db.session.delete(shift)
+        db.session.commit()
+        
+        return jsonify({"success": True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "error": "Erreur lors de la suppression"}), 500
 
-# --- Gestion des Ã‰quipes ---
+# --- Gestion des Équipes ---
 
 @app.route("/teams", methods=["GET", "POST"])
 @login_required
 def manage_teams():
     if not current_user.is_manager:
-        return "AccÃ¨s refusÃ©", 403
+        flash("Accès refusé", "error")
+        return redirect(url_for("index"))
         
     if request.method == "POST":
         name = request.form["name"]
         description = request.form.get("description", "")
         
-        team = Team(
-            name=name,
-            description=description,
-            manager_id=current_user.employee.id if current_user.employee else None
-        )
-        db.session.add(team)
-        db.session.commit()
+        try:
+            team = Team(
+                name=name,
+                description=description,
+                manager_id=current_user.employee.id if current_user.employee else None
+            )
+            db.session.add(team)
+            db.session.commit()
+            flash("Équipe créée avec succès", "success")
+        except Exception as e:
+            db.session.rollback()
+            flash("Erreur lors de la création de l'équipe", "error")
     
-    # Afficher les Ã©quipes gÃ©rÃ©es
+    # Afficher les équipes gérées
     if current_user.is_admin:
         teams = Team.query.all()
     elif current_user.employee:
@@ -384,22 +627,26 @@ def manage_teams():
 @login_required
 def delete_team(team_id):
     if not current_user.is_manager:
-        return jsonify({"success": False, "error": "AccÃ¨s refusÃ©"}), 403
+        return jsonify({"success": False, "error": "Accès refusé"}), 403
     
-    team = Team.query.get_or_404(team_id)
-    
-    # VÃ©rifier les permissions
-    if not current_user.is_admin and team.manager_id != current_user.employee.id:
-        return jsonify({"success": False, "error": "Vous ne pouvez pas supprimer cette Ã©quipe"}), 403
-    
-    # Retirer les employÃ©s de l'Ã©quipe avant de la supprimer
-    for member in team.members:
-        member.team_id = None
-    
-    db.session.delete(team)
-    db.session.commit()
-    
-    return jsonify({"success": True})
+    try:
+        team = Team.query.get_or_404(team_id)
+        
+        # Vérifier les permissions
+        if not current_user.is_admin and team.manager_id != current_user.employee.id:
+            return jsonify({"success": False, "error": "Vous ne pouvez pas supprimer cette équipe"}), 403
+        
+        # Retirer les employés de l'équipe avant de la supprimer
+        for member in team.members:
+            member.team_id = None
+        
+        db.session.delete(team)
+        db.session.commit()
+        
+        return jsonify({"success": True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "error": "Erreur lors de la suppression"}), 500
 
 @app.route("/api/unassigned-employees")
 @login_required
@@ -407,7 +654,7 @@ def get_unassigned_employees():
     if not current_user.is_manager:
         return jsonify([])
     
-    # EmployÃ©s sans Ã©quipe que le manager peut gÃ©rer
+    # Employés sans équipe que le manager peut gérer
     manageable_employees = get_manageable_employees(current_user)
     unassigned = [emp for emp in manageable_employees if not emp.team_id]
     
@@ -421,40 +668,48 @@ def get_unassigned_employees():
 @login_required
 def assign_employees_to_team(team_id):
     if not current_user.is_manager:
-        return jsonify({"success": False, "error": "AccÃ¨s refusÃ©"}), 403
+        return jsonify({"success": False, "error": "Accès refusé"}), 403
     
-    team = Team.query.get_or_404(team_id)
-    
-    # VÃ©rifier les permissions
-    if not current_user.is_admin and team.manager_id != current_user.employee.id:
-        return jsonify({"success": False, "error": "Vous ne pouvez pas modifier cette Ã©quipe"}), 403
-    
-    data = request.get_json()
-    employee_ids = data.get("employee_ids", [])
-    
-    for emp_id in employee_ids:
-        employee = Employee.query.get(emp_id)
-        if employee and employee.can_be_managed_by(current_user):
-            employee.team_id = team_id
-    
-    db.session.commit()
-    return jsonify({"success": True})
+    try:
+        team = Team.query.get_or_404(team_id)
+        
+        # Vérifier les permissions
+        if not current_user.is_admin and team.manager_id != current_user.employee.id:
+            return jsonify({"success": False, "error": "Vous ne pouvez pas modifier cette équipe"}), 403
+        
+        data = request.get_json()
+        employee_ids = data.get("employee_ids", [])
+        
+        for emp_id in employee_ids:
+            employee = Employee.query.get(emp_id)
+            if employee and employee.can_be_managed_by(current_user):
+                employee.team_id = team_id
+        
+        db.session.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "error": "Erreur lors de l'assignation"}), 500
 
 @app.route("/api/teams/<int:team_id>/remove/<int:employee_id>", methods=["POST"])
 @login_required
 def remove_employee_from_team(team_id, employee_id):
     if not current_user.is_manager:
-        return jsonify({"success": False, "error": "AccÃ¨s refusÃ©"}), 403
+        return jsonify({"success": False, "error": "Accès refusé"}), 403
     
-    employee = Employee.query.get_or_404(employee_id)
-    
-    if not employee.can_be_managed_by(current_user):
-        return jsonify({"success": False, "error": "Vous ne pouvez pas modifier cet employÃ©"}), 403
-    
-    employee.team_id = None
-    db.session.commit()
-    
-    return jsonify({"success": True})
+    try:
+        employee = Employee.query.get_or_404(employee_id)
+        
+        if not employee.can_be_managed_by(current_user):
+            return jsonify({"success": False, "error": "Vous ne pouvez pas modifier cet employé"}), 403
+        
+        employee.team_id = None
+        db.session.commit()
+        
+        return jsonify({"success": True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "error": "Erreur lors de la modification"}), 500
 
 # --- Assignations ---
 
@@ -462,7 +717,8 @@ def remove_employee_from_team(team_id, employee_id):
 @login_required
 def assignments():
     if not current_user.is_manager:
-        return "AccÃ¨s refusÃ©", 403
+        flash("Accès refusé", "error")
+        return redirect(url_for("index"))
         
     if request.method == "POST":
         employee_id = request.form["employee_id"]
@@ -473,28 +729,37 @@ def assignments():
         end_time = request.form["end_time"]
         notes = request.form.get("notes", "")
         
-        # VÃ©rifier que le manager peut assigner cet employÃ©
-        employee = Employee.query.get(employee_id)
-        if not employee or not employee.can_be_managed_by(current_user):
-            return "Vous ne pouvez pas assigner cet employÃ©", 403
-        
-        start = datetime.strptime(f"{start_date} {start_time}", "%Y-%m-%d %H:%M")
-        end = datetime.strptime(f"{end_date} {end_time}", "%Y-%m-%d %H:%M")
-        
-        assignment = Assignment(
-            employee_id=employee_id,
-            shift_id=shift_id,
-            start=start,
-            end=end,
-            notes=notes,
-            created_by=current_user.id
-        )
-        db.session.add(assignment)
-        db.session.commit()
-        
-        return redirect(url_for("assignments"))
+        try:
+            # Vérifier que le manager peut assigner cet employé
+            employee = Employee.query.get(employee_id)
+            if not employee or not employee.can_be_managed_by(current_user):
+                flash("Vous ne pouvez pas assigner cet employé", "error")
+                return redirect(url_for("assignments"))
+            
+            start = datetime.strptime(f"{start_date} {start_time}", "%Y-%m-%d %H:%M")
+            end = datetime.strptime(f"{end_date} {end_time}", "%Y-%m-%d %H:%M")
+            
+            assignment = Assignment(
+                employee_id=employee_id,
+                shift_id=shift_id,
+                start=start,
+                end=end,
+                notes=notes,
+                created_by=current_user.id
+            )
+            
+            db.session.add(assignment)
+            db.session.commit()
+            
+            flash("Assignation créée avec succès", "success")
+            return redirect(url_for("assignments"))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash("Erreur lors de la création de l'assignation", "error")
+            return redirect(url_for("assignments"))
     
-    # Afficher seulement les assignations des employÃ©s gÃ©rables
+    # Afficher seulement les assignations des employés gérables
     manageable_employees = get_manageable_employees(current_user)
     manageable_ids = [emp.id for emp in manageable_employees]
     
@@ -516,21 +781,22 @@ def assignments():
 @login_required
 def create_assignment():
     if not current_user.is_manager:
-        return jsonify({"success": False, "error": "AccÃ¨s refusÃ©"}), 403
+        return jsonify({"success": False, "error": "Accès refusé"}), 403
     
     try:
         employee_id = request.form.get("employee_id")
         shift_id = request.form.get("shift_id") 
         start_str = request.form.get("start")
         end_str = request.form.get("end")
+        notes = request.form.get("notes", "")
         
         if not all([employee_id, shift_id, start_str, end_str]):
-            return jsonify({"success": False, "error": "DonnÃ©es manquantes"}), 400
+            return jsonify({"success": False, "error": "Données manquantes"}), 400
         
-        # VÃ©rifier que le manager peut assigner cet employÃ©
+        # Vérifier que le manager peut assigner cet employé
         employee = Employee.query.get(employee_id)
         if not employee or not employee.can_be_managed_by(current_user):
-            return jsonify({"success": False, "error": "Vous ne pouvez pas assigner cet employÃ©"}), 403
+            return jsonify({"success": False, "error": "Vous ne pouvez pas assigner cet employé"}), 403
         
         start = datetime.fromisoformat(start_str.replace('T', ' '))
         end = datetime.fromisoformat(end_str.replace('T', ' '))
@@ -540,6 +806,7 @@ def create_assignment():
             shift_id=int(shift_id),
             start=start,
             end=end,
+            notes=notes,
             created_by=current_user.id
         )
         
@@ -549,54 +816,62 @@ def create_assignment():
         return jsonify({"success": True})
         
     except Exception as e:
-        print(f"Erreur: {str(e)}")
-        return jsonify({"success": False, "error": "Erreur lors de la crÃ©ation"}), 500
+        db.session.rollback()
+        return jsonify({"success": False, "error": "Erreur lors de la création"}), 500
 
 @app.route("/api/assignments/<int:assignment_id>", methods=["DELETE"])
 @login_required
 def delete_assignment(assignment_id):
     if not current_user.is_manager:
-        return jsonify({"success": False, "error": "AccÃ¨s refusÃ©"}), 403
+        return jsonify({"success": False, "error": "Accès refusé"}), 403
     
-    assignment = Assignment.query.get_or_404(assignment_id)
-    
-    # VÃ©rifier que le manager peut supprimer cette assignation
-    if not assignment.employee.can_be_managed_by(current_user):
-        return jsonify({"success": False, "error": "Vous ne pouvez pas supprimer cette assignation"}), 403
-    
-    db.session.delete(assignment)
-    db.session.commit()
-    
-    return jsonify({"success": True})
+    try:
+        assignment = Assignment.query.get_or_404(assignment_id)
+        
+        # Vérifier que le manager peut supprimer cette assignation
+        if not assignment.employee.can_be_managed_by(current_user):
+            return jsonify({"success": False, "error": "Vous ne pouvez pas supprimer cette assignation"}), 403
+        
+        db.session.delete(assignment)
+        db.session.commit()
+        
+        return jsonify({"success": True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "error": "Erreur lors de la suppression"}), 500
 
 @app.route("/api/assignments/<int:assignment_id>/duplicate", methods=["POST"])
 @login_required
 def duplicate_assignment(assignment_id):
     if not current_user.is_manager:
-        return jsonify({"success": False, "error": "AccÃ¨s refusÃ©"}), 403
+        return jsonify({"success": False, "error": "Accès refusé"}), 403
     
-    original = Assignment.query.get_or_404(assignment_id)
-    
-    # VÃ©rifier les permissions
-    if not original.employee.can_be_managed_by(current_user):
-        return jsonify({"success": False, "error": "Vous ne pouvez pas dupliquer cette assignation"}), 403
-    
-    # CrÃ©er une nouvelle assignation basÃ©e sur l'originale
-    duplicate = Assignment(
-        employee_id=original.employee_id,
-        shift_id=original.shift_id,
-        start=original.start + timedelta(days=7),  # DÃ©caler d'une semaine
-        end=original.end + timedelta(days=7),
-        notes=original.notes,
-        created_by=current_user.id
-    )
-    
-    db.session.add(duplicate)
-    db.session.commit()
-    
-    return jsonify({"success": True})
+    try:
+        original = Assignment.query.get_or_404(assignment_id)
+        
+        # Vérifier les permissions
+        if not original.employee.can_be_managed_by(current_user):
+            return jsonify({"success": False, "error": "Vous ne pouvez pas dupliquer cette assignation"}), 403
+        
+        # Créer une nouvelle assignation basée sur l'originale
+        duplicate = Assignment(
+            employee_id=original.employee_id,
+            shift_id=original.shift_id,
+            start=original.start + timedelta(days=7),  # Décaler d'une semaine
+            end=original.end + timedelta(days=7),
+            notes=original.notes,
+            created_by=current_user.id
+        )
+        
+        db.session.add(duplicate)
+        db.session.commit()
+        
+        return jsonify({"success": True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "error": "Erreur lors de la duplication"}), 500
 
-# --- ParamÃ¨tres ---
+# --- Paramètres ---
 
 @app.route("/settings")
 @login_required
@@ -610,19 +885,23 @@ def change_password():
     new_password = request.form["new_password"]
     confirm_password = request.form["confirm_password"]
     
-    # VÃ©rifier le mot de passe actuel
+    # Vérifier le mot de passe actuel
     if not current_user.check_password(current_password):
         return jsonify({"success": False, "error": "Mot de passe actuel incorrect"}), 400
     
-    # VÃ©rifier que les nouveaux mots de passe correspondent
+    # Vérifier que les nouveaux mots de passe correspondent
     if new_password != confirm_password:
         return jsonify({"success": False, "error": "Les mots de passe ne correspondent pas"}), 400
     
-    # Changer le mot de passe
-    current_user.set_password(new_password)
-    db.session.commit()
-    
-    return jsonify({"success": True, "message": "Mot de passe changÃ© avec succÃ¨s"})
+    try:
+        # Changer le mot de passe
+        current_user.set_password(new_password)
+        db.session.commit()
+        
+        return jsonify({"success": True, "message": "Mot de passe changé avec succès"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "error": "Erreur lors du changement de mot de passe"}), 500
 
 # --- Export CSV ---
 
@@ -630,12 +909,13 @@ def change_password():
 @login_required
 def export_week():
     if not current_user.is_manager:
-        return "AccÃ¨s refusÃ©", 403
+        flash("Accès refusé", "error")
+        return redirect(url_for("index"))
         
     import csv
     from io import StringIO
     
-    # Exporter seulement les assignations des employÃ©s gÃ©rables
+    # Exporter seulement les assignations des employés gérables
     manageable_employees = get_manageable_employees(current_user)
     manageable_ids = [emp.id for emp in manageable_employees]
     
@@ -664,7 +944,23 @@ def export_week():
         'Content-Disposition': 'attachment; filename="planning_maihlili_spv.csv"'
     }
 
+# --- Gestion des erreurs ---
+
+@app.errorhandler(404)
+def not_found_error(error):
+    return render_template('errors/404.html'), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    db.session.rollback()
+    return render_template('errors/500.html'), 500
+
+# --- Lancement de l'application ---
+
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
-    app.run(debug=True)
+    
+    # Configuration pour production Render
+    port = int(os.environ.get("PORT", 5000))
+    
