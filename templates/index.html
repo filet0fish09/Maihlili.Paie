@@ -129,7 +129,14 @@
             }
         }
 
-        // --- NOUVEAU CODE AJOUTÉ ---
+        // --- CORRECTION : Fonction pour récupérer les événements ---
+        async function getCalendarEvents() {
+            const response = await fetch('/api/assignments/events');  // Route corrigée
+            const events = await response.json();
+            return events;
+        }
+
+        // Charger les employés et services
         async function loadEmployeesAndShifts() {
             const employeeSelect = document.querySelector('select[name="employee_id"]');
             const shiftSelect = document.querySelector('select[name="shift_id"]');
@@ -147,7 +154,6 @@
             {% endfor %}
         }
         
-        // --- NOUVEAU CODE AJOUTÉ : Appeler la fonction au chargement du DOM ---
         loadEmployeesAndShifts();
 
         // Gestion du formulaire d'ajout rapide
@@ -189,27 +195,47 @@
             endDateInput.value = this.value;
         });
 
-        // Fonction pour récupérer les événements FullCalendar
-        async function getCalendarEvents() {
-            const response = await fetch('/api/assignments/events');
-            const events = await response.json();
-            return events;
-        }
-
+        // --- CORRECTION : Configuration FullCalendar avec semaine commençant le lundi ---
         var calendarEl = document.getElementById('calendar');
         var calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             locale: 'fr',
+            firstDay: 1, // AJOUTÉ : Commencer la semaine le lundi (0=dimanche, 1=lundi)
             headerToolbar: {
                 left: 'prev,next today',
                 center: 'title',
                 right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            },
+            buttonText: {
+                today: 'Aujourd\'hui',
+                month: 'Mois',
+                week: 'Semaine',
+                day: 'Jour'
             },
             navLinks: true,
             dayMaxEvents: true,
             editable: true,
             eventStartEditable: true,
             eventDurationEditable: true,
+            // --- AMÉLIORATION : Meilleure lisibilité des événements ---
+            eventDisplay: 'block',
+            eventTextColor: '#ffffff',
+            eventBorderWidth: 2,
+            eventClassNames: function(arg) {
+                return ['calendar-event-improved'];
+            },
+            eventContent: function(arg) {
+                // Améliorer l'affichage des événements
+                return {
+                    html: `
+                        <div class="event-content-improved">
+                            <div class="font-semibold text-xs truncate">${arg.event.extendedProps.shift_name}</div>
+                            <div class="text-xs opacity-90 truncate">${arg.event.extendedProps.employee_name}</div>
+                            <div class="text-xs opacity-75">${arg.event.extendedProps.duration}</div>
+                        </div>
+                    `
+                };
+            },
             eventDrop: function(info) {
                 updateAssignment(info.event);
             },
@@ -219,8 +245,118 @@
             eventClick: function(info) {
                 showAssignmentDetails(info.event);
             },
-            events: getCalendarEvents,
+            events: getCalendarEvents, // Fonction corrigée
         });
+        
+        // --- AJOUT : Styles CSS pour améliorer la lisibilité ---
+        const style = document.createElement('style');
+        style.textContent = `
+            /* Amélioration de la lisibilité du calendrier */
+            .fc-event {
+                border-radius: 6px !important;
+                padding: 2px 4px !important;
+                margin: 1px 0 !important;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
+                border-width: 0 !important;
+            }
+            
+            .event-content-improved {
+                line-height: 1.2;
+                padding: 1px;
+            }
+            
+            .fc-daygrid-event {
+                white-space: normal !important;
+                font-size: 11px !important;
+            }
+            
+            .fc-event-title {
+                font-weight: 600 !important;
+            }
+            
+            /* Améliorer la lisibilité du header */
+            .fc-toolbar-title {
+                font-size: 1.5em !important;
+                font-weight: 700 !important;
+                color: #374151 !important;
+            }
+            
+            .fc-button {
+                background: #4F46E5 !important;
+                border-color: #4F46E5 !important;
+                font-weight: 500 !important;
+            }
+            
+            .fc-button:hover {
+                background: #4338CA !important;
+                border-color: #4338CA !important;
+            }
+            
+            .fc-button-primary:disabled {
+                background: #9CA3AF !important;
+                border-color: #9CA3AF !important;
+            }
+            
+            /* Améliorer la lisibilité des jours */
+            .fc-col-header-cell {
+                font-weight: 600 !important;
+                background: #F9FAFB !important;
+                color: #374151 !important;
+                text-transform: uppercase !important;
+                font-size: 12px !important;
+                letter-spacing: 0.5px !important;
+            }
+            
+            .fc-daygrid-day-number {
+                font-weight: 600 !important;
+                color: #374151 !important;
+            }
+            
+            .fc-day-today {
+                background: #EEF2FF !important;
+            }
+            
+            .fc-day-today .fc-daygrid-day-number {
+                background: #4F46E5 !important;
+                color: white !important;
+                border-radius: 50% !important;
+                width: 24px !important;
+                height: 24px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                margin: 2px !important;
+            }
+            
+            /* Mode sombre pour le calendrier */
+            [data-theme="dark"] .fc {
+                --fc-border-color: #374151;
+                --fc-button-bg-color: #4F46E5;
+                --fc-button-hover-bg-color: #4338CA;
+                --fc-today-bg-color: #1E293B;
+                background: #1F2937;
+                color: #F9FAFB;
+            }
+            
+            [data-theme="dark"] .fc-toolbar-title {
+                color: #F9FAFB !important;
+            }
+            
+            [data-theme="dark"] .fc-col-header-cell {
+                background: #374151 !important;
+                color: #E5E7EB !important;
+            }
+            
+            [data-theme="dark"] .fc-daygrid-day-number {
+                color: #E5E7EB !important;
+            }
+            
+            [data-theme="dark"] .fc-day-today {
+                background: #1E3A8A !important;
+            }
+        `;
+        document.head.appendChild(style);
+        
         calendar.render();
 
         // Fonction pour mettre à jour une assignation
@@ -252,20 +388,72 @@
             });
         }
 
-        // Fonction pour afficher les détails d'une assignation (modal)
+        // Fonction pour afficher les détails d'une assignation (modal amélioré)
         function showAssignmentDetails(event) {
-            // Logique pour afficher les détails dans un modal
-            alert(`
-                Assignation : ${event.extendedProps.shift_name}
-                Employé : ${event.extendedProps.employee_name}
-                Début : ${event.start.toLocaleString()}
-                Fin : ${event.end ? event.end.toLocaleString() : 'N/A'}
-                Durée : ${event.extendedProps.duration}
-                Statut : ${event.extendedProps.status_display}
-                Notes : ${event.extendedProps.notes || 'Aucune'}
-                Créé par : ${event.extendedProps.created_by}
-            `);
+            const startDate = new Date(event.start);
+            const endDate = new Date(event.end);
+            
+            const detailsHtml = `
+                <div class="bg-white rounded-xl p-6 max-w-md mx-auto shadow-2xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold text-gray-800">Détails de l'assignation</h3>
+                        <button onclick="this.closest('.fixed').remove()" class="text-gray-500 hover:text-gray-700">✖️</button>
+                    </div>
+                    
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between">
+                            <span class="font-medium text-gray-600">Service:</span>
+                            <span class="font-semibold" style="color: ${event.color};">${event.extendedProps.shift_name}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="font-medium text-gray-600">Employé:</span>
+                            <span class="font-semibold text-gray-800">${event.extendedProps.employee_name}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="font-medium text-gray-600">Début:</span>
+                            <span class="text-gray-800">${startDate.toLocaleString('fr-FR')}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="font-medium text-gray-600">Fin:</span>
+                            <span class="text-gray-800">${endDate.toLocaleString('fr-FR')}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="font-medium text-gray-600">Durée:</span>
+                            <span class="font-semibold text-blue-600">${event.extendedProps.duration}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="font-medium text-gray-600">Statut:</span>
+                            <span class="text-gray-800">${event.extendedProps.status_display}</span>
+                        </div>
+                        ${event.extendedProps.notes ? `
+                        <div class="pt-2 border-t">
+                            <span class="font-medium text-gray-600">Notes:</span>
+                            <p class="text-gray-700 mt-1">${event.extendedProps.notes}</p>
+                        </div>
+                        ` : ''}
+                        <div class="pt-2 border-t text-xs text-gray-500">
+                            Créé par: ${event.extendedProps.created_by}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Créer le modal
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            modal.innerHTML = detailsHtml;
+            document.body.appendChild(modal);
+            
+            // Fermer en cliquant à l'extérieur
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
         }
+        
+        // Exposer les fonctions globalement
+        window.showQuickAddModal = showQuickAddModal;
     });
 </script>
 {% endblock %}
