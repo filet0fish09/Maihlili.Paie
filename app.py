@@ -202,12 +202,16 @@ def index():
     total_hours = sum([(a.end - a.start).total_seconds() / 3600 for a in week_assignments])
     conflicts = 0
     
+    # Ajouter les shifts pour le modal
+    shifts = Shift.query.all()
+    
     return render_template("index.html", 
                          total_employees=total_employees,
                          total_shifts_today=len(week_assignments),
                          total_hours=int(total_hours),
                          conflicts=conflicts,
-                         manageable_employees=manageable_employees)
+                         manageable_employees=manageable_employees,
+                         shifts=shifts)
 
 # --- Dashboard Employé ---
 
@@ -250,9 +254,9 @@ def employee_dashboard():
                          assignments_week=assignments_week,
                          next_shift=next_shift)
 
-# --- API Événements ---
+# --- API Événements --- CORRIGÉ
 
-@app.get("/api/events")
+@app.get("/api/assignments/events")  # Route corrigée
 @login_required
 def api_events():
     start_str = request.args.get("start")
@@ -352,7 +356,7 @@ def show_employees():
     
     # Ajouter des attributs pour l'affichage
     for e in employees:
-        e.avatar = '👤'
+        e.avatar = 'ðŸ'¤'
         e.role = e.position or 'Employé'
         e.status = 'active' if e.is_active else 'absent'
         
@@ -818,6 +822,33 @@ def create_assignment():
     except Exception as e:
         db.session.rollback()
         return jsonify({"success": False, "error": "Erreur lors de la création"}), 500
+
+@app.route("/api/assignments/<int:assignment_id>", methods=["PUT"])
+@login_required
+def update_assignment(assignment_id):
+    if not current_user.is_manager:
+        return jsonify({"success": False, "error": "Accès refusé"}), 403
+    
+    try:
+        assignment = Assignment.query.get_or_404(assignment_id)
+        
+        # Vérifier que le manager peut modifier cette assignation
+        if not assignment.employee.can_be_managed_by(current_user):
+            return jsonify({"success": False, "error": "Vous ne pouvez pas modifier cette assignation"}), 403
+        
+        data = request.get_json()
+        
+        if 'start' in data:
+            assignment.start = datetime.fromisoformat(data['start'].replace('Z', ''))
+        if 'end' in data:
+            assignment.end = datetime.fromisoformat(data['end'].replace('Z', ''))
+            
+        db.session.commit()
+        
+        return jsonify({"success": True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "error": "Erreur lors de la mise à jour"}), 500
 
 @app.route("/api/assignments/<int:assignment_id>", methods=["DELETE"])
 @login_required
