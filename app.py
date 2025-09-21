@@ -7,7 +7,7 @@ import os
 app = Flask(__name__)
 
 # Configuration pour Render avec PostgreSQL
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://maihlili_user:QTFCzRV63h8cdfLPdLOcyscZzwBYDhYY@dpg-d365v7nfte5s739fk2j0-a.oregon-postgres.render.com/maihlili_spv"
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("SQLALCHEMY_DATABASE_URI")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "maihlili_secret_key_2024_render")
 
@@ -963,4 +963,4 @@ if __name__ == "__main__":
     
     # Configuration pour production Render
     port = int(os.environ.get("PORT", 5000))
-    
+    app.run(host="0.0.0.0", port=port, debug=False)
