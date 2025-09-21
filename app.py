@@ -1,8 +1,11 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify, flash
+# -*- coding: utf-8 -*-
+from flask import Flask, render_template, request, redirect, url_for, jsonify, flash, make_response
 from models import db, User, Employee, Shift, Assignment, Team
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from datetime import datetime, timedelta
 import os
+import csv
+from io import StringIO
 
 app = Flask(__name__)
 
@@ -190,28 +193,42 @@ def index():
     manageable_ids = [emp.id for emp in manageable_employees]
     
     total_employees = len(manageable_employees)
-    total_shifts_today = Shift.query.count()
+    total_shifts_today = 0
     
     # Assignations de cette semaine pour les employés gérables
     week_start = datetime.now() - timedelta(days=datetime.now().weekday())
-    week_assignments = Assignment.query.filter(
-        Assignment.employee_id.in_(manageable_ids) if manageable_ids else Assignment.id == -1,
-        Assignment.start >= week_start
-    ).all()
+    
+    if manageable_ids:
+      week_assignments = Assignment.query.filter(
+          Assignment.employee_id.in_(manageable_ids),
+          Assignment.start >= week_start
+      ).all()
+      # Compter les shifts d'aujourd'hui
+      today = datetime.now().date()
+      total_shifts_today = len([a for a in week_assignments if a.start.date() == today])
+    else:
+      week_assignments = []
+    
     
     total_hours = sum([(a.end - a.start).total_seconds() / 3600 for a in week_assignments])
-    conflicts = 0
     
+    conflicts = 0
+    if manageable_ids:
+      all_assignments = Assignment.query.filter(Assignment.employee_id.in_(manageable_ids)).all()
+      for a in all_assignments:
+          if a.check_conflicts():
+              conflicts += 1
+
     # Ajouter les shifts pour le modal
     shifts = Shift.query.all()
     
-    return render_template("index.html", 
-                         total_employees=total_employees,
-                         total_shifts_today=len(week_assignments),
-                         total_hours=int(total_hours),
-                         conflicts=conflicts,
-                         manageable_employees=manageable_employees,
-                         shifts=shifts)
+    return render_template("index.html",
+                           total_employees=total_employees,
+                           total_shifts_today=total_shifts_today,
+                           total_hours=int(total_hours),
+                           conflicts=conflicts,
+                           manageable_employees=manageable_employees,
+                           shifts=shifts)
 
 # --- Dashboard Employé ---
 
@@ -247,14 +264,14 @@ def employee_dashboard():
         if assignment.start > now and (not next_shift or assignment.start < next_shift.start):
             next_shift = assignment
     
-    return render_template("employee_dashboard.html", 
-                         assignments=my_assignments,
-                         employee=employee,
-                         total_hours_week=int(total_hours_week),
-                         assignments_week=assignments_week,
-                         next_shift=next_shift)
+    return render_template("employee_dashboard.html",
+                           assignments=my_assignments,
+                           employee=employee,
+                           total_hours_week=int(total_hours_week),
+                           assignments_week=assignments_week,
+                           next_shift=next_shift)
 
-# --- API Événements --- CORRIGÉ
+# --- API Événements ---
 
 @app.get("/api/assignments/events")  # Route corrigée
 @login_required
@@ -304,7 +321,7 @@ def show_employees():
         try:
             # Créer l'employé
             emp = Employee(
-                full_name=name, 
+                full_name=name,
                 position=position,
                 team_id=int(team_id) if team_id else None
             )
@@ -354,10 +371,10 @@ def show_employees():
     # Afficher seulement les employés gérables
     employees = get_manageable_employees(current_user)
     
-    # Ajouter des attributs pour l'affichage
+    # Ajouter des attributs pour l'affichage - CORRECTION: remplacer emoji par texte
     for e in employees:
-        e.avatar = 'ðŸ'¤'
-        e.role = e.position or 'Employé'
+        e.avatar = 'USER'  # Remplacé l'emoji par du texte
+        e.role = e.position or 'Employe'
         e.status = 'active' if e.is_active else 'absent'
         
     # Équipes disponibles pour ce manager
@@ -366,6 +383,8 @@ def show_employees():
         teams = Team.query.all()
     elif current_user.employee:
         teams = Team.query.filter_by(manager_id=current_user.employee.id).all()
+    else:
+        teams = []
     
     return render_template("employees.html", employees=employees, teams=teams)
 
@@ -428,7 +447,7 @@ def create_employee_account():
         db.session.commit()
         
         return jsonify({
-            "success": True, 
+            "success": True,
             "message": "Compte créé avec succès",
             "username": username,
             "email": email
@@ -552,7 +571,7 @@ def show_shifts():
         
         try:
             shift = Shift(
-                name=name, 
+                name=name,
                 color=color,
                 start_time=start_time,
                 end_time=end_time
@@ -739,18 +758,24 @@ def assignments():
             if not employee or not employee.can_be_managed_by(current_user):
                 flash("Vous ne pouvez pas assigner cet employé", "error")
                 return redirect(url_for("assignments"))
+
+            start_dt = datetime.fromisoformat(f"{start_date}T{start_time}")
+            end_dt = datetime.fromisoformat(f"{end_date}T{end_time}")
             
-            start = datetime.strptime(f"{start_date} {start_time}", "%Y-%m-%d %H:%M")
-            end = datetime.strptime(f"{end_date} {end_time}", "%Y-%m-%d %H:%M")
-            
+            # Créer l'assignation
             assignment = Assignment(
                 employee_id=employee_id,
                 shift_id=shift_id,
-                start=start,
-                end=end,
+                start=start_dt,
+                end=end_dt,
                 notes=notes,
                 created_by=current_user.id
             )
+            
+            # Vérifier les conflits
+            if assignment.check_conflicts():
+                flash("Cet employé a déjà un service à cet horaire.", "error")
+                return redirect(url_for("assignments"))
             
             db.session.add(assignment)
             db.session.commit()
@@ -760,193 +785,118 @@ def assignments():
             
         except Exception as e:
             db.session.rollback()
-            flash("Erreur lors de la création de l'assignation", "error")
+            flash(f"Erreur lors de l'assignation: {e}", "error")
             return redirect(url_for("assignments"))
-    
-    # Afficher seulement les assignations des employés gérables
+            
+    # Afficher la page de gestion des assignations
     manageable_employees = get_manageable_employees(current_user)
     manageable_ids = [emp.id for emp in manageable_employees]
     
     if manageable_ids:
-        assignments = Assignment.query.filter(
-            Assignment.employee_id.in_(manageable_ids)
-        ).order_by(Assignment.start.desc()).all()
+        assignments = Assignment.query.filter(Assignment.employee_id.in_(manageable_ids)).order_by(Assignment.start.desc()).all()
     else:
         assignments = []
     
+    employees = get_manageable_employees(current_user)
     shifts = Shift.query.all()
     
-    return render_template("assignments.html", 
-                         assignments=assignments,
-                         employees=manageable_employees, 
-                         shifts=shifts)
+    return render_template("assignments.html", assignments=assignments, employees=employees, shifts=shifts)
 
 @app.route("/api/assignments", methods=["POST"])
 @login_required
-def create_assignment():
+def assignments_api_post():
     if not current_user.is_manager:
         return jsonify({"success": False, "error": "Accès refusé"}), 403
     
     try:
         employee_id = request.form.get("employee_id")
-        shift_id = request.form.get("shift_id") 
-        start_str = request.form.get("start")
-        end_str = request.form.get("end")
-        notes = request.form.get("notes", "")
+        shift_id = request.form.get("shift_id")
+        start = request.form.get("start")
+        end = request.form.get("end")
         
-        if not all([employee_id, shift_id, start_str, end_str]):
+        if not employee_id or not shift_id or not start or not end:
             return jsonify({"success": False, "error": "Données manquantes"}), 400
         
-        # Vérifier que le manager peut assigner cet employé
         employee = Employee.query.get(employee_id)
         if not employee or not employee.can_be_managed_by(current_user):
             return jsonify({"success": False, "error": "Vous ne pouvez pas assigner cet employé"}), 403
         
-        start = datetime.fromisoformat(start_str.replace('T', ' '))
-        end = datetime.fromisoformat(end_str.replace('T', ' '))
-        
         assignment = Assignment(
-            employee_id=int(employee_id),
-            shift_id=int(shift_id),
-            start=start,
-            end=end,
-            notes=notes,
+            employee_id=employee_id,
+            shift_id=shift_id,
+            start=datetime.fromisoformat(start),
+            end=datetime.fromisoformat(end),
             created_by=current_user.id
         )
         
+        if assignment.check_conflicts():
+            return jsonify({"success": False, "error": "Conflit d'horaire existant"}), 409
+        
         db.session.add(assignment)
         db.session.commit()
-        
         return jsonify({"success": True})
         
     except Exception as e:
         db.session.rollback()
-        return jsonify({"success": False, "error": "Erreur lors de la création"}), 500
+        return jsonify({"success": False, "error": f"Erreur interne: {e}"}), 500
 
 @app.route("/api/assignments/<int:assignment_id>", methods=["PUT"])
 @login_required
-def update_assignment(assignment_id):
+def assignments_api_put(assignment_id):
     if not current_user.is_manager:
         return jsonify({"success": False, "error": "Accès refusé"}), 403
     
+    assignment = Assignment.query.get_or_404(assignment_id)
+    
+    if not assignment.employee.can_be_managed_by(current_user):
+        return jsonify({"success": False, "error": "Vous ne pouvez pas modifier cette assignation"}), 403
+    
     try:
-        assignment = Assignment.query.get_or_404(assignment_id)
-        
-        # Vérifier que le manager peut modifier cette assignation
-        if not assignment.employee.can_be_managed_by(current_user):
-            return jsonify({"success": False, "error": "Vous ne pouvez pas modifier cette assignation"}), 403
-        
         data = request.get_json()
         
-        if 'start' in data:
-            assignment.start = datetime.fromisoformat(data['start'].replace('Z', ''))
-        if 'end' in data:
-            assignment.end = datetime.fromisoformat(data['end'].replace('Z', ''))
+        if "start" in data:
+            assignment.start = datetime.fromisoformat(data["start"].replace("Z", "+00:00"))
+        if "end" in data:
+            assignment.end = datetime.fromisoformat(data["end"].replace("Z", "+00:00"))
+        
+        if assignment.check_conflicts():
+            return jsonify({"success": False, "error": "Conflit d'horaire existant"}), 409
             
         db.session.commit()
-        
         return jsonify({"success": True})
+        
     except Exception as e:
         db.session.rollback()
-        return jsonify({"success": False, "error": "Erreur lors de la mise à jour"}), 500
+        return jsonify({"success": False, "error": f"Erreur interne: {e}"}), 500
 
 @app.route("/api/assignments/<int:assignment_id>", methods=["DELETE"])
 @login_required
 def delete_assignment(assignment_id):
     if not current_user.is_manager:
         return jsonify({"success": False, "error": "Accès refusé"}), 403
-    
+        
     try:
         assignment = Assignment.query.get_or_404(assignment_id)
         
-        # Vérifier que le manager peut supprimer cette assignation
         if not assignment.employee.can_be_managed_by(current_user):
             return jsonify({"success": False, "error": "Vous ne pouvez pas supprimer cette assignation"}), 403
-        
+            
         db.session.delete(assignment)
         db.session.commit()
         
         return jsonify({"success": True})
     except Exception as e:
         db.session.rollback()
-        return jsonify({"success": False, "error": "Erreur lors de la suppression"}), 500
+        return jsonify({"success": False, "error": f"Erreur interne: {e}"}), 500
 
-@app.route("/api/assignments/<int:assignment_id>/duplicate", methods=["POST"])
+# --- Export de données ---
+
+@app.route("/export/assignments.csv")
 @login_required
-def duplicate_assignment(assignment_id):
-    if not current_user.is_manager:
-        return jsonify({"success": False, "error": "Accès refusé"}), 403
+def export_assignments():
+    """Exporter les assignations au format CSV"""
     
-    try:
-        original = Assignment.query.get_or_404(assignment_id)
-        
-        # Vérifier les permissions
-        if not original.employee.can_be_managed_by(current_user):
-            return jsonify({"success": False, "error": "Vous ne pouvez pas dupliquer cette assignation"}), 403
-        
-        # Créer une nouvelle assignation basée sur l'originale
-        duplicate = Assignment(
-            employee_id=original.employee_id,
-            shift_id=original.shift_id,
-            start=original.start + timedelta(days=7),  # Décaler d'une semaine
-            end=original.end + timedelta(days=7),
-            notes=original.notes,
-            created_by=current_user.id
-        )
-        
-        db.session.add(duplicate)
-        db.session.commit()
-        
-        return jsonify({"success": True})
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"success": False, "error": "Erreur lors de la duplication"}), 500
-
-# --- Paramètres ---
-
-@app.route("/settings")
-@login_required
-def settings():
-    return render_template("settings.html")
-
-@app.route("/api/change-password", methods=["POST"])
-@login_required
-def change_password():
-    current_password = request.form["current_password"]
-    new_password = request.form["new_password"]
-    confirm_password = request.form["confirm_password"]
-    
-    # Vérifier le mot de passe actuel
-    if not current_user.check_password(current_password):
-        return jsonify({"success": False, "error": "Mot de passe actuel incorrect"}), 400
-    
-    # Vérifier que les nouveaux mots de passe correspondent
-    if new_password != confirm_password:
-        return jsonify({"success": False, "error": "Les mots de passe ne correspondent pas"}), 400
-    
-    try:
-        # Changer le mot de passe
-        current_user.set_password(new_password)
-        db.session.commit()
-        
-        return jsonify({"success": True, "message": "Mot de passe changé avec succès"})
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"success": False, "error": "Erreur lors du changement de mot de passe"}), 500
-
-# --- Export CSV ---
-
-@app.route("/export/week")
-@login_required
-def export_week():
-    if not current_user.is_manager:
-        flash("Accès refusé", "error")
-        return redirect(url_for("index"))
-        
-    import csv
-    from io import StringIO
-    
-    # Exporter seulement les assignations des employés gérables
+    # Récupérer les assignations des employés gérables
     manageable_employees = get_manageable_employees(current_user)
     manageable_ids = [emp.id for emp in manageable_employees]
     
@@ -962,18 +912,18 @@ def export_week():
     for a in assignments:
         duration = a.end - a.start
         writer.writerow([
-            a.employee.full_name, 
-            a.shift.name, 
-            a.start.strftime('%d/%m/%Y %H:%M'), 
+            a.employee.full_name,
+            a.shift.name,
+            a.start.strftime('%d/%m/%Y %H:%M'),
             a.end.strftime('%d/%m/%Y %H:%M'),
             f"{duration.total_seconds() / 3600:.1f}h"
         ])
     
     si.seek(0)
-    return si.getvalue(), 200, {
-        'Content-Type': 'text/csv', 
-        'Content-Disposition': 'attachment; filename="planning_maihlili_spv.csv"'
-    }
+    response = make_response(si.getvalue())
+    response.headers['Content-Type'] = 'text/csv'
+    response.headers['Content-Disposition'] = 'attachment; filename="planning_maihlili_spv.csv"'
+    return response
 
 # --- Gestion des erreurs ---
 
@@ -986,12 +936,8 @@ def internal_error(error):
     db.session.rollback()
     return render_template('errors/500.html'), 500
 
-# --- Lancement de l'application ---
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     with app.app_context():
-        db.create_all()
-    
-    # Configuration pour production Render
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=False)
+        # db.create_all()  # Décommentez pour la première exécution
+        pass
+    app.run(debug=True)
