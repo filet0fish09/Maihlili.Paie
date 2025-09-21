@@ -776,6 +776,24 @@ def assignments():
                          assignments=assignments,
                          employees=manageable_employees, 
                          shifts=shifts)
+@app.route("/")
+@login_required
+def index():
+    if not current_user.is_manager:
+        return redirect(url_for("employee_dashboard"))
+    
+    # ... votre code existant ...
+    
+    # Ajouter les shifts pour le modal
+    shifts = Shift.query.all()
+    
+    return render_template("index.html", 
+                         total_employees=total_employees,
+                         total_shifts_today=len(week_assignments),
+                         total_hours=int(total_hours),
+                         conflicts=conflicts,
+                         manageable_employees=manageable_employees,
+                         shifts=shifts)  # Ajouter cette ligne
 
 @app.route("/api/assignments", methods=["POST"])
 @login_required
