@@ -115,6 +115,129 @@
     [data-theme="dark"] aside .border-gray-200 { border-color: var(--color-border-dark-sidebar); }
 
     /* -------------------------------------------------------------------------------------------------- */
+    /* AMÉLIORATIONS MODE SOMBRE - LISIBILITÉ ACCRUE                                                      */
+    /* -------------------------------------------------------------------------------------------------- */
+    
+    /* Couleurs pour les textes en mode sombre */
+    [data-theme="dark"] main .text-gray-700 { color: #E5E7EB !important; }
+    [data-theme="dark"] main .text-gray-600 { color: #D1D5DB !important; }
+    [data-theme="dark"] main .text-gray-400 { color: #6B7280 !important; }
+    
+    /* Améliorations des bordures */
+    [data-theme="dark"] main .border-gray-300 { border-color: #6B7280 !important; }
+    
+    /* Dividers plus visibles */
+    [data-theme="dark"] main .divide-gray-200 > * + * { border-color: #4B5563 !important; }
+    
+    /* Tables plus lisibles */
+    [data-theme="dark"] main .bg-gray-50 { 
+        background-color: #374151 !important;
+        color: #F3F4F6 !important;
+    }
+    
+    [data-theme="dark"] main .hover\:bg-gray-50:hover { 
+        background-color: #4B5563 !important; 
+    }
+    
+    /* Cartes et conteneurs */
+    [data-theme="dark"] main .shadow-sm { 
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3) !important; 
+    }
+    
+    [data-theme="dark"] main .shadow-lg { 
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2) !important; 
+    }
+    
+    /* Inputs et selects plus lisibles */
+    [data-theme="dark"] main input, 
+    [data-theme="dark"] main select, 
+    [data-theme="dark"] main textarea {
+        background-color: #374151 !important;
+        border-color: #6B7280 !important;
+        color: #F3F4F6 !important;
+    }
+    
+    [data-theme="dark"] main input::placeholder,
+    [data-theme="dark"] main textarea::placeholder {
+        color: #9CA3AF !important;
+    }
+    
+    [data-theme="dark"] main input:focus,
+    [data-theme="dark"] main select:focus,
+    [data-theme="dark"] main textarea:focus {
+        border-color: #4F46E5 !important;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.3) !important;
+        background-color: #4B5563 !important;
+    }
+    
+    /* Modals en mode sombre */
+    [data-theme="dark"] .fixed.bg-black.bg-opacity-50 {
+        background-color: rgba(0, 0, 0, 0.8) !important;
+    }
+    
+    [data-theme="dark"] .fixed .bg-white {
+        background-color: #1F2937 !important;
+        border: 1px solid #374151 !important;
+    }
+    
+    /* Badges et statuts plus contrastés */
+    [data-theme="dark"] main .bg-green-100 {
+        background-color: #065F46 !important;
+        color: #A7F3D0 !important;
+    }
+    
+    [data-theme="dark"] main .bg-blue-100 {
+        background-color: #1E3A8A !important;
+        color: #BFDBFE !important;
+    }
+    
+    [data-theme="dark"] main .bg-purple-100 {
+        background-color: #581C87 !important;
+        color: #DDD6FE !important;
+    }
+    
+    [data-theme="dark"] main .bg-yellow-100 {
+        background-color: #92400E !important;
+        color: #FED7AA !important;
+    }
+    
+    [data-theme="dark"] main .bg-red-100 {
+        background-color: #7F1D1D !important;
+        color: #FECACA !important;
+    }
+    
+    /* Amélioration du contraste des couleurs de texte pour les badges */
+    [data-theme="dark"] main .text-green-800 { color: #A7F3D0 !important; }
+    [data-theme="dark"] main .text-blue-800 { color: #BFDBFE !important; }
+    [data-theme="dark"] main .text-purple-800 { color: #DDD6FE !important; }
+    [data-theme="dark"] main .text-yellow-800 { color: #FED7AA !important; }
+    [data-theme="dark"] main .text-red-800 { color: #FECACA !important; }
+    
+    /* Boutons hover améliorés */
+    [data-theme="dark"] main .hover\:bg-blue-50:hover { 
+        background-color: rgba(79, 70, 229, 0.2) !important; 
+    }
+    
+    [data-theme="dark"] main .hover\:bg-green-50:hover { 
+        background-color: rgba(34, 197, 94, 0.2) !important; 
+    }
+    
+    [data-theme="dark"] main .hover\:bg-red-50:hover { 
+        background-color: rgba(239, 68, 68, 0.2) !important; 
+    }
+    
+    [data-theme="dark"] main .hover\:bg-gray-200:hover { 
+        background-color: #6B7280 !important; 
+    }
+    
+    /* Stats cards plus lisibles */
+    [data-theme="dark"] main .text-blue-600 { color: #60A5FA !important; }
+    [data-theme="dark"] main .text-green-600 { color: #34D399 !important; }
+    [data-theme="dark"] main .text-purple-600 { color: #A78BFA !important; }
+    [data-theme="dark"] main .text-orange-600 { color: #FB923C !important; }
+    [data-theme="dark"] main .text-red-600 { color: #F87171 !important; }
+
+    /* -------------------------------------------------------------------------------------------------- */
     /* Logos                                                                                              */
     /* -------------------------------------------------------------------------------------------------- */
     .logo-dark { display: none; }
@@ -125,14 +248,25 @@
     /* -------------------------------------------------------------------------------------------------- */
     /* Animations & Scrollbar                                                                             */
     /* -------------------------------------------------------------------------------------------------- */
-    * { transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease; }
+    * { transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, transform 0.2s ease !important; }
+    
     ::-webkit-scrollbar { width: 8px; }
     ::-webkit-scrollbar-track { background: rgba(79, 70, 229, 0.1); border-radius: 10px; }
     ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #4F46E5 0%, #4338CA 100%); border-radius: 10px; }
     ::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #4338CA 0%, #3730A3 100%); }
-    [data-theme="dark"] ::-webkit-scrollbar-track { background: #374151; }
-    [data-theme="dark"] ::-webkit-scrollbar-thumb { background: #6b7280; }
-    [data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+    
+    /* Scrollbars pour le mode sombre */
+    [data-theme="dark"] ::-webkit-scrollbar-track { 
+        background: #1F2937 !important; 
+    }
+    
+    [data-theme="dark"] ::-webkit-scrollbar-thumb { 
+        background: linear-gradient(180deg, #4F46E5 0%, #7C3AED 100%) !important; 
+    }
+    
+    [data-theme="dark"] ::-webkit-scrollbar-thumb:hover { 
+        background: linear-gradient(180deg, #4338CA 0%, #6D28D9 100%) !important; 
+    }
     
     /* Style du bouton de thème */
     .theme-toggle {
@@ -153,11 +287,46 @@
       font-size: 1.5rem;
     }
 
+    /* Toggle theme button amélioré */
     [data-theme="dark"] .theme-toggle {
-      background: #374151;
-      border-color: #4b5563;
-      color: #E0E7FF;
-      box-shadow: 0 8px 32px rgba(30, 27, 75, 0.5);
+        background: linear-gradient(135deg, #4F46E5, #7C3AED) !important;
+        border: none !important;
+        box-shadow: 0 8px 32px rgba(79, 70, 229, 0.4) !important;
+        color: #E0E7FF;
+    }
+    
+    [data-theme="dark"] .theme-toggle:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 12px 40px rgba(79, 70, 229, 0.5) !important;
+    }
+
+    /* Sidebar améliorée */
+    [data-theme="dark"] aside {
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3) !important;
+    }
+    
+    [data-theme="dark"] aside .nav-link {
+        color: #E0E7FF !important;
+        transition: all 0.2s ease !important;
+    }
+    
+    [data-theme="dark"] aside .nav-link:hover {
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        color: #FFFFFF !important;
+        transform: translateX(4px) !important;
+    }
+    
+    /* User profile dans la sidebar */
+    [data-theme="dark"] aside .user-profile {
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    }
+    
+    /* Flash messages améliorés */
+    [data-theme="dark"] .bg-gradient-to-r.from-maihlili-100.to-maihlili-50 {
+        background: linear-gradient(to right, rgba(79, 70, 229, 0.2), rgba(99, 102, 241, 0.1)) !important;
+        border-color: rgba(79, 70, 229, 0.3) !important;
+        color: #E0E7FF !important;
     }
 
     /* Couleurs du menu en mode sombre */
@@ -214,7 +383,7 @@
       {% else %}
         <a href="{{ url_for('login') }}" 
            class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-maihlili-50 hover:text-maihlili-700 text-maihlili-600 font-medium">
-          <span class="text-lg">🔐</span> Connexion
+          <span class="text-lg">🔑</span> Connexion
         </a>
         <a href="{{ url_for('register') }}" 
            class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-green-50 hover:text-green-700 text-green-600 font-medium">
