@@ -363,12 +363,13 @@ class Assignment(db.Model):
             # Vérifier les chevauchements
             db.or_(
                 db.and_(Assignment.start <= self.start, Assignment.end > self.start),
-                db.and__(Assignment.start < self.end, Assignment.end >= self.end),
-                db.and__(Assignment.start >= self.start, Assignment.end <= self.end)
+                db.and_(Assignment.start < self.end, Assignment.end >= self.end),
+                db.and_(Assignment.start >= self.start, Assignment.end <= self.end)
             )
         ).all()
         
         return conflicts
 
     def __repr__(self):
+
         return f'<Assignment {self.employee.full_name} - {self.shift.name} ({self.start.strftime("%d/%m/%Y %H:%M")})>'
