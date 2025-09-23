@@ -370,127 +370,7 @@ def show_employees():
     
     return render_template("employees.html", employees=employees, teams=teams)
 
-# --- API Gestion des comptes ---
-
-@app.route("/api/employees/create-account", methods=["POST"])
-@login_required
-def create_employee_account():
-    """Créer un compte utilisateur pour un employé existant"""
-    if not current_user.is_manager:
-        return jsonify({"success": False, "error": "Accès refusé"}), 403
-    
-    try:
-        employee_id = request.form.get("employee_id")
-        email = request.form.get("email")
-        
-        if not employee_id or not email:
-            return jsonify({"success": False, "error": "Données manquantes"}), 400
-        
-        employee = Employee.query.get(employee_id)
-        if not employee:
-            return jsonify({"success": False, "error": "Employé non trouvé"}), 404
-        
-        # Vérifier les permissions
-        if not employee.can_be_managed_by(current_user):
-            return jsonify({"success": False, "error": "Vous ne pouvez pas créer de compte pour cet employé"}), 403
-        
-        # Vérifier si l'employé a déjà un compte
-        if employee.user:
-            return jsonify({"success": False, "error": "Cet employé a déjà un compte utilisateur"}), 400
-        
-        # Vérifier si l'email existe déjà
-        if User.query.filter_by(email=email).first():
-            return jsonify({"success": False, "error": "Un compte avec cet email existe déjà"}), 400
-        
-        # Créer le nom d'utilisateur basé sur le nom
-        username = employee.full_name.lower().replace(' ', '.').replace('é', 'e').replace('è', 'e').replace('à', 'a')
-        counter = 1
-        original_username = username
-        
-        # S'assurer que le nom d'utilisateur est unique
-        while User.query.filter_by(username=username).first():
-            username = f"{original_username}{counter}"
-            counter += 1
-        
-        # Créer le compte utilisateur
-        user = User(
-            username=username,
-            email=email,
-            is_manager=False,
-            is_admin=False
-        )
-        user.set_password("maihlili123")  # Mot de passe par défaut
-        
-        db.session.add(user)
-        db.session.flush()  # Pour obtenir l'ID
-        
-        # Associer l'employé au compte
-        employee.user_id = user.id
-        db.session.commit()
-        
-        return jsonify({
-            "success": True, 
-            "message": "Compte créé avec succès",
-            "username": username,
-            "email": email
-        })
-        
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"success": False, "error": "Erreur lors de la création du compte"}), 500
-
-@app.route("/api/employees/<int:employee_id>/reset-password", methods=["POST"])
-@login_required
-def reset_employee_password(employee_id):
-    """Réinitialiser le mot de passe d'un employé"""
-    if not current_user.is_manager:
-        return jsonify({"success": False, "error": "Accès refusé"}), 403
-    
-    try:
-        employee = Employee.query.get_or_404(employee_id)
-        
-        # Vérifier les permissions
-        if not employee.can_be_managed_by(current_user):
-            return jsonify({"success": False, "error": "Vous ne pouvez pas modifier cet employé"}), 403
-        
-        # Vérifier que l'employé a un compte
-        if not employee.user:
-            return jsonify({"success": False, "error": "Cet employé n'a pas de compte utilisateur"}), 400
-        
-        # Réinitialiser le mot de passe
-        employee.user.set_password("maihlili123")
-        db.session.commit()
-        
-        return jsonify({"success": True, "message": "Mot de passe réinitialisé"})
-        
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"success": False, "error": "Erreur lors de la réinitialisation"}), 500
-
-@app.route("/api/users/<int:user_id>/toggle", methods=["POST"])
-@login_required
-def toggle_user_account(user_id):
-    """Activer/désactiver un compte utilisateur"""
-    if not current_user.is_manager:
-        return jsonify({"success": False, "error": "Accès refusé"}), 403
-    
-    try:
-        user = User.query.get_or_404(user_id)
-        employee = user.employee
-        
-        if not employee or not employee.can_be_managed_by(current_user):
-            return jsonify({"success": False, "error": "Vous ne pouvez pas modifier ce compte"}), 403
-        
-        # Basculer le statut actif de l'employé
-        employee.is_active = not employee.is_active
-        db.session.commit()
-        
-        status = "activé" if employee.is_active else "désactivé"
-        return jsonify({"success": True, "message": f"Compte {status}"})
-        
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"success": False, "error": "Erreur lors de la modification"}), 500
+# --- API Employés ---
 
 @app.route("/api/employees/<int:employee_id>", methods=["PUT"])
 @login_required
@@ -591,6 +471,26 @@ def delete_shift(shift_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"success": False, "error": "Erreur lors de la suppression"}), 500
+
+@app.route("/api/shifts/<int:shift_id>", methods=["PUT"])
+@login_required
+def update_shift(shift_id):
+    if not current_user.is_manager:
+        return jsonify({"success": False, "error": "Accès refusé"}), 403
+    
+    try:
+        shift = Shift.query.get_or_404(shift_id)
+        
+        shift.name = request.form.get("name", shift.name)
+        shift.color = request.form.get("color", shift.color)
+        shift.start_time = request.form.get("start_time", shift.start_time)
+        shift.end_time = request.form.get("end_time", shift.end_time)
+        
+        db.session.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "error": "Erreur lors de la modification"}), 500
 
 # --- Gestion des Équipes ---
 
@@ -777,10 +677,29 @@ def assignments():
     
     shifts = Shift.query.all()
     
+    # Calculer les statistiques pour le template
+    assignments_today = 0
+    assignments_week = 0
+    conflicts = 0
+    
+    now = datetime.now()
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    today_end = today_start + timedelta(days=1)
+    week_start = now - timedelta(days=now.weekday())
+    
+    for assignment in assignments:
+        if today_start <= assignment.start < today_end:
+            assignments_today += 1
+        if assignment.start >= week_start:
+            assignments_week += 1
+    
     return render_template("assignments.html", 
                          assignments=assignments,
                          employees=manageable_employees, 
-                         shifts=shifts)
+                         shifts=shifts,
+                         assignments_today=assignments_today,
+                         assignments_week=assignments_week,
+                         conflicts=conflicts)
 
 @app.route("/api/assignments", methods=["POST"])
 @login_required
@@ -903,7 +822,7 @@ def duplicate_assignment(assignment_id):
         db.session.rollback()
         return jsonify({"success": False, "error": "Erreur lors de la duplication"}), 500
 
-# --- ROUTE SETTINGS MANQUANTE ---
+# --- Paramètres ---
 
 @app.route("/settings", methods=["GET", "POST"])
 @login_required
@@ -968,31 +887,6 @@ def settings():
     
     return render_template("settings.html")
 
-@app.route("/api/change-password", methods=["POST"])
-@login_required
-def change_password():
-    current_password = request.form["current_password"]
-    new_password = request.form["new_password"]
-    confirm_password = request.form["confirm_password"]
-    
-    # Vérifier le mot de passe actuel
-    if not current_user.check_password(current_password):
-        return jsonify({"success": False, "error": "Mot de passe actuel incorrect"}), 400
-    
-    # Vérifier que les nouveaux mots de passe correspondent
-    if new_password != confirm_password:
-        return jsonify({"success": False, "error": "Les mots de passe ne correspondent pas"}), 400
-    
-    try:
-        # Changer le mot de passe
-        current_user.set_password(new_password)
-        db.session.commit()
-        
-        return jsonify({"success": True, "message": "Mot de passe changé avec succès"})
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"success": False, "error": "Erreur lors du changement de mot de passe"}), 500
-
 # --- Export CSV ---
 
 @app.route("/export/week")
@@ -1034,7 +928,7 @@ def export_week():
         'Content-Disposition': 'attachment; filename="planning_maihlili_spv.csv"'
     }
 
-# --- Gestion des erreurs --- CORRECTION : RETIRER LES REFERENCES AUX TEMPLATES
+# --- Gestion des erreurs ---
 
 @app.errorhandler(404)
 def not_found_error(error):
@@ -1062,28 +956,6 @@ def internal_error(error):
         </body>
     </html>
     """, 500
-
-# --- API SHIFTS manquante ---
-
-@app.route("/api/shifts/<int:shift_id>", methods=["PUT"])
-@login_required
-def update_shift(shift_id):
-    if not current_user.is_manager:
-        return jsonify({"success": False, "error": "Accès refusé"}), 403
-    
-    try:
-        shift = Shift.query.get_or_404(shift_id)
-        
-        shift.name = request.form.get("name", shift.name)
-        shift.color = request.form.get("color", shift.color)
-        shift.start_time = request.form.get("start_time", shift.start_time)
-        shift.end_time = request.form.get("end_time", shift.end_time)
-        
-        db.session.commit()
-        return jsonify({"success": True})
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"success": False, "error": "Erreur lors de la modification"}), 500
 
 # --- Lancement de l'application ---
 
