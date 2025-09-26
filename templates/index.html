@@ -1,5 +1,6 @@
-{% extends "base.html" %}
+{% extends “base.html” %}
 {% block content %}
+
 <div class="space-y-6">
   {% if current_user.is_manager %}
   <div class="flex justify-between items-center">
@@ -54,9 +55,13 @@
     </div>
   </div>
 
-  <div id='calendar-container' class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 h-screen">
-    <div id='calendar'></div>
+  <div id='calendar-container' class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+    <div id='calendar' style="min-height: 600px;"></div>
   </div>
+
+  <!-- Modal ajout rapide -->
+
+{% if current_user.is_manager %}
 
   <div id="quickAddModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
     <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
@@ -66,31 +71,37 @@
           <form id="quickAddForm" method="POST">
             <div class="mb-4">
               <label for="employee_id" class="block text-sm font-medium text-gray-700 text-left">Employé</label>
-              <select name="employee_id" id="employee_id" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+              <select name="employee_id" id="employee_id" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 p-2 border">
                 <option value="">Sélectionner un employé</option>
+                {% for emp in manageable_employees %}
+                <option value="{{ emp.id }}">{{ emp.full_name }} - {{ emp.position or "Employé" }}</option>
+                {% endfor %}
               </select>
             </div>
             <div class="mb-4">
               <label for="shift_id" class="block text-sm font-medium text-gray-700 text-left">Service</label>
-              <select name="shift_id" id="shift_id" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+              <select name="shift_id" id="shift_id" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 p-2 border">
                 <option value="">Sélectionner un service</option>
+                {% for shift in shifts %}
+                <option value="{{ shift.id }}" data-color="{{ shift.color }}">{{ shift.name }}</option>
+                {% endfor %}
               </select>
             </div>
             <div class="mb-4">
               <label for="start_date" class="block text-sm font-medium text-gray-700 text-left">Date de début</label>
-              <input type="date" name="start_date" id="start_date" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+              <input type="date" name="start_date" id="start_date" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 p-2 border">
             </div>
             <div class="mb-4">
               <label for="start_time" class="block text-sm font-medium text-gray-700 text-left">Heure de début</label>
-              <input type="time" name="start_time" id="start_time" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+              <input type="time" name="start_time" id="start_time" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 p-2 border">
             </div>
             <div class="mb-4">
               <label for="end_date" class="block text-sm font-medium text-gray-700 text-left">Date de fin</label>
-              <input type="date" name="end_date" id="end_date" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+              <input type="date" name="end_date" id="end_date" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 p-2 border">
             </div>
             <div class="mb-4">
               <label for="end_time" class="block text-sm font-medium text-gray-700 text-left">Heure de fin</label>
-              <input type="time" name="end_time" id="end_time" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+              <input type="time" name="end_time" id="end_time" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 p-2 border">
             </div>
             <div class="items-center px-4 py-3">
               <button id="closeQuickAddModal" type="button" class="px-4 py-2 bg-gray-300 text-black text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300">
@@ -105,60 +116,68 @@
       </div>
     </div>
   </div>
+  {% endif %}
 
 </div>
-{% endblock %}
 
-{% block scripts %}
 <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Fonctions pour gérer le modal d'ajout rapide
-        const quickAddModal = document.getElementById('quickAddModal');
-        function showQuickAddModal() {
-            quickAddModal.classList.remove('hidden');
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded');
+    
+    // Variables globales
+    let calendar;
+
+    // Fonctions pour le modal
+    function showQuickAddModal() {
+        const modal = document.getElementById('quickAddModal');
+        if (modal) {
+            modal.classList.remove('hidden');
         }
-        function hideQuickAddModal() {
-            quickAddModal.classList.add('hidden');
-            document.getElementById('quickAddForm').reset();
+    }
+
+    function hideQuickAddModal() {
+        const modal = document.getElementById('quickAddModal');
+        if (modal) {
+            modal.classList.add('hidden');
+            const form = document.getElementById('quickAddForm');
+            if (form) form.reset();
         }
-        document.getElementById('closeQuickAddModal').addEventListener('click', hideQuickAddModal);
-        window.onclick = function(event) {
-            if (event.target == quickAddModal) {
+    }
+
+    // Event listeners pour le modal
+    const closeBtn = document.getElementById('closeQuickAddModal');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', hideQuickAddModal);
+    }
+
+    const modal = document.getElementById('quickAddModal');
+    if (modal) {
+        modal.addEventListener('click', function(event) {
+            if (event.target === modal) {
                 hideQuickAddModal();
             }
-        }
+        });
+    }
 
-        // --- CORRECTION : Fonction pour récupérer les événements ---
-        async function getCalendarEvents() {
-            const response = await fetch('/api/assignments/events');  // Route corrigée
-            const events = await response.json();
-            return events;
-        }
+    // Auto-compléter la date de fin
+    const startDateInput = document.getElementById('start_date');
+    const endDateInput = document.getElementById('end_date');
+    if (startDateInput && endDateInput) {
+        startDateInput.addEventListener('change', function() {
+            if (!endDateInput.value) {
+                endDateInput.value = this.value;
+            }
+        });
+    }
 
-        // Charger les employés et services
-        async function loadEmployeesAndShifts() {
-            const employeeSelect = document.querySelector('select[name="employee_id"]');
-            const shiftSelect = document.querySelector('select[name="shift_id"]');
-            
-            // Remplir les employés
-            employeeSelect.innerHTML = '<option value="">Sélectionner un employé</option>';
-            {% for emp in manageable_employees %}
-            employeeSelect.innerHTML += '<option value="{{ emp.id }}">{{ emp.full_name }} - {{ emp.position or "Employé" }}</option>';
-            {% endfor %}
-            
-            // Remplir les services
-            shiftSelect.innerHTML = '<option value="">Sélectionner un service</option>';
-            {% for shift in shifts %}
-            shiftSelect.innerHTML += '<option value="{{ shift.id }}" data-color="{{ shift.color }}">{{ shift.name }}</option>';
-            {% endfor %}
-        }
-        
-        loadEmployeesAndShifts();
-
-        // Gestion du formulaire d'ajout rapide
-        document.getElementById('quickAddForm').addEventListener('submit', function(e) {
+    // Gestion du formulaire d'ajout rapide
+    const quickForm = document.getElementById('quickAddForm');
+    if (quickForm) {
+        quickForm.addEventListener('submit', function(e) {
             e.preventDefault();
+            console.log('Form submitted');
             
             const formData = new FormData(this);
             const startDate = formData.get('start_date');
@@ -176,284 +195,274 @@
             })
             .then(response => response.json())
             .then(data => {
+                console.log('Response:', data);
                 if (data.success) {
                     hideQuickAddModal();
-                    calendar.refetchEvents();
+                    if (calendar) {
+                        calendar.refetchEvents();
+                    } else {
+                        location.reload();
+                    }
                 } else {
-                    alert('Erreur: ' + data.error);
+                    alert('Erreur: ' + (data.error || 'Erreur inconnue'));
                 }
             })
             .catch(error => {
-                console.error('Erreur:', error);
-                alert('Erreur de connexion');
+                console.error('Error:', error);
+                alert('Erreur de connexion: ' + error.message);
             });
         });
+    }
 
-        // Auto-compléter la date de fin
-        document.querySelector('input[name="start_date"]').addEventListener('change', function() {
-            const endDateInput = document.querySelector('input[name="end_date"]');
-            endDateInput.value = this.value;
-        });
-
-        // --- CORRECTION : Configuration FullCalendar avec semaine commençant le lundi ---
-        var calendarEl = document.getElementById('calendar');
-        var calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'dayGridMonth',
-            locale: 'fr',
-            firstDay: 1, // AJOUTÉ : Commencer la semaine le lundi (0=dimanche, 1=lundi)
-            headerToolbar: {
-                left: 'prev,next today',
-                center: 'title',
-                right: 'dayGridMonth,timeGridWeek,timeGridDay'
-            },
-            buttonText: {
-                today: 'Aujourd\'hui',
-                month: 'Mois',
-                week: 'Semaine',
-                day: 'Jour'
-            },
-            navLinks: true,
-            dayMaxEvents: true,
-            editable: true,
-            eventStartEditable: true,
-            eventDurationEditable: true,
-            // --- AMÉLIORATION : Meilleure lisibilité des événements ---
-            eventDisplay: 'block',
-            eventTextColor: '#ffffff',
-            eventBorderWidth: 2,
-            eventClassNames: function(arg) {
-                return ['calendar-event-improved'];
-            },
-            eventContent: function(arg) {
-                // Améliorer l'affichage des événements
-                return {
-                    html: `
-                        <div class="event-content-improved">
-                            <div class="font-semibold text-xs truncate">${arg.event.extendedProps.shift_name}</div>
-                            <div class="text-xs opacity-90 truncate">${arg.event.extendedProps.employee_name}</div>
-                            <div class="text-xs opacity-75">${arg.event.extendedProps.duration}</div>
-                        </div>
-                    `
-                };
-            },
-            eventDrop: function(info) {
-                updateAssignment(info.event);
-            },
-            eventResize: function(info) {
-                updateAssignment(info.event);
-            },
-            eventClick: function(info) {
-                showAssignmentDetails(info.event);
-            },
-            events: getCalendarEvents, // Fonction corrigée
+    // Fonction pour récupérer les événements
+    function fetchCalendarEvents(fetchInfo, successCallback, failureCallback) {
+        console.log('Fetching events...');
+        
+        const params = new URLSearchParams({
+            start: fetchInfo.startStr,
+            end: fetchInfo.endStr
         });
         
-        // --- AJOUT : Styles CSS pour améliorer la lisibilité ---
-        const style = document.createElement('style');
-        style.textContent = `
-            /* Amélioration de la lisibilité du calendrier */
-            .fc-event {
-                border-radius: 6px !important;
-                padding: 2px 4px !important;
-                margin: 1px 0 !important;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
-                border-width: 0 !important;
+        fetch(`/api/assignments/events?${params}`)
+        .then(response => {
+            console.log('API Response status:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
+            return response.json();
+        })
+        .then(events => {
+            console.log('Events received:', events);
+            successCallback(events);
+        })
+        .catch(error => {
+            console.error('Error fetching events:', error);
+            failureCallback(error);
             
-            .event-content-improved {
-                line-height: 1.2;
-                padding: 1px;
+            // Afficher un message d'erreur dans le calendrier
+            const calendarEl = document.getElementById('calendar');
+            if (calendarEl) {
+                calendarEl.innerHTML = `
+                    <div class="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                        <h4 class="font-bold">Erreur de chargement</h4>
+                        <p>Impossible de charger les événements: ${error.message}</p>
+                        <button onclick="location.reload()" class="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
+                            Réessayer
+                        </button>
+                    </div>
+                `;
             }
-            
-            .fc-daygrid-event {
-                white-space: normal !important;
-                font-size: 11px !important;
-            }
-            
-            .fc-event-title {
-                font-weight: 600 !important;
-            }
-            
-            /* Améliorer la lisibilité du header */
-            .fc-toolbar-title {
-                font-size: 1.5em !important;
-                font-weight: 700 !important;
-                color: #374151 !important;
-            }
-            
-            .fc-button {
-                background: #4F46E5 !important;
-                border-color: #4F46E5 !important;
-                font-weight: 500 !important;
-            }
-            
-            .fc-button:hover {
-                background: #4338CA !important;
-                border-color: #4338CA !important;
-            }
-            
-            .fc-button-primary:disabled {
-                background: #9CA3AF !important;
-                border-color: #9CA3AF !important;
-            }
-            
-            /* Améliorer la lisibilité des jours */
-            .fc-col-header-cell {
-                font-weight: 600 !important;
-                background: #F9FAFB !important;
-                color: #374151 !important;
-                text-transform: uppercase !important;
-                font-size: 12px !important;
-                letter-spacing: 0.5px !important;
-            }
-            
-            .fc-daygrid-day-number {
-                font-weight: 600 !important;
-                color: #374151 !important;
-            }
-            
-            .fc-day-today {
-                background: #EEF2FF !important;
-            }
-            
-            .fc-day-today .fc-daygrid-day-number {
-                background: #4F46E5 !important;
-                color: white !important;
-                border-radius: 50% !important;
-                width: 24px !important;
-                height: 24px !important;
-                display: flex !important;
-                align-items: center !important;
-                justify-content: center !important;
-                margin: 2px !important;
-            }
-            
-            /* Mode sombre pour le calendrier */
-            [data-theme="dark"] .fc {
-                --fc-border-color: #374151;
-                --fc-button-bg-color: #4F46E5;
-                --fc-button-hover-bg-color: #4338CA;
-                --fc-today-bg-color: #1E293B;
-                background: #1F2937;
-                color: #F9FAFB;
-            }
-            
-            [data-theme="dark"] .fc-toolbar-title {
-                color: #F9FAFB !important;
-            }
-            
-            [data-theme="dark"] .fc-col-header-cell {
-                background: #374151 !important;
-                color: #E5E7EB !important;
-            }
-            
-            [data-theme="dark"] .fc-daygrid-day-number {
-                color: #E5E7EB !important;
-            }
-            
-            [data-theme="dark"] .fc-day-today {
-                background: #1E3A8A !important;
-            }
-        `;
-        document.head.appendChild(style);
-        
-        calendar.render();
+        });
+    }
 
-        // Fonction pour mettre à jour une assignation
-        function updateAssignment(event) {
-            const eventData = {
-                start: event.start.toISOString(),
-                end: event.end ? event.end.toISOString() : null
-            };
-            fetch(`/api/assignments/${event.id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(eventData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (!data.success) {
-                    alert('Erreur lors de la mise à jour : ' + data.error);
-                    event.revert();
-                } else {
-                    calendar.refetchEvents();
-                }
-            })
-            .catch(error => {
-                console.error('Erreur:', error);
-                alert('Erreur de connexion');
-                event.revert();
-            });
+    // Initialiser le calendrier
+    function initCalendar() {
+        const calendarEl = document.getElementById('calendar');
+        
+        if (!calendarEl) {
+            console.error('Calendar element not found');
+            return;
         }
 
-        // Fonction pour afficher les détails d'une assignation (modal amélioré)
-        function showAssignmentDetails(event) {
-            const startDate = new Date(event.start);
-            const endDate = new Date(event.end);
-            
-            const detailsHtml = `
-                <div class="bg-white rounded-xl p-6 max-w-md mx-auto shadow-2xl">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-bold text-gray-800">Détails de l'assignation</h3>
-                        <button onclick="this.closest('.fixed').remove()" class="text-gray-500 hover:text-gray-700">✖️</button>
-                    </div>
+        console.log('Initializing calendar...');
+
+        try {
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'fr',
+                firstDay: 1, // Commencer par lundi
+                
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                
+                buttonText: {
+                    today: 'Aujourd\'hui',
+                    month: 'Mois',
+                    week: 'Semaine',
+                    day: 'Jour'
+                },
+                
+                height: 'auto',
+                navLinks: true,
+                dayMaxEvents: true,
+                editable: {% if current_user.is_manager %}true{% else %}false{% endif %},
+                eventStartEditable: {% if current_user.is_manager %}true{% else %}false{% endif %},
+                eventDurationEditable: {% if current_user.is_manager %}true{% else %}false{% endif %},
+                
+                events: fetchCalendarEvents,
+                
+                eventClick: function(info) {
+                    const event = info.event;
+                    const startTime = event.start ? event.start.toLocaleString('fr-FR') : 'N/A';
+                    const endTime = event.end ? event.end.toLocaleString('fr-FR') : 'N/A';
                     
-                    <div class="space-y-3 text-sm">
-                        <div class="flex justify-between">
-                            <span class="font-medium text-gray-600">Service:</span>
-                            <span class="font-semibold" style="color: ${event.color};">${event.extendedProps.shift_name}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="font-medium text-gray-600">Employé:</span>
-                            <span class="font-semibold text-gray-800">${event.extendedProps.employee_name}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="font-medium text-gray-600">Début:</span>
-                            <span class="text-gray-800">${startDate.toLocaleString('fr-FR')}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="font-medium text-gray-600">Fin:</span>
-                            <span class="text-gray-800">${endDate.toLocaleString('fr-FR')}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="font-medium text-gray-600">Durée:</span>
-                            <span class="font-semibold text-blue-600">${event.extendedProps.duration}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="font-medium text-gray-600">Statut:</span>
-                            <span class="text-gray-800">${event.extendedProps.status_display}</span>
-                        </div>
-                        ${event.extendedProps.notes ? `
-                        <div class="pt-2 border-t">
-                            <span class="font-medium text-gray-600">Notes:</span>
-                            <p class="text-gray-700 mt-1">${event.extendedProps.notes}</p>
-                        </div>
-                        ` : ''}
-                        <div class="pt-2 border-t text-xs text-gray-500">
-                            Créé par: ${event.extendedProps.created_by}
-                        </div>
-                    </div>
+                    let details = `Service: ${event.extendedProps.shift_name || 'N/A'}\n`;
+                    details += `Employé: ${event.extendedProps.employee_name || 'N/A'}\n`;
+                    details += `Début: ${startTime}\n`;
+                    details += `Fin: ${endTime}\n`;
+                    details += `Durée: ${event.extendedProps.duration || 'N/A'}\n`;
+                    details += `Statut: ${event.extendedProps.status_display || 'N/A'}`;
+                    
+                    if (event.extendedProps.notes) {
+                        details += `\n\nNotes: ${event.extendedProps.notes}`;
+                    }
+                    
+                    alert(details);
+                },
+                
+                {% if current_user.is_manager %}
+                eventDrop: function(info) {
+                    updateAssignment(info.event);
+                },
+                
+                eventResize: function(info) {
+                    updateAssignment(info.event);
+                },
+                {% endif %}
+                
+                loading: function(bool) {
+                    if (bool) {
+                        console.log('Calendar loading...');
+                    } else {
+                        console.log('Calendar loaded');
+                    }
+                }
+            });
+
+            calendar.render();
+            console.log('Calendar rendered successfully');
+
+        } catch (error) {
+            console.error('Calendar initialization error:', error);
+            calendarEl.innerHTML = `
+                <div class="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                    <h4 class="font-bold">Erreur d'initialisation</h4>
+                    <p>Le calendrier n'a pas pu être initialisé: ${error.message}</p>
+                    <button onclick="location.reload()" class="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
+                        Recharger la page
+                    </button>
                 </div>
             `;
-            
-            // Créer le modal
-            const modal = document.createElement('div');
-            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
-            modal.innerHTML = detailsHtml;
-            document.body.appendChild(modal);
-            
-            // Fermer en cliquant à l'extérieur
-            modal.addEventListener('click', function(e) {
-                if (e.target === modal) {
-                    modal.remove();
-                }
-            });
         }
+    }
+
+    {% if current_user.is_manager %}
+    // Fonction pour mettre à jour une assignation
+    function updateAssignment(event) {
+        const eventData = {
+            start: event.start.toISOString(),
+            end: event.end ? event.end.toISOString() : null
+        };
         
-        // Exposer les fonctions globalement
-        window.showQuickAddModal = showQuickAddModal;
-    });
+        fetch(`/api/assignments/${event.id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(eventData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                alert('Erreur lors de la mise à jour: ' + (data.error || 'Erreur inconnue'));
+                event.revert();
+            } else {
+                console.log('Assignment updated successfully');
+            }
+        })
+        .catch(error => {
+            console.error('Update error:', error);
+            alert('Erreur de connexion lors de la mise à jour');
+            event.revert();
+        });
+    }
+    {% endif %}
+
+    // Démarrer l'initialisation
+    initCalendar();
+
+    // Exposer les fonctions globalement
+    window.showQuickAddModal = showQuickAddModal;
+});
 </script>
+
+<style>
+/* Amélioration du calendrier */
+.fc-event {
+    border-radius: 6px !important;
+    padding: 2px 4px !important;
+    margin: 1px 0 !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
+}
+
+.fc-toolbar-title {
+    font-size: 1.5em !important;
+    font-weight: 700 !important;
+    color: #374151 !important;
+}
+
+.fc-button {
+    background: #4F46E5 !important;
+    border-color: #4F46E5 !important;
+    font-weight: 500 !important;
+}
+
+.fc-button:hover {
+    background: #4338CA !important;
+    border-color: #4338CA !important;
+}
+
+.fc-col-header-cell {
+    font-weight: 600 !important;
+    background: #F9FAFB !important;
+    color: #374151 !important;
+    text-transform: uppercase !important;
+    font-size: 12px !important;
+    letter-spacing: 0.5px !important;
+}
+
+.fc-day-today {
+    background: #EEF2FF !important;
+}
+
+/* Mode sombre pour le calendrier */
+[data-theme="dark"] .fc {
+    background: #1F2937 !important;
+    color: #F9FAFB !important;
+}
+
+[data-theme="dark"] .fc-toolbar-title {
+    color: #F9FAFB !important;
+}
+
+[data-theme="dark"] .fc-col-header-cell {
+    background: #374151 !important;
+    color: #E5E7EB !important;
+}
+
+[data-theme="dark"] .fc-day-today {
+    background: #1E3A8A !important;
+}
+
+/* Modal en mode sombre */
+[data-theme="dark"] #quickAddModal .bg-white {
+    background-color: #1F2937 !important;
+    color: #F3F4F6 !important;
+}
+
+[data-theme="dark"] #quickAddModal input,
+[data-theme="dark"] #quickAddModal select {
+    background-color: #374151 !important;
+    border-color: #6B7280 !important;
+    color: #F3F4F6 !important;
+}
+
+[data-theme="dark"] #quickAddModal label {
+    color: #E5E7EB !important;
+}
+</style>
+
 {% endblock %}
