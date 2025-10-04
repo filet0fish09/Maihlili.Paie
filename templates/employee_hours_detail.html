@@ -1,0 +1,356 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-6">
+  <!-- En-tête -->
+  <div class="flex justify-between items-center">
+    <div class="flex items-center gap-4">
+      <a href="{{ url_for('show_employees') }}" class="text-gray-500 hover:text-gray-700 text-2xl">
+        ←
+      </a>
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">📊 Suivi des heures - {{ employee.full_name }}</h1>
+        <p class="text-gray-500">{{ employee.position or 'Employé' }} • {{ employee.contract_type or 'CDI' }} • {{ employee.contract_hours_per_week or 35 }}h/semaine</p>
+      </div>
+    </div>
+    <button onclick="exportHoursReport()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+      📥 Exporter le rapport
+    </button>
+  </div>
+
+  <!-- Résumé du mois en cours -->
+  <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl shadow-sm border border-blue-200 p-6">
+    <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+      📅 Mois en cours - {{ current_month.worked_hours }}h / {{ current_month.contract_hours }}h
+    </h3>
+    
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div class="text-center bg-white p-4 rounded-lg shadow-sm">
+        <div class="text-3xl font-bold text-blue-600">{{ current_month.worked_hours }}h</div>
+        <div class="text-sm text-gray-500 mt-1">Heures travaillées</div>
+      </div>
+      
+      <div class="text-center bg-white p-4 rounded-lg shadow-sm">
+        <div class="text-3xl font-bold text-gray-600">{{ current_month.contract_hours }}h</div>
+        <div class="text-sm text-gray-500 mt-1">Heures contractuelles</div>
+      </div>
+      
+      <div class="text-center bg-white p-4 rounded-lg shadow-sm">
+        {% if current_month.difference > 0 %}
+        <div class="text-3xl font-bold text-orange-600">+{{ current_month.difference }}h</div>
+        <div class="text-sm text-orange-600 mt-1">Heures supplémentaires</div>
+        {% elif current_month.difference < 0 %}
+        <div class="text-3xl font-bold text-red-600">{{ current_month.difference }}h</div>
+        <div class="text-sm text-red-600 mt-1">Heures manquantes</div>
+        {% else %}
+        <div class="text-3xl font-bold text-green-600">±0h</div>
+        <div class="text-sm text-green-600 mt-1">Parfait équilibre</div>
+        {% endif %}
+      </div>
+      
+      <div class="text-center bg-white p-4 rounded-lg shadow-sm">
+        <div class="text-3xl font-bold {% if current_month.percentage >= 100 %}text-green-600{% elif current_month.percentage >= 90 %}text-yellow-600{% else %}text-red-600{% endif %}">
+          {{ current_month.percentage }}%
+        </div>
+        <div class="text-sm text-gray-500 mt-1">Taux de réalisation</div>
+      </div>
+    </div>
+
+    <!-- Barre de progression -->
+    <div class="mt-6">
+      <div class="flex justify-between text-sm text-gray-700 mb-2">
+        <span class="font-medium">Progression du contrat</span>
+        <span class="font-semibold">{{ current_month.percentage }}%</span>
+      </div>
+      <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+        <div class="{% if current_month.percentage >= 100 %}bg-gradient-to-r from-green-500 to-green-600{% elif current_month.percentage >= 90 %}bg-gradient-to-r from-yellow-500 to-yellow-600{% else %}bg-gradient-to-r from-red-500 to-red-600{% endif %} h-4 rounded-full transition-all duration-1000 progress-bar" 
+             style="width: {{ current_month.percentage if current_month.percentage <= 100 else 100 }}%"></div>
+      </div>
+      {% if current_month.percentage > 100 %}
+      <div class="text-right mt-2">
+        <span class="text-xs font-medium text-orange-600 bg-orange-50 px-2 py-1 rounded">
+          ⚡ {{ current_month.percentage - 100 }}% d'heures supplémentaires
+        </span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Historique des 6 derniers mois -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <h3 class="text-lg font-semibold mb-6 flex items-center gap-2">
+      📈 Historique des 6 derniers mois
+    </h3>
+    
+    <!-- Graphique -->
+    <div class="mb-8 bg-gray-50 p-4 rounded-lg">
+      <canvas id="hoursChart" style="max-height: 300px;"></canvas>
+    </div>
+    
+    <!-- Tableau détaillé -->
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="text-left py-3 px-4 font-semibold text-gray-700 rounded-tl-lg">Mois</th>
+            <th class="text-right py-3 px-4 font-semibold text-gray-700">Travaillées</th>
+            <th class="text-right py-3 px-4 font-semibold text-gray-700">Contractuelles</th>
+            <th class="text-right py-3 px-4 font-semibold text-gray-700">Différence</th>
+            <th class="text-right py-3 px-4 font-semibold text-gray-700">Taux</th>
+            <th class="text-center py-3 px-4 font-semibold text-gray-700 rounded-tr-lg">Statut</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+          {% for month_data in months_history %}
+          <tr class="hover:bg-gray-50 transition-colors">
+            <td class="py-4 px-4 font-medium text-gray-800">{{ month_data.month }}</td>
+            <td class="py-4 px-4 text-right font-semibold text-blue-600">{{ month_data.worked_hours }}h</td>
+            <td class="py-4 px-4 text-right text-gray-600">{{ month_data.contract_hours }}h</td>
+            <td class="py-4 px-4 text-right font-semibold {% if month_data.difference > 0 %}text-orange-600{% elif month_data.difference < 0 %}text-red-600{% else %}text-green-600{% endif %}">
+              {% if month_data.difference > 0 %}+{% endif %}{{ month_data.difference }}h
+            </td>
+            <td class="py-4 px-4 text-right font-semibold {% if month_data.percentage >= 100 %}text-green-600{% elif month_data.percentage >= 90 %}text-yellow-600{% else %}text-red-600{% endif %}">
+              {{ month_data.percentage }}%
+            </td>
+            <td class="py-4 px-4 text-center">
+              {% if month_data.status == 'over' %}
+                <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded-full">
+                  ⏰ Supplémentaires
+                </span>
+              {% elif month_data.status == 'under' %}
+                <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
+                  ⚠️ Insuffisantes
+                </span>
+              {% else %}
+                <span class="inline-flex items-center px-3 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                  ✅ Conforme
+                </span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Statistiques supplémentaires -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Répartition par type de statut -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <h3 class="text-lg font-semibold mb-6">📊 Répartition sur 6 mois</h3>
+      {% set conforme_count = months_history | selectattr('status', 'equalto', 'exact') | list | length %}
+      {% set over_count = months_history | selectattr('status', 'equalto', 'over') | list | length %}
+      {% set under_count = months_history | selectattr('status', 'equalto', 'under') | list | length %}
+      
+      <div class="space-y-4">
+        <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+          <div class="flex items-center gap-3">
+            <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+            <span class="text-sm font-medium text-gray-700">Mois conformes</span>
+          </div>
+          <div class="text-xl font-bold text-green-600">{{ conforme_count }}/6</div>
+        </div>
+        
+        <div class="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
+          <div class="flex items-center gap-3">
+            <div class="w-3 h-3 bg-orange-500 rounded-full"></div>
+            <span class="text-sm font-medium text-gray-700">Heures supplémentaires</span>
+          </div>
+          <div class="text-xl font-bold text-orange-600">{{ over_count }}/6</div>
+        </div>
+        
+        <div class="flex justify-between items-center p-3 bg-red-50 rounded-lg">
+          <div class="flex items-center gap-3">
+            <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+            <span class="text-sm font-medium text-gray-700">Heures insuffisantes</span>
+          </div>
+          <div class="text-xl font-bold text-red-600">{{ under_count }}/6</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Moyennes -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <h3 class="text-lg font-semibold mb-6">📈 Moyennes sur 6 mois</h3>
+      {% set avg_worked = (months_history | sum(attribute='worked_hours')) / (months_history | length) %}
+      {% set avg_percentage = (months_history | sum(attribute='percentage')) / (months_history | length) %}
+      {% set total_diff = months_history | sum(attribute='difference') %}
+      
+      <div class="space-y-4">
+        <div class="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+          <span class="text-sm font-medium text-gray-700">Heures travaillées/mois</span>
+          <div class="text-xl font-bold text-blue-600">{{ "%.1f"|format(avg_worked) }}h</div>
+        </div>
+        
+        <div class="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
+          <span class="text-sm font-medium text-gray-700">Taux de réalisation moyen</span>
+          <div class="text-xl font-bold {% if avg_percentage >= 100 %}text-green-600{% elif avg_percentage >= 90 %}text-yellow-600{% else %}text-red-600{% endif %}">
+            {{ "%.1f"|format(avg_percentage) }}%
+          </div>
+        </div>
+        
+        <div class="flex justify-between items-center p-3 {% if total_diff > 0 %}bg-orange-50{% elif total_diff < 0 %}bg-red-50{% else %}bg-green-50{% endif %} rounded-lg">
+          <span class="text-sm font-medium text-gray-700">Total différence (6 mois)</span>
+          <div class="text-xl font-bold {% if total_diff > 0 %}text-orange-600{% elif total_diff < 0 %}text-red-600{% else %}text-green-600{% endif %}">
+            {% if total_diff > 0 %}+{% endif %}{{ total_diff }}h
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Créer le graphique
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('hoursChart').getContext('2d');
+    
+    const monthsData = {{ months_history | tojson }};
+    const labels = monthsData.map(m => m.month_short);
+    const workedHours = monthsData.map(m => m.worked_hours);
+    const contractHours = monthsData.map(m => m.contract_hours);
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Heures travaillées',
+                data: workedHours,
+                borderColor: 'rgb(59, 130, 246)',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                tension: 0.3,
+                fill: true,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                pointBackgroundColor: 'rgb(59, 130, 246)',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2
+            }, {
+                label: 'Heures contractuelles',
+                data: contractHours,
+                borderColor: 'rgb(156, 163, 175)',
+                backgroundColor: 'rgba(156, 163, 175, 0.05)',
+                borderDash: [5, 5],
+                tension: 0.1,
+                pointRadius: 4,
+                pointBackgroundColor: 'rgb(156, 163, 175)',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Heures',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Évolution des heures travaillées vs contractuelles',
+                    font: {
+                        size: 16,
+                        weight: 'bold'
+                    },
+                    padding: 20
+                },
+                legend: {
+                    position: 'top',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 15,
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    titleFont: {
+                        size: 14
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.parsed.y + 'h';
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+
+function exportHoursReport() {
+    const employeeName = "{{ employee.full_name }}";
+    const monthsData = {{ months_history | tojson }};
+    
+    let csv = "Rapport d'heures - " + employeeName + "\n\n";
+    csv += "Mois,Heures Travaillées,Heures Contractuelles,Différence,Taux (%),Statut\n";
+    
+    monthsData.forEach(month => {
+        const status = month.status === 'over' ? 'Heures supplémentaires' : 
+                      month.status === 'under' ? 'Heures insuffisantes' : 'Conforme';
+        csv += `${month.month},"${month.worked_hours}","${month.contract_hours}","${month.difference}","${month.percentage}","${status}"\n`;
+    });
+    
+    // Télécharger le fichier
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `rapport_heures_${employeeName.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 7)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+</script>
+
+<style>
+/* Animation de la barre de progression */
+@keyframes progressAnimation {
+    from { width: 0%; }
+}
+
+.progress-bar {
+    animation: progressAnimation 1.5s ease-out;
+}
+
+/* Améliorer le survol des lignes du tableau */
+tbody tr {
+    transition: all 0.2s ease;
+}
+
+tbody tr:hover {
+    transform: translateX(2px);
+}
+</style>
+{% endblock %}
