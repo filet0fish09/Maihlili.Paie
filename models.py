@@ -1,375 +1,197 @@
 from flask_sqlalchemy import SQLAlchemy
-from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
-from datetime import datetime
+from datetime import datetime, timedelta
+import calendar
 
 db = SQLAlchemy()
 
 class User(UserMixin, db.Model):
-    __tablename__ = "users"
+    __tablename__ = 'users'
+    
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(200), nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)
     is_manager = db.Column(db.Boolean, default=False)
     is_admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    last_login = db.Column(db.DateTime)
     
     # Relations
-    employee = db.relationship("Employee", back_populates="user", uselist=False)
-    created_assignments = db.relationship("Assignment", foreign_keys="Assignment.created_by", back_populates="creator")
-
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
-
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
-
-    @property
-    def role_display(self):
-        """Retourne l'affichage du rôle"""
-        if self.is_admin:
-            return "⚡ Administrateur"
-        elif self.is_manager:
-            return "👥 Manager"
-        else:
-            return "👤 Employé"
-
-    @property
-    def can_manage_employees(self):
-        """Vérifie si l'utilisateur peut gérer des employés"""
-        return self.is_manager or self.is_admin
-
-    def __repr__(self):
-        return f'<User {self.username}>'
-
-class Team(db.Model):
-    __tablename__ = "teams"
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    description = db.Column(db.Text)
-    manager_id = db.Column(db.Integer, db.ForeignKey("employees.id"))
-    is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    employee = db.relationship('Employee', backref='user', uselist=False)
     
-    # Relations
-    manager = db.relationship("Employee", foreign_keys=[manager_id], post_update=True)
-    members = db.relationship("Employee", foreign_keys="Employee.team_id", back_populates="team")
-
-    @property
-    def member_count(self):
-        """Nombre de membres actifs dans l'équipe"""
-        return len([m for m in self.members if m.is_active])
-
-    @property
-    def manager_name(self):
-        """Nom du manager de l'équipe"""
-        return self.manager.full_name if self.manager else "Non assigné"
-
     def __repr__(self):
-        return f'<Team {self.name}>'
+        return f'<User {self.email}>'
+
 
 class Employee(db.Model):
-    __tablename__ = "employees"
+    __tablename__ = 'employees'
+    
     id = db.Column(db.Integer, primary_key=True)
     full_name = db.Column(db.String(100), nullable=False)
     position = db.Column(db.String(100))
-    phone = db.Column(db.String(20))
-    hire_date = db.Column(db.Date)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), unique=True)
-    team_id = db.Column(db.Integer, db.ForeignKey("teams.id"))
     is_active = db.Column(db.Boolean, default=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    team_id = db.Column(db.Integer, db.ForeignKey('teams.id'))
+    
+    # NOUVEAUX CHAMPS pour les heures contractuelles
+    contract_hours_per_week = db.Column(db.Float, default=35.0)
+    contract_hours_per_month = db.Column(db.Float, default=151.67)
+    contract_type = db.Column(db.String(20), default="CDI")
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relations
-    user = db.relationship("User", back_populates="employee")
-    team = db.relationship("Team", foreign_keys=[team_id], back_populates="members")
-    assignments = db.relationship("Assignment", back_populates="employee", cascade="all, delete-orphan")
-
-    @property
-    def status_display(self):
-        """Statut d'affichage de l'employé"""
-        return "Actif" if self.is_active else "Inactif"
-
-    @property
-    def team_name(self):
-        """Nom de l'équipe de l'employé"""
-        return self.team.name if self.team else "Aucune équipe"
-
-    @property
-    def has_user_account(self):
-        """Vérifie si l'employé a un compte utilisateur"""
-        return self.user is not None
-
-    @property
-    def email(self):
-        """Email de l'employé (depuis son compte utilisateur)"""
-        return self.user.email if self.user else None
-
-    def can_be_managed_by(self, manager_user):
-        """Vérifie si cet employé peut être géré par ce manager"""
-        if not manager_user:
-            return False
+    assignments = db.relationship('Assignment', backref='employee', lazy=True, cascade='all, delete-orphan')
+    managed_teams = db.relationship('Team', foreign_keys='Team.manager_id', backref='manager', lazy=True)
+    
+    # NOUVELLES MÉTHODES pour le calcul des heures
+    
+    def get_worked_hours_for_month(self, year=None, month=None):
+        """Calcule les heures travaillées pour un mois donné"""
+        if not year:
+            year = datetime.now().year
+        if not month:
+            month = datetime.now().month
             
-        # Admin peut tout gérer
-        if manager_user.is_admin:
-            return True
-            
-        # Non-manager ne peut rien gérer
-        if not manager_user.is_manager:
-            return False
+        # Premier et dernier jour du mois
+        start_date = datetime(year, month, 1)
+        last_day = calendar.monthrange(year, month)[1]
+        end_date = datetime(year, month, last_day, 23, 59, 59)
         
-        manager_employee = manager_user.employee
-        if not manager_employee:
-            return False
-        
-        # Si l'employé a une équipe, vérifier si le manager gère cette équipe
-        if self.team and self.team.manager_id == manager_employee.id:
-            return True
-            
-        # Si l'employé n'a pas d'équipe, les managers peuvent le gérer
-        if not self.team:
-            return True
-            
-        return False
-
-    def get_current_assignment(self):
-        """Retourne l'assignation actuelle (en cours) de l'employé"""
-        now = datetime.now()
-        return Assignment.query.filter(
-            Assignment.employee_id == self.id,
-            Assignment.start <= now,
-            Assignment.end >= now
-        ).first()
-
-    def get_next_assignment(self):
-        """Retourne la prochaine assignation de l'employé"""
-        now = datetime.now()
-        return Assignment.query.filter(
-            Assignment.employee_id == self.id,
-            Assignment.start > now
-        ).order_by(Assignment.start).first()
-
-    def get_weekly_hours(self, start_date=None):
-        """Calcule les heures travaillées dans la semaine"""
-        if not start_date:
-            from datetime import timedelta
-            now = datetime.now()
-            start_date = now - timedelta(days=now.weekday())
-        
-        end_date = start_date + timedelta(days=7)
-        
-        assignments = Assignment.query.filter(
+        # Récupérer toutes les assignations du mois
+        monthly_assignments = Assignment.query.filter(
             Assignment.employee_id == self.id,
             Assignment.start >= start_date,
-            Assignment.start < end_date
+            Assignment.start <= end_date,
+            Assignment.status.in_(['completed', 'in_progress', 'scheduled'])
         ).all()
         
         total_hours = 0
-        for assignment in assignments:
+        for assignment in monthly_assignments:
+            # Calculer la durée effective
             duration = assignment.end - assignment.start
             total_hours += duration.total_seconds() / 3600
             
-        return total_hours
+        return round(total_hours, 2)
 
-    def __repr__(self):
-        return f'<Employee {self.full_name}>'
-
-class Shift(db.Model):
-    __tablename__ = "shifts"
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), nullable=False)
-    description = db.Column(db.Text)
-    color = db.Column(db.String(7), default="#3788d8")  # Format hexadécimal
-    start_time = db.Column(db.String(5), default="08:00")  # Format HH:MM
-    end_time = db.Column(db.String(5), default="16:00")    # Format HH:MM
-    duration_hours = db.Column(db.Float, default=8.0)      # Durée en heures
-    employees_needed = db.Column(db.Integer, default=1)
-    is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    # Relations
-    assignments = db.relationship("Assignment", back_populates="shift")
-
-    @property
-    def time_display(self):
-        """Affichage formaté des horaires"""
-        return f"{self.start_time} - {self.end_time}"
-
-    @property
-    def duration_display(self):
-        """Affichage formaté de la durée"""
-        hours = int(self.duration_hours)
-        minutes = int((self.duration_hours - hours) * 60)
-        if minutes > 0:
-            return f"{hours}h{minutes:02d}"
-        return f"{hours}h"
-
-    def calculate_duration(self):
-        """Calcule la durée basée sur start_time et end_time"""
-        try:
-            start_parts = self.start_time.split(':')
-            end_parts = self.end_time.split(':')
-            
-            start_minutes = int(start_parts[0]) * 60 + int(start_parts[1])
-            end_minutes = int(end_parts[0]) * 60 + int(end_parts[1])
-            
-            # Gérer le cas où le shift traverse minuit
-            if end_minutes < start_minutes:
-                end_minutes += 24 * 60
-            
-            duration_minutes = end_minutes - start_minutes
-            self.duration_hours = duration_minutes / 60
-            
-        except (ValueError, IndexError):
-            # En cas d'erreur, utiliser la valeur par défaut
-            self.duration_hours = 8.0
-
-    def get_current_assignments(self):
-        """Retourne les assignations actuelles pour ce shift"""
-        now = datetime.now()
-        return Assignment.query.filter(
-            Assignment.shift_id == self.id,
-            Assignment.start <= now,
-            Assignment.end >= now
-        ).all()
-
-    def __repr__(self):
-        return f'<Shift {self.name}>'
-
-class Assignment(db.Model):
-    __tablename__ = "assignments"
-    id = db.Column(db.Integer, primary_key=True)
-    employee_id = db.Column(db.Integer, db.ForeignKey("employees.id"), nullable=False)
-    shift_id = db.Column(db.Integer, db.ForeignKey("shifts.id"), nullable=False)
-    start = db.Column(db.DateTime, nullable=False)
-    end = db.Column(db.DateTime, nullable=False)
-    notes = db.Column(db.Text)
-    status = db.Column(db.String(20), default="scheduled")  # scheduled, in_progress, completed, cancelled
-    created_by = db.Column(db.Integer, db.ForeignKey("users.id"))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    # Relations
-    employee = db.relationship("Employee", back_populates="assignments")
-    shift = db.relationship("Shift", back_populates="assignments")
-    creator = db.relationship("User", foreign_keys=[created_by], back_populates="created_assignments")
-
-    @property
-    def duration(self):
-        """Durée de l'assignation"""
-        return self.end - self.start
-
-    @property
-    def duration_hours(self):
-        """Durée en heures"""
-        return self.duration.total_seconds() / 3600
-
-    @property
-    def duration_display(self):
-        """Affichage formaté de la durée"""
-        hours = self.duration_hours
-        h = int(hours)
-        m = int((hours - h) * 60)
-        if m > 0:
-            return f"{h}h{m:02d}"
-        return f"{h}h"
-
-    @property
-    def status_display(self):
-        """Affichage du statut"""
-        status_map = {
-            'scheduled': '📅 Programmé',
-            'in_progress': '⏳ En cours',
-            'completed': '✅ Terminé',
-            'cancelled': '❌ Annulé'
-        }
-        return status_map.get(self.status, self.status)
-
-    @property
-    def is_current(self):
-        """Vérifie si l'assignation est en cours"""
-        now = datetime.now()
-        return self.start <= now <= self.end
-
-    @property
-    def is_future(self):
-        """Vérifie si l'assignation est dans le futur"""
-        now = datetime.now()
-        return self.start > now
-
-    @property
-    def is_past(self):
-        """Vérifie si l'assignation est passée"""
-        now = datetime.now()
-        return self.end < now
-
-    def update_status(self):
-        """Met à jour automatiquement le statut basé sur les dates"""
-        now = datetime.now()
-        
-        if self.status == 'cancelled':
-            return  # Ne pas changer si déjà annulé
-            
-        if self.start > now:
-            self.status = 'scheduled'
-        elif self.start <= now <= self.end:
-            self.status = 'in_progress'
-        elif self.end < now:
-            self.status = 'completed'
-
-    def as_fullcalendar(self):
-        """Convertit l'assignation au format FullCalendar"""
-        # Mettre à jour le statut automatiquement
-        self.update_status()
-        
-        # Couleur basée sur le statut
-        color = self.shift.color
-        if self.status == 'cancelled':
-            color = '#dc3545'  # Rouge
-        elif self.status == 'completed':
-            color = '#28a745'  # Vert
+    def get_hours_difference_for_month(self, year=None, month=None):
+        """Calcule la différence entre heures travaillées et contractuelles"""
+        worked_hours = self.get_worked_hours_for_month(year, month)
+        contract_hours = self.contract_hours_per_month or 151.67
+        difference = worked_hours - contract_hours
         
         return {
-            "id": self.id,
-            "title": f"{self.shift.name} - {self.employee.full_name}",
-            "start": self.start.isoformat(),
-            "end": self.end.isoformat(),
-            "color": color,
-            "textColor": "#ffffff",
-            "extendedProps": {
-                "employee_id": self.employee_id,
-                "employee_name": self.employee.full_name,
-                "shift_id": self.shift_id,
-                "shift_name": self.shift.name,
-                "notes": self.notes,
-                "status": self.status,
-                "status_display": self.status_display,
-                "duration": self.duration_display,
-                "created_by": self.creator.username if self.creator else "Système"
-            }
+            'worked_hours': worked_hours,
+            'contract_hours': contract_hours,
+            'difference': round(difference, 2),
+            'percentage': round((worked_hours / contract_hours * 100), 1) if contract_hours > 0 else 0,
+            'status': 'over' if difference > 0 else 'under' if difference < 0 else 'exact'
         }
 
-    def check_conflicts(self):
-        """Vérifie les conflits avec d'autres assignations du même employé"""
-        conflicts = Assignment.query.filter(
-            Assignment.employee_id == self.employee_id,
-            Assignment.id != self.id,  # Exclure cette assignation
-            Assignment.status != 'cancelled',
-            # Vérifier les chevauchements
-            db.or_(
-                db.and_(Assignment.start <= self.start, Assignment.end > self.start),
-                db.and_(Assignment.start < self.end, Assignment.end >= self.end),
-                db.and_(Assignment.start >= self.start, Assignment.end <= self.end)
-            )
-        ).all()
+    def get_monthly_hours_history(self, months_count=6):
+        """Retourne l'historique des heures sur les derniers mois"""
+        history = []
+        current_date = datetime.now()
         
-        return conflicts
+        for i in range(months_count):
+            # Calculer le mois à analyser
+            year = current_date.year
+            month = current_date.month - i
+            
+            # Gérer le changement d'année
+            while month <= 0:
+                month += 12
+                year -= 1
+            
+            target_date = datetime(year, month, 1)
+            
+            month_data = self.get_hours_difference_for_month(year, month)
+            month_data['month'] = target_date.strftime('%B %Y')
+            month_data['month_short'] = target_date.strftime('%m/%Y')
+            
+            history.append(month_data)
+            
+        return list(reversed(history))  # Ordre chronologique
+
+    @property
+    def current_month_hours_summary(self):
+        """Résumé rapide du mois en cours"""
+        return self.get_hours_difference_for_month()
+
+    def update_contract_hours(self, hours_per_week):
+        """Met à jour les heures contractuelles"""
+        self.contract_hours_per_week = hours_per_week
+        # Calculer les heures mensuelles (moyenne : 52 semaines / 12 mois)
+        self.contract_hours_per_month = round(hours_per_week * 52 / 12, 2)
 
     def __repr__(self):
+        return f'<Employee {self.full_name} - {self.contract_hours_per_week}h/sem>'
 
-        return f'<Assignment {self.employee.full_name} - {self.shift.name} ({self.start.strftime("%d/%m/%Y %H:%M")})>'
+
+class Team(db.Model):
+    __tablename__ = 'teams'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+    manager_id = db.Column(db.Integer, db.ForeignKey('employees.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relations
+    members = db.relationship('Employee', foreign_keys='Employee.team_id', backref='team', lazy=True)
+    
+    def __repr__(self):
+        return f'<Team {self.name}>'
+
+
+class Shift(db.Model):
+    __tablename__ = 'shifts'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    start_time = db.Column(db.Time, nullable=False)
+    end_time = db.Column(db.Time, nullable=False)
+    color = db.Column(db.String(7), default='#3B82F6')  # Couleur hex
+    created_by = db.Column(db.Integer, db.ForeignKey('employees.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relations
+    assignments = db.relationship('Assignment', backref='shift', lazy=True)
+    
+    @property
+    def duration_hours(self):
+        """Calcule la durée du shift en heures"""
+        start = datetime.combine(datetime.today(), self.start_time)
+        end = datetime.combine(datetime.today(), self.end_time)
+        
+        # Gérer les shifts qui traversent minuit
+        if end < start:
+            end += timedelta(days=1)
+        
+        duration = end - start
+        return duration.total_seconds() / 3600
+    
+    def __repr__(self):
+        return f'<Shift {self.name} {self.start_time}-{self.end_time}>'
+
+
+class Assignment(db.Model):
+    __tablename__ = 'assignments'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    employee_id = db.Column(db.Integer, db.ForeignKey('employees.id'), nullable=False)
+    shift_id = db.Column(db.Integer, db.ForeignKey('shifts.id'), nullable=False)
+    start = db.Column(db.DateTime, nullable=False)
+    end = db.Column(db.DateTime, nullable=False)
+    status = db.Column(db.String(20), default='scheduled')  # scheduled, in_progress, completed, cancelled
+    notes = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    @property
+    def duration_hours(self):
+        """Calcule la durée de l'assignation en heures"""
+        duration = self.end - self.start
+        return round(duration.total_seconds() / 3600, 2)
+    
+    def __repr__(self):
+        return f'<Assignment {self.employee_id} - {self.shift_id} on {self.start}>'
