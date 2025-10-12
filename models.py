@@ -162,6 +162,7 @@ class Shift(db.Model):
     color = db.Column(db.String(7), default='#3B82F6')  # Couleur hex
     created_by = db.Column(db.Integer, db.ForeignKey('employees.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    employees_needed = db.Column(db.Integer, default=3)
     
     # Relations
     assignments = db.relationship('Assignment', backref='shift', lazy=True)
@@ -204,4 +205,5 @@ class Assignment(db.Model):
     
     def __repr__(self):
         return f'<Assignment {self.employee_id} - {self.shift_id} on {self.start}>'
+
 
