@@ -286,7 +286,7 @@ def api_events():
     events = [
     {
         "id": a.id,
-        "title": a.title,
+        "title": getattr(a, "title", "Affectation"),
         "start": a.start_date.isoformat() if a.start_date else None,
         "end": a.end_date.isoformat() if a.end_date else None,
         "allDay": False,
@@ -1043,5 +1043,6 @@ if __name__ == "__main__":
     # Configuration pour production Render
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
