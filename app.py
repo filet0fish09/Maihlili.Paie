@@ -287,7 +287,6 @@ def api_events():
     return jsonify(events)
 
 # --- CRUD Employés ---
-
 @app.route("/employees", methods=["GET", "POST"])
 @login_required
 def show_employees():
@@ -295,31 +294,27 @@ def show_employees():
         flash("Accès refusé", "error")
         return redirect(url_for("index"))
         
-   if request.method == "POST":
-    name = request.form["full_name"]
-    position = request.form.get("position")
-    email = request.form.get("email")
-    team_id = request.form.get("team_id")
-    create_account = "create_account" in request.form
-    
-    try:
-        # NOUVEAU : Récupérer les heures contractuelles
-        contract_hours = float(request.form.get("contract_hours", 35.0))
-        contract_type = request.form.get("contract_type", "CDI")
+    if request.method == "POST":
+        name = request.form["full_name"]
+        position = request.form.get("position")
+        email = request.form.get("email")
+        team_id = request.form.get("team_id")
+        create_account = "create_account" in request.form
         
-        # Créer l'employé
-        emp = Employee(
-            full_name=name, 
-            position=position,
-            team_id=int(team_id) if team_id else None,
-            contract_hours_per_week=contract_hours,
-            contract_type=contract_type
-        )
-        emp.update_contract_hours(contract_hours)
-        
-        # Créer un compte utilisateur si demandé et email fourni
-        if create_account and email:
-            # (Votre code existant pour créer le compte continue ici...)
+        try:
+            # NOUVEAU : Récupérer les heures contractuelles
+            contract_hours = float(request.form.get("contract_hours", 35.0))
+            contract_type = request.form.get("contract_type", "CDI")
+            
+            # Créer l'employé
+            emp = Employee(
+                full_name=name, 
+                position=position,
+                team_id=int(team_id) if team_id else None,
+                contract_hours_per_week=contract_hours,
+                contract_type=contract_type
+            )
+            emp.update_contract_hours(contract_hours)
             
             # Créer un compte utilisateur si demandé et email fourni
             if create_account and email:
@@ -344,7 +339,7 @@ def show_employees():
                     is_manager=False,
                     is_admin=False
                 )
-                user.set_password("maihlili123")  # Mot de passe par défaut
+                user.set_password("maihlili123")
                 db.session.add(user)
                 db.session.flush()
                 emp.user_id = user.id
@@ -363,12 +358,12 @@ def show_employees():
             flash("Erreur lors de la création de l'employé", "error")
             return redirect(url_for("show_employees"))
     
-    # Afficher seulement les employés gérables
+    # GET: Afficher seulement les employés gérables
     employees = get_manageable_employees(current_user)
     
-    # Ajouter des attributs pour l'affichage - CORRECTION: remplacer emoji par texte
+    # Ajouter des attributs pour l'affichage
     for e in employees:
-        e.avatar = 'USER'  # Remplacé l'emoji par du texte
+        e.avatar = 'USER'
         e.role = e.position or 'Employe'
         e.status = 'active' if e.is_active else 'absent'
         e.hours_summary = e.current_month_hours_summary
@@ -381,52 +376,6 @@ def show_employees():
         teams = Team.query.filter_by(manager_id=current_user.employee.id).all()
     
     return render_template("employees.html", employees=employees, teams=teams)
-
-# --- API Employés ---
-
-@app.route("/api/employees/<int:employee_id>", methods=["PUT"])
-@login_required
-def update_employee(employee_id):
-    if not current_user.is_manager:
-        return jsonify({"success": False, "error": "Accès refusé"}), 403
-    
-    employee = Employee.query.get_or_404(employee_id)
-    
-    # Vérifier que le manager peut modifier cet employé
-    if not employee.can_be_managed_by(current_user):
-        return jsonify({"success": False, "error": "Vous ne pouvez pas modifier cet employé"}), 403
-    
-    try:
-        employee.full_name = request.form.get("full_name", employee.full_name)
-        employee.position = request.form.get("position", employee.position)
-        
-        db.session.commit()
-        return jsonify({"success": True})
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"success": False, "error": "Erreur lors de la modification"}), 500
-
-@app.route("/api/employees/<int:employee_id>", methods=["DELETE"])
-@login_required
-def delete_employee(employee_id):
-    if not current_user.is_manager:
-        return jsonify({"success": False, "error": "Accès refusé"}), 403
-    
-    employee = Employee.query.get_or_404(employee_id)
-    
-    # Vérifier que le manager peut supprimer cet employé
-    if not employee.can_be_managed_by(current_user):
-        return jsonify({"success": False, "error": "Vous ne pouvez pas supprimer cet employé"}), 403
-    
-    try:
-        # Désactiver plutôt que supprimer
-        employee.is_active = False
-        db.session.commit()
-        
-        return jsonify({"success": True})
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"success": False, "error": "Erreur lors de la suppression"}), 500
 
 # --- CRUD Shifts ---
 
@@ -1084,3 +1033,4 @@ if __name__ == "__main__":
     # Configuration pour production Render
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
