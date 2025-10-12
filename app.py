@@ -283,7 +283,17 @@ def api_events():
     if end_str:
         q = q.filter(Assignment.start <= datetime.fromisoformat(end_str.replace("Z", "+00:00")))
 
-    events = [a.as_fullcalendar() for a in q.all()]
+    events = [
+    {
+        "id": a.id,
+        "title": a.title,
+        "start": a.start_date.isoformat() if a.start_date else None,
+        "end": a.end_date.isoformat() if a.end_date else None,
+        "allDay": False,
+    }
+    for a in q.all()
+]
+
     return jsonify(events)
 
 # --- CRUD Employés ---
@@ -1033,4 +1043,5 @@ if __name__ == "__main__":
     # Configuration pour production Render
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
