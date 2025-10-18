@@ -1035,6 +1035,164 @@ def internal_error(error):
     </html>
     """, 500
 
+# Ajouter ces routes dans votre app.py après les routes existantes
+
+# --- Route pour afficher le planning ---
+@app.route("/planning")
+@login_required
+def planning():
+    """Vue principale du planning avec calendrier et Gantt"""
+    if not current_user.is_manager:
+        return redirect(url_for("employee_dashboard"))
+    
+    return render_template("planning.html")
+
+
+# --- API pour les données Gantt ---
+@app.get("/api/gantt-data")
+@login_required
+def api_gantt_data():
+    """Récupère les données pour afficher la vue Gantt"""
+    from datetime import datetime, timedelta
+    
+    start_str = request.args.get("start")
+    
+    if not start_str:
+        start_date = datetime.now()
+        start_date = start_date - timedelta(days=start_date.weekday())
+    else:
+        start_date = datetime.fromisoformat(start_str)
+    
+    end_date = start_date + timedelta(days=7)
+    
+    # Récupérer les employés gérables
+    manageable_employees = get_manageable_employees(current_user)
+    manageable_ids = [emp.id for emp in manageable_employees]
+    
+    # Récupérer les assignations de la semaine
+    if manageable_ids:
+        assignments = Assignment.query.filter(
+            Assignment.employee_id.in_(manageable_ids),
+            Assignment.start >= start_date,
+            Assignment.start < end_date
+        ).all()
+    else:
+        assignments = []
+    
+    # Formater les données
+    employees = [{"id": emp.id, "name": emp.full_name} for emp in manageable_employees]
+    
+    assignments_data = [
+        {
+            "employee_id": a.employee_id,
+            "shift_id": a.shift_id,
+            "shift_name": a.shift.name,
+            "shift_color": a.shift.color,
+            "start": a.start.isoformat(),
+            "start_time": a.start.strftime("%H:%M"),
+            "end": a.end.isoformat(),
+            "end_time": a.end.strftime("%H:%M"),
+        }
+        for a in assignments
+    ]
+    
+    return jsonify({
+        "employees": employees,
+        "assignments": assignments_data,
+        "start": start_date.isoformat(),
+        "end": end_date.isoformat()
+    })
+
+
+# --- API pour les statistiques du planning ---
+@app.get("/api/planning-stats")
+@login_required
+def api_planning_stats():
+    """Récupère les statistiques du planning"""
+    from datetime import datetime, timedelta
+    
+    manageable_employees = get_manageable_employees(current_user)
+    manageable_ids = [emp.id for emp in manageable_employees]
+    
+    now = datetime.now()
+    week_start = now - timedelta(days=now.weekday())
+    week_end = week_start + timedelta(days=7)
+    
+    if manageable_ids:
+        week_assignments = Assignment.query.filter(
+            Assignment.employee_id.in_(manageable_ids),
+            Assignment.start >= week_start,
+            Assignment.start < week_end
+        ).all()
+    else:
+        week_assignments = []
+    
+    # Calculer les statistiques
+    total_hours = sum(
+        [(a.end - a.start).total_seconds() / 3600 for a in week_assignments]
+    )
+    
+    employees_covered = len(set([a.employee_id for a in week_assignments]))
+    
+    # Conformité (% employés ayant des assignations)
+    compliance = int((employees_covered / len(manageable_employees) * 100) if manageable_employees else 0)
+    
+    return jsonify({
+        "assignments_week": len(week_assignments),
+        "total_hours": round(total_hours, 2),
+        "employees_covered": employees_covered,
+        "compliance": compliance
+    })
+
+
+# --- Route pour exporter le planning en PDF (optionnel) ---
+@app.route("/export/planning/pdf")
+@login_required
+def export_planning_pdf():
+    """Exporte le planning en PDF"""
+    if not current_user.is_manager:
+        flash("Accès refusé", "error")
+        return redirect(url_for("planning"))
+    
+    # Nécessite: pip install reportlab PyPDF2
+    from io import BytesIO
+    from datetime import datetime, timedelta
+    
+    manageable_employees = get_manageable_employees(current_user)
+    manageable_ids = [emp.id for emp in manageable_employees]
+    
+    now = datetime.now()
+    week_start = now - timedelta(days=now.weekday())
+    
+    if manageable_ids:
+        assignments = Assignment.query.filter(
+            Assignment.employee_id.in_(manageable_ids),
+            Assignment.start >= week_start,
+            Assignment.start < week_start + timedelta(days=7)
+        ).all()
+    else:
+        assignments = []
+    
+    # Créer un simple document texte pour commencer
+    content = "PLANNING MAIHLILI PAIE\n"
+    content += f"Semaine du {week_start.strftime('%d/%m/%Y')}\n\n"
+    
+    for emp in manageable_employees:
+        emp_assignments = [a for a in assignments if a.employee_id == emp.id]
+        if emp_assignments:
+            content += f"\n{emp.full_name} ({emp.position or 'Employé'}):\n"
+            for a in sorted(emp_assignments, key=lambda x: x.start):
+                content += f"  - {a.start.strftime('%a %d/%m')} : {a.shift.name} ({a.start.strftime('%H:%M')}-{a.end.strftime('%H:%M')})\n"
+    
+    response = BytesIO()
+    response.write(content.encode('utf-8'))
+    response.seek(0)
+    
+    return response.getvalue(), 200, {
+        'Content-Type': 'text/plain',
+        'Content-Disposition': 'attachment; filename="planning_maihlili_paie.txt"'
+    }
+
 # --- Lancement de l'application ---
 
 if __name__ == "__main__":
@@ -1044,6 +1202,7 @@ if __name__ == "__main__":
     # Configuration pour production Render
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
