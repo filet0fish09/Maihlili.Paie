@@ -681,16 +681,24 @@ def create_assignment():
         return jsonify({"success": False, "error": "Accès refusé"}), 403
     
     try:
-        employee_id = request.form.get("employee_id")
-        shift_id = request.form.get("shift_id") 
+        employee_id_str = request.form.get("employee_id")
+        shift_id_str = request.form.get("shift_id") 
         start_str = request.form.get("start")
         end_str = request.form.get("end")
         notes = request.form.get("notes", "")
         
-        if not all([employee_id, shift_id, start_str, end_str]):
+        if not all([employee_id_str, shift_id_str, start_str, end_str]):
             return jsonify({"success": False, "error": "Données manquantes"}), 400
         
-        # Vérifier que le manager peut assigner cet employé
+        # 🚨 CORRECTION 1 : CONVERSION DES ID EN INT ICI 🚨
+        try:
+            employee_id = int(employee_id_str)
+            shift_id = int(shift_id_str)
+        except ValueError:
+            print("ERREUR: Impossible de convertir l'ID en entier.")
+            return jsonify({"success": False, "error": "IDs d'employé ou de service invalides"}), 400
+        
+        # Vérifier que le manager peut assigner cet employé (avec l'ID entier)
         employee = Employee.query.get(employee_id)
         if not employee or not employee.can_be_managed_by(current_user):
             return jsonify({"success": False, "error": "Vous ne pouvez pas assigner cet employé"}), 403
@@ -699,8 +707,8 @@ def create_assignment():
         end = datetime.fromisoformat(end_str.replace("Z", "+00:00").replace(" ", "+"))
         
         assignment = Assignment(
-            employee_id=int(employee_id),
-            shift_id=int(shift_id),
+            employee_id=employee_id, # Utiliser l'entier
+            shift_id=shift_id,       # Utiliser l'entier
             start=start,
             end=end,
             notes=notes,
@@ -714,7 +722,9 @@ def create_assignment():
         
     except Exception as e:
         db.session.rollback()
-        return jsonify({"success": False, "error": "Erreur lors de la création"}), 500
+        # 🚨 CORRECTION 2 : AJOUTER LE PRINT POUR DIAGNOSTIQUER LES FUTURES ERREURS 🚨
+        print(f"ERREUR CATCHED DANS L'API POST /api/assignments: {e}") 
+        return jsonify({"success": False, "error": "Erreur interne lors de la création (voir logs)"}), 500
 
 @app.route("/api/assignments/<int:assignment_id>", methods=["PUT"])
 @login_required
@@ -1203,6 +1213,7 @@ if __name__ == "__main__":
     # Configuration pour production Render
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
