@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-6">
+  <!-- En-tête du planning -->
+  <div class="flex justify-between items-center">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">📅 Planning Maihlili PAIE</h1>
+      <p class="text-gray-500">Gérez le planning par semaine ou par mois</p>
+    </div>
+    <div class="flex gap-3">
+      <button onclick="switchView('calendar')" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 view-toggle" id="btn-calendar">
+        📆 Calendrier
+      </button>
+      <button onclick="switchView('gantt')" class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 view-toggle" id="btn-gantt">
+        📊 Vue Gantt
+      </button>
+    </div>
+  </div>
+
+  <!-- Vue Calendrier -->
+  <div id="calendar-view" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div id="calendar" style="min-height: 600px;"></div>
+  </div>
+
+  <!-- Vue Gantt -->
+  <div id="gantt-view" class="hidden bg-white rounded-xl shadow-sm border border-gray-200">
+    <div class="p-6 border-b border-gray-200">
+      <div class="flex justify-between items-center">
+        <h3 class="text-lg font-semibold">📊 Vue Gantt - Planning hebdomadaire</h3>
+        <div class="flex gap-2">
+          <button onclick="previousWeek()" class="px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">← Semaine précédente</button>
+          <span id="week-info" class="px-4 py-2 text-sm font-medium"></span>
+          <button onclick="nextWeek()" class="px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">Semaine suivante →</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+          <tr>
+            <th class="text-left py-3 px-4 font-semibold">Employé</th>
+            <th class="text-center py-3 px-4 font-semibold">Lun</th>
+            <th class="text-center py-3 px-4 font-semibold">Mar</th>
+            <th class="text-center py-3 px-4 font-semibold">Mer</th>
+            <th class="text-center py-3 px-4 font-semibold">Jeu</th>
+            <th class="text-center py-3 px-4 font-semibold">Ven</th>
+            <th class="text-center py-3 px-4 font-semibold">Sam</th>
+            <th class="text-center py-3 px-4 font-semibold">Dim</th>
+          </tr>
+        </thead>
+        <tbody id="gantt-tbody" class="divide-y divide-gray-200">
+          <!-- Les lignes seront générées par JavaScript -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Statistiques du planning -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-500">Assignations cette semaine</p>
+          <p class="text-2xl font-bold text-blue-600" id="stat-week">--</p>
+        </div>
+        <div class="text-3xl">📅</div>
+      </div>
+    </div>
+    
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-500">Heures totales</p>
+          <p class="text-2xl font-bold text-green-600" id="stat-hours">--</p>
+        </div>
+        <div class="text-3xl">⏰</div>
+      </div>
+    </div>
+    
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-500">Employés couverts</p>
+          <p class="text-2xl font-bold text-purple-600" id="stat-employees">--</p>
+        </div>
+        <div class="text-3xl">👥</div>
+      </div>
+    </div>
+    
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-500">Conformité</p>
+          <p class="text-2xl font-bold text-orange-600" id="stat-compliance">--</p>
+        </div>
+        <div class="text-3xl">✓</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+<script>
+let calendar = null;
+let currentWeekStart = new Date();
+currentWeekStart.setDate(currentWeekStart.getDate() - currentWeekStart.getDay() + 1);
+
+// Initialiser le calendrier FullCalendar
+function initCalendar() {
+  const calendarEl = document.getElementById('calendar');
+  
+  calendar = new FullCalendar.Calendar(calendarEl, {
+    initialView: 'dayGridMonth',
+    locale: 'fr',
+    firstDay: 1,
+    
+    headerToolbar: {
+      left: 'prev,next today',
+      center: 'title',
+      right: 'dayGridMonth,timeGridWeek,timeGridDay'
+    },
+    
+    buttonText: {
+      today: "Aujourd'hui",
+      month: 'Mois',
+      week: 'Semaine',
+      day: 'Jour'
+    },
+    
+    height: 'auto',
+    navLinks: true,
+    dayMaxEvents: true,
+    editable: true,
+    
+    events: function(info, successCallback, failureCallback) {
+      fetch(`/api/assignments/events?start=${info.startStr}&end=${info.endStr}`)
+        .then(response => response.json())
+        .then(events => {
+          successCallback(events);
+          updateStatistics();
+        })
+        .catch(error => {
+          console.error('Erreur:', error);
+          failureCallback(error);
+        });
+    }
+  });
+  
+  calendar.render();
+}
+
+// Changer la vue (Calendrier / Gantt)
+function switchView(view) {
+  const calendarView = document.getElementById('calendar-view');
+  const ganttView = document.getElementById('gantt-view');
+  const btnCalendar = document.getElementById('btn-calendar');
+  const btnGantt = document.getElementById('btn-gantt');
+  
+  if (view === 'calendar') {
+    calendarView.classList.remove('hidden');
+    ganttView.classList.add('hidden');
+    btnCalendar.classList.remove('bg-gray-200', 'text-gray-800');
+    btnCalendar.classList.add('bg-blue-600', 'text-white');
+    btnGantt.classList.add('bg-gray-200', 'text-gray-800');
+    btnGantt.classList.remove('bg-blue-600', 'text-white');
+  } else {
+    calendarView.classList.add('hidden');
+    ganttView.classList.remove('hidden');
+    btnGantt.classList.remove('bg-gray-200', 'text-gray-800');
+    btnGantt.classList.add('bg-blue-600', 'text-white');
+    btnCalendar.classList.add('bg-gray-200', 'text-gray-800');
+    btnCalendar.classList.remove('bg-blue-600', 'text-white');
+    loadGanttView();
+  }
+}
+
+// Charger la vue Gantt
+function loadGanttView() {
+  fetch(`/api/gantt-data?start=${currentWeekStart.toISOString().split('T')[0]}`)
+    .then(response => response.json())
+    .then(data => {
+      renderGantt(data);
+      updateWeekInfo();
+    })
+    .catch(error => console.error('Erreur:', error));
+}
+
+// Afficher le Gantt
+function renderGantt(data) {
+  const tbody = document.getElementById('gantt-tbody');
+  tbody.innerHTML = '';
+  
+  data.employees.forEach(employee => {
+    const row = document.createElement('tr');
+    row.className = 'hover:bg-gray-50';
+    
+    let html = `<td class="py-3 px-4 font-medium text-gray-800 bg-gray-50 sticky left-0">${employee.name}</td>`;
+    
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(currentWeekStart);
+      date.setDate(date.getDate() + i);
+      
+      const assignment = data.assignments.find(a => 
+        a.employee_id === employee.id && 
+        new Date(a.start).toDateString() === date.toDateString()
+      );
+      
+      if (assignment) {
+        const color = assignment.shift_color || '#3055ff';
+        html += `
+          <td class="py-2 px-2 text-center">
+            <div class="bg-${getColorClass(color)} text-white text-xs font-semibold px-2 py-1 rounded" 
+                 title="${assignment.shift_name} ${assignment.start_time}-${assignment.end_time}">
+              ${assignment.shift_name}
+            </div>
+          </td>
+        `;
+      } else {
+        html += `<td class="py-2 px-2 text-center bg-gray-50"></td>`;
+      }
+    }
+    
+    row.innerHTML = html;
+    tbody.appendChild(row);
+  });
+}
+
+// Semaine précédente
+function previousWeek() {
+  currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+  loadGanttView();
+}
+
+// Semaine suivante
+function nextWeek() {
+  currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+  loadGanttView();
+}
+
+// Mettre à jour les infos de la semaine
+function updateWeekInfo() {
+  const end = new Date(currentWeekStart);
+  end.setDate(end.getDate() + 6);
+  
+  const options = { day: 'numeric', month: 'long' };
+  const weekInfo = `Semaine du ${currentWeekStart.toLocaleDateString('fr-FR', options)} au ${end.toLocaleDateString('fr-FR', options)}`;
+  document.getElementById('week-info').textContent = weekInfo;
+}
+
+// Mettre à jour les statistiques
+function updateStatistics() {
+  fetch('/api/planning-stats')
+    .then(response => response.json())
+    .then(data => {
+      document.getElementById('stat-week').textContent = data.assignments_week || 0;
+      document.getElementById('stat-hours').textContent = (data.total_hours || 0) + 'h';
+      document.getElementById('stat-employees').textContent = data.employees_covered || 0;
+      document.getElementById('stat-compliance').textContent = (data.compliance || 0) + '%';
+    })
+    .catch(error => console.error('Erreur:', error));
+}
+
+// Initialiser au chargement
+document.addEventListener('DOMContentLoaded', function() {
+  initCalendar();
+  updateStatistics();
+});
+</script>
+
+<style>
+/* Améliorations visuelles */
+.view-toggle {
+  transition: all 0.3s ease;
+}
+
+.view-toggle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* Table Gantt optimisée */
+#gantt-view table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+#gantt-view td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Couleurs pour les shifts */
+.bg-morning { background: #FFD700 !important; color: #333 !important; }
+.bg-afternoon { background: #FF6B6B !important; }
+.bg-evening { background: #4ECDC4 !important; }
+.bg-night { background: #2C3E50 !important; }
+
+/* Mode sombre */
+[data-theme="dark"] #calendar-view,
+[data-theme="dark"] #gantt-view {
+  background-color: #1F2937 !important;
+  border-color: #374151 !important;
+}
+
+[data-theme="dark"] #gantt-view table tr {
+  border-color: #374151 !important;
+}
+</style>
+{% endblock %}
