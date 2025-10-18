@@ -279,9 +279,9 @@ def api_events():
         q = Assignment.query.filter(Assignment.employee_id == emp.id)
 
     if start_str:
-        q = q.filter(Assignment.end >= datetime.fromisoformat(start_str.replace("Z", "+00:00")))
+        q = q.filter(Assignment.end >= datetime.fromisoformat(start_str.replace("Z", "+00:00").replace(" ", "+")))
     if end_str:
-        q = q.filter(Assignment.start <= datetime.fromisoformat(end_str.replace("Z", "+00:00")))
+        q = q.filter(Assignment.start <= datetime.fromisoformat(end_str.replace("Z", "+00:00").replace(" ", "+")))
 
     events = [
     {
@@ -1202,6 +1202,7 @@ if __name__ == "__main__":
     # Configuration pour production Render
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
