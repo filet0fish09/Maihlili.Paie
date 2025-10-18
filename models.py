@@ -2,6 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from datetime import datetime, timedelta
 import calendar
+from werkzeug.security import generate_password_hash, check_password_hash # Importez-les ici pour les méthodes
 
 db = SQLAlchemy()
 
@@ -9,7 +10,7 @@ class User(UserMixin, db.Model):
     __tablename__ = 'users'
     
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)  # ✅ AJOUTEZ CETTE LIGNE
+    username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     is_manager = db.Column(db.Boolean, default=False)
@@ -21,15 +22,13 @@ class User(UserMixin, db.Model):
     
     # Méthodes
     def set_password(self, password):
-        from werkzeug.security import generate_password_hash
         self.password_hash = generate_password_hash(password)
     
     def check_password(self, password):
-        from werkzeug.security import check_password_hash
         return check_password_hash(self.password_hash, password)
     
     def __repr__(self):
-        return f'<User {self.username}>'  # ✅ Changez aussi ici
+        return f'<User {self.username}>'
 
 class Employee(db.Model):
     __tablename__ = 'employees'
@@ -52,6 +51,32 @@ class Employee(db.Model):
     assignments = db.relationship('Assignment', backref='employee', lazy=True, cascade='all, delete-orphan')
     managed_teams = db.relationship('Team', foreign_keys='Team.manager_id', backref='manager', lazy=True)
     
+    # NOUVELLE MÉTHODE : Correction de l'AttributeError
+    def can_be_managed_by(self, user):
+        """Vérifie si cet employé peut être géré par l'utilisateur (manager/admin) donné."""
+        if not user or not user.is_manager:
+            return False
+        
+        # L'admin peut tout gérer
+        if user.is_admin:
+            return True
+        
+        manager_employee = user.employee
+        if not manager_employee:
+            return False
+
+        # Si l'employé est dans une équipe, vérifier si le manager est le responsable de cette équipe
+        if self.team_id:
+            if self.team and self.team.manager_id == manager_employee.id:
+                return True
+        
+        # Logique simplifiée: si le manager gère au moins une équipe, il peut voir les non-assignés.
+        managed_teams_count = Team.query.filter_by(manager_id=manager_employee.id).count()
+        if not self.team_id and managed_teams_count > 0:
+             return True
+
+        return False
+
     # NOUVELLES MÉTHODES pour le calcul des heures
     
     def get_worked_hours_for_month(self, year=None, month=None):
@@ -71,7 +96,8 @@ class Employee(db.Model):
             Assignment.employee_id == self.id,
             Assignment.start >= start_date,
             Assignment.start <= end_date,
-            Assignment.status.in_(['completed', 'in_progress', 'scheduled'])
+            # Supposons qu'Assignment.status existe (sinon retirez .in_([...]))
+            # Assignment.status.in_(['completed', 'in_progress', 'scheduled']) 
         ).all()
         
         total_hours = 0
@@ -119,7 +145,7 @@ class Employee(db.Model):
             
             history.append(month_data)
             
-        return list(reversed(history))  # Ordre chronologique
+        return list(reversed(history)) # Ordre chronologique
 
     @property
     def current_month_hours_summary(self):
@@ -159,7 +185,7 @@ class Shift(db.Model):
     name = db.Column(db.String(100), nullable=False)
     start_time = db.Column(db.Time, nullable=False)
     end_time = db.Column(db.Time, nullable=False)
-    color = db.Column(db.String(7), default='#3B82F6')  # Couleur hex
+    color = db.Column(db.String(7), default='#3B82F6') # Couleur hex
     created_by = db.Column(db.Integer, db.ForeignKey('employees.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     employees_needed = db.Column(db.Integer, default=3)
@@ -192,11 +218,14 @@ class Assignment(db.Model):
     shift_id = db.Column(db.Integer, db.ForeignKey('shifts.id'), nullable=False)
     start = db.Column(db.DateTime, nullable=False)
     end = db.Column(db.DateTime, nullable=False)
-    status = db.Column(db.String(20), default='scheduled')  # scheduled, in_progress, completed, cancelled
+    status = db.Column(db.String(20), default='scheduled') # scheduled, in_progress, completed, cancelled
     notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
+    # Relation vers TimeSheetEntry (pour que TimeSheetEntry puisse avoir une relation)
+    timesheet_entries = db.relationship('TimeSheetEntry', backref='assignment', lazy=True, cascade='all, delete-orphan') 
+
     @property
     def duration_hours(self):
         """Calcule la durée de l'assignation en heures"""
@@ -206,4 +235,37 @@ class Assignment(db.Model):
     def __repr__(self):
         return f'<Assignment {self.employee_id} - {self.shift_id} on {self.start}>'
 
-
+# NOUVEAU MODÈLE : Ajout de la classe TimeSheetEntry manquante
+class TimeSheetEntry(db.Model):
+    __tablename__ = 'timesheet_entries'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # CORRECTION CRUCIALE pour le DELETE 500
+    assignment_id = db.Column(
+        db.Integer, 
+        db.ForeignKey('assignments.id', ondelete='CASCADE'), # <-- Ajout de ondelete='CASCADE'
+        nullable=False
+    )
+    
+    employee_id = db.Column(db.Integer, db.ForeignKey('employees.id'), nullable=False)
+    
+    # Heures d'arrivée/départ réelles
+    clock_in = db.Column(db.DateTime, nullable=False)
+    clock_out = db.Column(db.DateTime)
+    
+    # Type d'entrée (e.g., break, work)
+    entry_type = db.Column(db.String(50), default='work') 
+    
+    # Relation (pour avoir accès aux données de l'employé)
+    employee = db.relationship('Employee', backref='timesheet_records', lazy=True, foreign_keys=[employee_id])
+    
+    @property
+    def actual_duration_hours(self):
+        if self.clock_out:
+            duration = self.clock_out - self.clock_in
+            return round(duration.total_seconds() / 3600, 2)
+        return 0
+        
+    def __repr__(self):
+        return f'<TimeSheetEntry {self.id} for Assignment {self.assignment_id}>'
