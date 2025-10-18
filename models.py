@@ -222,6 +222,8 @@ class Assignment(db.Model):
     notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    creator = db.relationship('User', backref='assignments_created')
     
     # Relation vers TimeSheetEntry (pour que TimeSheetEntry puisse avoir une relation)
     timesheet_entries = db.relationship('TimeSheetEntry', backref='assignment', lazy=True, cascade='all, delete-orphan') 
@@ -269,3 +271,4 @@ class TimeSheetEntry(db.Model):
         
     def __repr__(self):
         return f'<TimeSheetEntry {self.id} for Assignment {self.assignment_id}>'
+
