@@ -633,6 +633,7 @@ def assignments():
             
         except Exception as e:
             db.session.rollback()
+            print(f"ERREUR LORS DE L'ENREGISTREMENT DE L'ASSIGNATION: {e}")
             flash("Erreur lors de la création de l'assignation", "error")
             return redirect(url_for("assignments"))
     
@@ -694,8 +695,8 @@ def create_assignment():
         if not employee or not employee.can_be_managed_by(current_user):
             return jsonify({"success": False, "error": "Vous ne pouvez pas assigner cet employé"}), 403
         
-        start = datetime.fromisoformat(start_str.replace('T', ' '))
-        end = datetime.fromisoformat(end_str.replace('T', ' '))
+        start = datetime.fromisoformat(start_str.replace("Z", "+00:00").replace(" ", "+"))
+        end = datetime.fromisoformat(end_str.replace("Z", "+00:00").replace(" ", "+"))
         
         assignment = Assignment(
             employee_id=int(employee_id),
@@ -1202,6 +1203,7 @@ if __name__ == "__main__":
     # Configuration pour production Render
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
