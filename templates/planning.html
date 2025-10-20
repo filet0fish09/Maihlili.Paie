@@ -108,19 +108,16 @@
 let calendar = null;
 let currentWeekStart = new Date();
 
-// CORRECTION #2 (Décalage de date): Logique plus robuste pour trouver le lundi
+// CORRECTION DÉCALAGE DE DATE : Logique robuste pour trouver le lundi
 function initializeWeekStart() {
     const today = new Date();
     today.setHours(0, 0, 0, 0); 
     
-    // 0=Dimanche, 1=Lundi, ..., 6=Samedi
-    let day = today.getDay();
+    let day = today.getDay(); // 0=Dimanche, 1=Lundi, ..., 6=Samedi
     // Calcule le nombre de jours à soustraire pour revenir au Lundi (1)
-    // Si c'est Dimanche (0), soustraire 6 jours pour le Lundi précédent.
-    // Sinon, soustraire (day - 1).
     let dayDifference = day === 0 ? 6 : day - 1;
     
-    currentWeekStart = new Date(today); // Crée une copie
+    currentWeekStart = new Date(today); 
     currentWeekStart.setDate(today.getDate() - dayDifference);
     currentWeekStart.setHours(0, 0, 0, 0); 
 }
@@ -235,7 +232,6 @@ function isDark(hex) {
 // --- Fonctions de la vue Gantt ---
 
 function formatDate(date) {
-    // Format YYYY-MM-DD
     return date.toISOString().split('T')[0];
 }
 
@@ -243,6 +239,7 @@ function loadGanttView() {
     const startIso = formatDate(currentWeekStart);
     document.getElementById('week-info').textContent = `Semaine du ${currentWeekStart.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}`;
     
+    // CORRECTION BUG PDF : Mise à jour de l'URL d'export
     const exportLink = document.getElementById('export-pdf-link');
     if (exportLink) {
         exportLink.href = `/api/export-gantt-pdf?start=${startIso}`;
@@ -262,7 +259,7 @@ function loadGanttView() {
         })
         .catch(error => {
             console.error('Erreur lors du chargement de la vue Gantt:', error);
-            document.getElementById('gantt-tbody').innerHTML = '<tr><td colspan="9" class="text-center py-4 text-red-500">Erreur lors du chargement du planning Gantt. Vérifiez votre console et votre backend Flask (/api/gantt-data).</td></tr>';
+            document.getElementById('gantt-tbody').innerHTML = '<tr><td colspan="9" class="text-center py-4 text-red-500">Erreur lors du chargement du planning Gantt. Vérifiez votre backend Flask.</td></tr>';
         });
 }
 
@@ -298,17 +295,15 @@ function renderGantt(data) {
         const row = tbody.insertRow();
         row.className = 'hover:bg-gray-50';
         
-        // Cellule Employé (Sticky)
         const nameCell = row.insertCell();
         nameCell.className = 'py-2 px-4 font-medium text-gray-800 sticky left-0 z-10 bg-white border-r border-gray-200 text-sm';
         nameCell.textContent = employee.name;
         
-        // Cellules des jours (Lundi=1 à Dimanche=0)
+        // Boucle pour les 7 jours (Lundi=1 à Dimanche=0)
         for (let i = 1; i <= 7; i++) {
             const dayIndex = i % 7; 
             const dayCell = row.insertCell();
             
-            // --- Préparation de la destination D&D ---
             const cellDate = new Date(weekStartDate);
             cellDate.setDate(weekStartDate.getDate() + (i - 1));
             const cellDateIso = formatDate(cellDate);
@@ -316,18 +311,17 @@ function renderGantt(data) {
             dayCell.className = 'py-2 px-1 text-center text-sm align-top gantt-cell drag-drop-target';
             dayCell.setAttribute('data-employee-id', employee.id);
             dayCell.setAttribute('data-date', cellDateIso);
-            // -------------------------------------------
             
             const assignments = assignmentsByEmployeeAndDay[employee.id] ? assignmentsByEmployeeAndDay[employee.id][dayIndex] || [] : [];
             
             assignments.forEach(a => {
                 const shiftDiv = document.createElement('div');
                 
-                // --- Préparation de la source D&D ---
                 shiftDiv.className = 'p-1 rounded text-sm font-semibold my-1 whitespace-nowrap overflow-hidden text-ellipsis shadow-md cursor-pointer gantt-shift-block-large';
                 shiftDiv.setAttribute('draggable', 'true');
                 shiftDiv.setAttribute('data-assignment-id', a.id);
-                // ---------------------------------------
+                // IMPORTANT : Pour le D&D, on met le pointeur à auto, le fix se fera pendant le dragstart
+                shiftDiv.style.pointerEvents = 'auto'; 
 
                 shiftDiv.style.backgroundColor = a.shift_color;
                 
@@ -376,7 +370,7 @@ function previousWeek() {
 }
 
 
-// --- Fonctions de Contrôle de la Vue ---
+// --- Fonctions de Contrôle et Statistiques (inchangées) ---
 
 function switchView(view) {
   const calendarView = document.getElementById('calendar-view');
@@ -426,18 +420,14 @@ function updateStatistics(startIso = null) {
 let draggedAssignmentId = null;
 
 document.addEventListener('dragstart', function(event) {
-    // Le drag doit se lancer sur le shift block
     const shiftBlock = event.target.closest('.gantt-shift-block-large');
     if (shiftBlock && shiftBlock.getAttribute('draggable') === 'true') {
         draggedAssignmentId = shiftBlock.dataset.assignmentId;
         event.dataTransfer.setData('text/plain', draggedAssignmentId);
         shiftBlock.classList.add('is-dragging'); 
         
-        // CORRECTION #1 (D&D): Ajout temporaire de l'effet "pointer-events: none" 
-        // LORS du drag pour que la cible soit la cellule <td> sous-jacente.
-        // C'est un meilleur compromis que de le mettre globalement dans le CSS.
-        event.dataTransfer.setDragImage(shiftBlock, shiftBlock.offsetWidth / 2, shiftBlock.offsetHeight / 2);
-
+        // CORRECTION D&D PRÉCISION : Désactiver temporairement les événements de la souris 
+        // sur TOUS les shifts pour que l'événement DROP puisse atteindre la cellule <td> sous-jacente.
         document.querySelectorAll('.gantt-shift-block-large').forEach(el => el.style.pointerEvents = 'none');
     }
 });
@@ -448,7 +438,7 @@ document.addEventListener('dragend', function(event) {
         shiftBlock.classList.remove('is-dragging');
     }
     
-    // CORRECTION #1 (D&D): Réactiver pointer-events après la fin du drag
+    // CORRECTION D&D PRÉCISION : Réactiver les événements après le drag
     document.querySelectorAll('.gantt-shift-block-large').forEach(el => el.style.pointerEvents = 'auto');
     
     document.querySelectorAll('.drag-drop-target').forEach(cell => cell.classList.remove('drag-over'));
@@ -458,7 +448,7 @@ document.addEventListener('dragend', function(event) {
 document.addEventListener('dragover', function(event) {
     const targetCell = event.target.closest('.drag-drop-target');
     if (targetCell) {
-        event.preventDefault(); // ESSENTIEL
+        event.preventDefault(); 
         targetCell.classList.add('drag-over'); 
     }
 });
@@ -473,7 +463,7 @@ document.addEventListener('dragleave', function(event) {
 document.addEventListener('drop', function(event) {
     event.preventDefault();
     
-    // La cible est maintenant garantie d'être la <td> grâce au pointer-events:none temporaire
+    // Grâce au `pointer-events: none` dans dragstart, targetCell est la <td> correcte.
     const targetCell = event.target.closest('.drag-drop-target'); 
     
     document.querySelectorAll('.drag-drop-target').forEach(cell => cell.classList.remove('drag-over'));
@@ -507,7 +497,6 @@ document.addEventListener('drop', function(event) {
         })
         .then(data => {
             if (data.success) {
-                // 2. Recharger les données du planning
                 loadGanttView(); 
             } else {
                 alert('Erreur lors du déplacement : ' + (data.error || 'Erreur inconnue'));
@@ -523,7 +512,7 @@ document.addEventListener('drop', function(event) {
     }
 });
 
-// --- Initialisation au chargement (AFFICHER GANTT PAR DÉFAUT) ---
+// --- Initialisation au chargement ---
 document.addEventListener('DOMContentLoaded', function() {
   initCalendar(); 
   switchView('gantt'); 
@@ -531,7 +520,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <style>
-/* --- Styles de la vue Gantt (Mise à jour pour le fix D&D) --- */
+/* --- Styles de la vue Gantt (optimisés) --- */
 
 .view-toggle {
   transition: all 0.3s ease;
@@ -555,7 +544,7 @@ document.addEventListener('DOMContentLoaded', function() {
   vertical-align: top;
 }
 
-/* FIX D&D : Suppression du pointer-events: none; ici pour permettre le dragstart */
+/* IMPORTANT : On le laisse sur auto ici, il sera désactivé par JS seulement pendant le drag */
 .gantt-shift-block-large {
     padding: 4px 6px !important; 
     line-height: 1.3;
@@ -563,9 +552,7 @@ document.addEventListener('DOMContentLoaded', function() {
     letter-spacing: 0.01em;
     opacity: 0.98;
     transition: all 0.1s ease;
-    
-    /* REMOVED: pointer-events: none; */
-    pointer-events: auto; /* Laisser par défaut (auto) pour que dragstart fonctionne */
+    pointer-events: auto; 
 }
 
 .gantt-shift-block-large:hover {
@@ -575,17 +562,13 @@ document.addEventListener('DOMContentLoaded', function() {
     z-index: 10;
 }
 
-/* Style de glissement */
 .gantt-shift-block-large.is-dragging {
     opacity: 0.4;
     border: 2px dashed #3B82F6;
     box-shadow: none;
     cursor: grabbing !important;
-    /* On laisse pointer-events: auto pour éviter les interférences */
 }
 
-
-/* Styles de la table (Sticky Columns, etc.) */
 .gantt-table thead th:first-child,
 .gantt-table tbody td:first-child {
   z-index: 20; 
@@ -609,7 +592,6 @@ document.addEventListener('DOMContentLoaded', function() {
   max-width: 180px;
 }
 
-/* Feedback pour le Glisser-Déposer */
 .drag-drop-target.drag-over {
     background-color: #EBF8FF !important; 
     box-shadow: inset 0 0 0 2px #3B82F6;
