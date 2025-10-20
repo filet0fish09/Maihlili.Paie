@@ -12,6 +12,9 @@ from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 # ------------------------------------------
 
+# Définition de la couleur de branding à partir de votre logo
+MAIHLILI_BRAND_ROSE = colors.HexColor('#EE82EE') # Couleur Rose/Violette
+MAIHLILI_GREY = colors.HexColor('#F4F4F4') # Gris très clair pour l'alternance
 app = Flask(__name__)
 
 # Configuration pour Render avec PostgreSQL
@@ -1196,6 +1199,18 @@ def export_gantt_pdf():
     if not current_user.is_manager:
         return jsonify({'error': 'Accès refusé'}), 403
 
+    # Fonction pour déterminer la couleur du texte (noir ou blanc) en fonction du fond
+    def get_text_color(hex_color_str):
+        # Convertir la chaîne hex en objet colors.Color pour manipulation
+        try:
+            color_obj = colors.HexColor(hex_color_str)
+        except: 
+            color_obj = colors.HexColor('#888888') 
+            
+        r, g, b = color_obj.red, color_obj.green, color_obj.blue
+        brightness = (r * 0.299 + g * 0.587 + b * 0.114) # Luminosité (0 à 1)
+        return "white" if brightness < 0.5 else "black"
+
     # 1. Préparation de la date de début de semaine
     start_date_str = request.args.get('start')
     if start_date_str:
@@ -1208,8 +1223,10 @@ def export_gantt_pdf():
     data = get_gantt_data_for_week(start_date, current_user)
     employees = data['employees']
     assignments = data['assignments']
-    week_start = data['week_start'] # On ne garde que la date pour le titre
-    week_end = data['week_end'] - timedelta(days=1) # Le dernier jour de la semaine
+    
+    week_start = data['week_start']
+    # Correction: L'objet week_end est un datetime.date/datetime.datetime, pas besoin de .date()
+    week_end = data.get('week_end', week_start + timedelta(days=7)) - timedelta(days=1)
 
     # 3. Préparation du PDF
     buffer = BytesIO()
@@ -1218,63 +1235,129 @@ def export_gantt_pdf():
     styles = getSampleStyleSheet()
     story = []
 
-    # 4. Titre et plage de dates
-    title = f"PLANNING HEBDOMADAIRE Maihlili PAIE"
-    story.append(Paragraph(title, styles['Title']))
-    date_range = f"Du {week_start.strftime('%d/%m/%Y')} au {week_end.strftime('%d/%m/%Y')}"
-    story.append(Paragraph(date_range, styles['h2']))
-    story.append(Spacer(1, 12))
+    # 4. En-tête (Logo et Titre)
+    header_table_data = []
+    
+    # 4a. Ajout du logo en haut à gauche
+    logo_path = os.path.join(app.root_path, 'static', 'images', 'Bleu Rose Bold Minimaliste Abstrait Logo.png') 
+    
+    logo_element = Spacer(1, 1) # Placeholder si logo introuvable
+    if os.path.exists(logo_path):
+        logo_element = Image(logo_path, width=70, height=45) # Ajustez la taille
+    
+    # Titre centré
+    title_text = f"""
+    <font size='18' color='{MAIHLILI_BRAND_ROSE}'><b>PLANNING HEBDOMADAIRE</b></font><br/>
+    <font size='10' color='#555555'>Du {week_start.strftime('%d/%m/%Y')} au {week_end.strftime('%d/%m/%Y')}</font>
+    """
+    title_element = Paragraph(title_text, styles['Normal'])
+    title_element.alignment = 1 # Center
+
+    # Créer le tableau d'en-tête pour aligner logo à gauche et titre au centre
+    header_table = Table([[logo_element, title_element, Spacer(1, 1)]], colWidths=[70, doc.width - 140, 70])
+    header_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('ALIGN', (1, 0), (1, 0), 'CENTER'),
+        ('LEFTPADDING', (0, 0), (0, 0), 0),
+        ('RIGHTPADDING', (2, 0), (2, 0), 0),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
+    ]))
+    story.append(header_table)
+    story.append(Spacer(1, 18)) # Espace après l'en-tête
 
     # 5. Préparation des données du tableau
     days_full = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
-    header = [Paragraph(d, styles['Normal']) for d in ['Employé'] + days_full]
-    table_data = [header]
+    
+    # En-tête du planning
+    header_content = [Paragraph("<b>Employé</b><br/><font size='7'>Poste</font>", styles['Normal'])]
+    for i in range(7):
+        current_date = week_start + timedelta(days=i)
+        header_text = f"<b>{days_full[i]}</b><br/><font size='8'>{current_date.strftime('%d/%m')}</font>"
+        # Utiliser un style Normal (centré) pour l'en-tête
+        p = Paragraph(header_text, styles['Normal'])
+        p.alignment = 1 # Center
+        header_content.append(p)
+    
+    table_data = [header_content]
 
     # Structure pour regrouper les assignations par employé et par jour
     assignments_by_employee_and_day = {emp['id']: {i: [] for i in range(7)} for emp in employees}
     
     for a in assignments:
-        # Trouver le jour de la semaine (0=Lun à 6=Dim)
         day_of_week_index = a['start'].weekday()
         employee_id = a['employee_id']
         
-        assignments_by_employee_and_day[employee_id][day_of_week_index].append(f"{a['shift_name']} ({a['start_time']}-{a['end_time']})")
+        content_str = f"<b>{a['shift_name']}</b><br/>{a['start_time']}-{a['end_time']}"
+        color_hex = a['shift_color']
+        
+        assignments_by_employee_and_day[employee_id][day_of_week_index].append((content_str, color_hex))
 
     # Remplissage des lignes du tableau
-    for emp in employees:
-        row = [Paragraph(emp['name'], styles['Normal'])]
+    day_cell_style = styles['BodyText']
+    day_cell_style.fontSize = 8
+    day_cell_style.leading = 9
+    day_cell_style.alignment = 1 # Center alignment
+    
+    for emp_index, emp in enumerate(employees):
+        # Nom de l'employé à gauche
+        emp_name_text = f"<b>{emp['name']}</b><br/><font size='7' color='#555555'>{emp.get('position', 'Employé')}</font>"
+        row = [Paragraph(emp_name_text, styles['Normal'])]
+        
         emp_assignments = assignments_by_employee_and_day.get(emp['id'], {i: [] for i in range(7)})
         
         for i in range(7):
             shifts = emp_assignments[i]
-            # Utiliser '<br/>' pour les sauts de ligne et Paragraph pour le contenu
-            content = '<br/>'.join(shifts) if shifts else '-'
-            style = styles['BodyText']
-            # Styles plus petits pour le contenu des cellules
-            style.fontSize = 8
-            style.leading = 10
-            row.append(Paragraph(content, style))
+            cell_content_html = []
+            
+            if shifts:
+                for content_str, color_hex in shifts:
+                    text_color = get_text_color(color_hex)
+                    
+                    # Style inspiré de SPV: un bloc coloré contenant le shift
+                    markup = f'<span bgcolor="{color_hex}" color="{text_color}">&nbsp; {content_str} &nbsp;</span>'
+                    cell_content_html.append(markup)
+                
+                # Double saut de ligne pour séparer les shifts dans la même journée
+                content = '<br/><br/>'.join(cell_content_html)
+                row.append(Paragraph(content, day_cell_style))
+            else:
+                row.append(Paragraph('', day_cell_style)) # Laisser vide pour plus de clarté
         
         table_data.append(row)
 
 
     # 6. Création et style du tableau
-    page_width = A4[1] - 60 
-    col_widths = [page_width * 0.15] + [ (page_width * 0.85) / 7 ] * 7 
+    page_width = doc.width 
+    # 18% pour l'employé, 82%/7 pour les jours
+    col_widths = [page_width * 0.18] + [ (page_width * 0.82) / 7 ] * 7 
     
     table = Table(table_data, colWidths=col_widths)
     
     table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2563EB')),
+        # En-tête
+        ('BACKGROUND', (0, 0), (-1, 0), MAIHLILI_BRAND_ROSE), # Rose de Branding
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('ALIGN', (0, 0), (0, -1), 'LEFT'),
-        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ('FONTSIZE', (0, 0), (-1, 0), 10),
-        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#CCCCCC')),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+        
+        # Corps du tableau
+        ('ALIGN', (0, 0), (0, -1), 'LEFT'), # Nom de l'employé à gauche
+        ('VALIGN', (0, 1), (-1, -1), 'TOP'), # Contenu en haut de la cellule pour les shifts
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#DDDDDD')), # Grille fine et claire
         ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        
+        ('LEFTPADDING', (0, 1), (0, -1), 8), # Padding à gauche pour le nom de l'employé
+        ('RIGHTPADDING', (0, 1), (0, -1), 4),
+        ('TOPPADDING', (1, 1), (-1, -1), 6), 
+        ('BOTTOMPADDING', (1, 1), (-1, -1), 6), 
+        
+        # Couleur d'arrière-plan alternée (gris très clair / blanc)
+        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [MAIHLILI_GREY, colors.white]),
     ]))
 
     story.append(table)
@@ -1287,7 +1370,7 @@ def export_gantt_pdf():
         
         return pdf, 200, {
             'Content-Type': 'application/pdf',
-            'Content-Disposition': f'attachment; filename="planning_gantt_{week_start.strftime("%Y%m%d")}.pdf"'
+            'Content-Disposition': f'attachment; filename="planning_maihlili_{week_start.strftime("%Y%m%d")}.pdf"'
         }
     except Exception as e:
         print(f"Erreur lors de la construction du PDF: {e}")
@@ -1302,4 +1385,5 @@ if __name__ == "__main__":
     # Configuration pour production Render
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
