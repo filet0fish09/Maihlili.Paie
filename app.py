@@ -1309,25 +1309,36 @@ def export_gantt_pdf():
             
             if shifts:
                 for content_str, color_hex in shifts:
-                    text_color = get_text_color(color_hex)
+                    # 1. Obtenir le nom de la couleur de texte (white ou black)
+                    text_color_name = get_text_color_name(color_hex)
                     
-                    # CORRECTION DU BLOC DE SHIFT :
-                    # Utilisation d'un bloc <para> pour forcer le rectangle et éviter l'étirement excessif.
-                    # On retire les &nbsp; en début/fin et on utilise un padding interne.
-                    # On définit la largeur du bloc. ReportLab est difficile à cet égard,
-                    # le style est appliqué au bloc P, pas au SPAN.
+                    # 2. Convertir le nom en objet couleur ReportLab (CORRECTION DE L'ERREUR)
+                    text_color_obj = getattr(colors, text_color_name) 
                     
-                    # Pour un meilleur rendu "rectangulaire" :
-                    p_style = styles['BodyText']
+                    # 3. Cloner le style pour éviter de modifier le style global BodyText (MEILLEURE PRATIQUE)
+                    p_style = styles['BodyText'].clone('ShiftBlockStyle') 
+                    
+                    # 4. Appliquer les styles pour le rendu Gantt (Rectangle)
                     p_style.alignment = 1
-                    p_style.textColor = colors.HexColor(text_color)
+                    p_style.textColor = text_color_obj
                     p_style.backColor = colors.HexColor(color_hex)
                     p_style.fontSize = 8
                     p_style.fontName = 'Helvetica'
-                    p_style.borderPadding = 2
-                    p_style.borderRadius = 3 # Légers coins arrondis
-                    p_style.leftIndent = 5 # Padding horizontal pour centrer
-                    p_style.rightIndent = 5
+                    p_style.borderPadding = 3 # Augmente le padding à l'intérieur du rectangle
+                    p_style.borderRadius = 3 
+                    
+                    markup = f'{content_str}'
+                    
+                    shift_p = Paragraph(markup, p_style)
+                    cell_content_html.append(shift_p)
+                
+                # Les éléments Paragraphs (les shifts) sont ajoutés directement à la cellule comme une liste
+                row.append(cell_content_html)
+            else:
+                # Créer un Paragraph simple pour les cellules vides ou sans shift
+                empty_p = Paragraph('', styles['BodyText'].clone('EmptyCell'))
+                empty_p.alignment = 1
+                row.append(empty_p)
                     
                     # On utilise <para> pour créer le bloc stylé
                     markup = f'{content_str}'
@@ -1403,6 +1414,7 @@ if __name__ == "__main__":
     # Configuration pour production Render
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
