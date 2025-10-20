@@ -13,8 +13,10 @@ from io import BytesIO
 # ------------------------------------------
 
 # Définition de la couleur de branding à partir de votre logo
-MAIHLILI_BRAND_ROSE = colors.HexColor('#EE82EE') # Couleur Rose/Violette
-MAIHLILI_GREY = colors.HexColor('#F4F4F4') # Gris très clair pour l'alternance
+MAIHLILI_FOND_TABLE = colors.HexColor('#FFF0F8') # Fond du tableau (simule le fond du doc)
+MAIHLILI_TITRES_BLEU = colors.HexColor('#3055FF') # Bleu pour les titres et en-têtes
+MAIHLILI_BLANC = colors.white
+
 app = Flask(__name__)
 
 # Configuration pour Render avec PostgreSQL
@@ -1201,14 +1203,13 @@ def export_gantt_pdf():
 
     # Fonction pour déterminer la couleur du texte (noir ou blanc) en fonction du fond
     def get_text_color(hex_color_str):
-        # Convertir la chaîne hex en objet colors.Color pour manipulation
         try:
             color_obj = colors.HexColor(hex_color_str)
         except: 
             color_obj = colors.HexColor('#888888') 
             
         r, g, b = color_obj.red, color_obj.green, color_obj.blue
-        brightness = (r * 0.299 + g * 0.587 + b * 0.114) # Luminosité (0 à 1)
+        brightness = (r * 0.299 + g * 0.587 + b * 0.114)
         return "white" if brightness < 0.5 else "black"
 
     # 1. Préparation de la date de début de semaine
@@ -1225,39 +1226,37 @@ def export_gantt_pdf():
     assignments = data['assignments']
     
     week_start = data['week_start']
-    # Correction: L'objet week_end est un datetime.date/datetime.datetime, pas besoin de .date()
     week_end = data.get('week_end', week_start + timedelta(days=7)) - timedelta(days=1)
 
     # 3. Préparation du PDF
     buffer = BytesIO()
-    # Utiliser un document plus large (Landscape A4) pour le planning
     doc = SimpleDocTemplate(buffer, pagesize=(A4[1], A4[0]), leftMargin=30, rightMargin=30, topMargin=30, bottomMargin=30)
     styles = getSampleStyleSheet()
     story = []
 
     # 4. En-tête (Logo et Titre)
-    header_table_data = []
     
-    # 4a. Ajout du logo en haut à gauche
-    logo_path = os.path.join(app.root_path, 'static', 'images', 'Bleu Rose Bold Minimaliste Abstrait Logo.png') 
+    # 4a. Chemin du logo
+    # Utilisation du chemin exact demandé : static/images/maihlili-logo-light.png
+    logo_path = os.path.join(app.root_path, 'static', 'images', 'maihlili-logo-light.png') 
     
-    logo_element = Spacer(1, 1) # Placeholder si logo introuvable
+    logo_element = Spacer(1, 1) 
     if os.path.exists(logo_path):
-        logo_element = Image(logo_path, width=70, height=45) # Ajustez la taille
+        logo_element = Image(logo_path, width=70, height=45) # Ajustez la taille si besoin
     
-    # Titre centré
+    # Titre centré (Couleur du titre en bleu #3055ff)
     title_text = f"""
-    <font size='18' color='{MAIHLILI_BRAND_ROSE}'><b>PLANNING HEBDOMADAIRE</b></font><br/>
+    <font size='18' color='{MAIHLILI_TITRES_BLEU}'><b>PLANNING HEBDOMADAIRE</b></font><br/>
     <font size='10' color='#555555'>Du {week_start.strftime('%d/%m/%Y')} au {week_end.strftime('%d/%m/%Y')}</font>
     """
     title_element = Paragraph(title_text, styles['Normal'])
     title_element.alignment = 1 # Center
 
-    # Créer le tableau d'en-tête pour aligner logo à gauche et titre au centre
+    # Création du tableau d'en-tête pour aligner logo à gauche et titre au centre
     header_table = Table([[logo_element, title_element, Spacer(1, 1)]], colWidths=[70, doc.width - 140, 70])
     header_table.setStyle(TableStyle([
         ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ('ALIGN', (1, 0), (1, 0), 'CENTER'),
         ('LEFTPADDING', (0, 0), (0, 0), 0),
         ('RIGHTPADDING', (2, 0), (2, 0), 0),
@@ -1269,12 +1268,11 @@ def export_gantt_pdf():
     # 5. Préparation des données du tableau
     days_full = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
     
-    # En-tête du planning
+    # En-tête du planning (Fond des en-têtes en bleu #3055ff)
     header_content = [Paragraph("<b>Employé</b><br/><font size='7'>Poste</font>", styles['Normal'])]
     for i in range(7):
         current_date = week_start + timedelta(days=i)
         header_text = f"<b>{days_full[i]}</b><br/><font size='8'>{current_date.strftime('%d/%m')}</font>"
-        # Utiliser un style Normal (centré) pour l'en-tête
         p = Paragraph(header_text, styles['Normal'])
         p.alignment = 1 # Center
         header_content.append(p)
@@ -1300,7 +1298,6 @@ def export_gantt_pdf():
     day_cell_style.alignment = 1 # Center alignment
     
     for emp_index, emp in enumerate(employees):
-        # Nom de l'employé à gauche
         emp_name_text = f"<b>{emp['name']}</b><br/><font size='7' color='#555555'>{emp.get('position', 'Employé')}</font>"
         row = [Paragraph(emp_name_text, styles['Normal'])]
         
@@ -1314,29 +1311,27 @@ def export_gantt_pdf():
                 for content_str, color_hex in shifts:
                     text_color = get_text_color(color_hex)
                     
-                    # Style inspiré de SPV: un bloc coloré contenant le shift
+                    # Markup pour les blocs de shift colorés
                     markup = f'<span bgcolor="{color_hex}" color="{text_color}">&nbsp; {content_str} &nbsp;</span>'
                     cell_content_html.append(markup)
                 
-                # Double saut de ligne pour séparer les shifts dans la même journée
                 content = '<br/><br/>'.join(cell_content_html)
                 row.append(Paragraph(content, day_cell_style))
             else:
-                row.append(Paragraph('', day_cell_style)) # Laisser vide pour plus de clarté
+                row.append(Paragraph('', day_cell_style)) 
         
         table_data.append(row)
 
 
     # 6. Création et style du tableau
     page_width = doc.width 
-    # 18% pour l'employé, 82%/7 pour les jours
     col_widths = [page_width * 0.18] + [ (page_width * 0.82) / 7 ] * 7 
     
     table = Table(table_data, colWidths=col_widths)
     
     table.setStyle(TableStyle([
         # En-tête
-        ('BACKGROUND', (0, 0), (-1, 0), MAIHLILI_BRAND_ROSE), # Rose de Branding
+        ('BACKGROUND', (0, 0), (-1, 0), MAIHLILI_TITRES_BLEU), # Bleu #3055ff
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
         ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
@@ -1344,20 +1339,21 @@ def export_gantt_pdf():
         ('FONTSIZE', (0, 0), (-1, 0), 10),
         ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
         
-        # Corps du tableau
-        ('ALIGN', (0, 0), (0, -1), 'LEFT'), # Nom de l'employé à gauche
-        ('VALIGN', (0, 1), (-1, -1), 'TOP'), # Contenu en haut de la cellule pour les shifts
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#DDDDDD')), # Grille fine et claire
+        # Corps du tableau (Fond en #FFF0F8)
+        ('BACKGROUND', (0, 1), (-1, -1), MAIHLILI_FOND_TABLE), # Fond général du tableau en #FFF0F8
+        
+        # Lignes alternées (lignes paires en blanc pour un contraste subtil)
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [MAIHLILI_FOND_TABLE, MAIHLILI_BLANC]), 
+
+        ('ALIGN', (0, 0), (0, -1), 'LEFT'), 
+        ('VALIGN', (0, 1), (-1, -1), 'TOP'), 
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#DDDDDD')), 
         ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
         
-        ('LEFTPADDING', (0, 1), (0, -1), 8), # Padding à gauche pour le nom de l'employé
+        ('LEFTPADDING', (0, 1), (0, -1), 8), 
         ('RIGHTPADDING', (0, 1), (0, -1), 4),
         ('TOPPADDING', (1, 1), (-1, -1), 6), 
         ('BOTTOMPADDING', (1, 1), (-1, -1), 6), 
-        
-        # Couleur d'arrière-plan alternée (gris très clair / blanc)
-        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
-        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [MAIHLILI_GREY, colors.white]),
     ]))
 
     story.append(table)
@@ -1385,5 +1381,6 @@ if __name__ == "__main__":
     # Configuration pour production Render
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
