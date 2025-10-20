@@ -213,9 +213,6 @@ class Shift(db.Model):
 class Assignment(db.Model):
     __tablename__ = 'assignments'
     
-    class Assignment(db.Model):
-    __tablename__ = 'assignments'
-    
     id = db.Column(db.Integer, primary_key=True)
     employee_id = db.Column(db.Integer, db.ForeignKey('employees.id'), nullable=False)
     shift_id = db.Column(db.Integer, db.ForeignKey('shifts.id'), nullable=False)
@@ -278,5 +275,6 @@ class TimeSheetEntry(db.Model):
         
     def __repr__(self):
         return f'<TimeSheetEntry {self.id} for Assignment {self.assignment_id}>'
+
 
 
