@@ -23,10 +23,17 @@
   <div id="gantt-view" class="bg-white rounded-xl shadow-sm border border-gray-200">
     <div class="p-6 border-b border-gray-200 flex justify-between items-center">
       <h3 class="text-lg font-semibold">📊 Vue Gantt - Planning hebdomadaire</h3>
-      <div class="flex gap-2">
-        <button onclick="previousWeek()" class="px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">← Semaine précédente</button>
-        <span id="week-info" class="px-4 py-2 text-sm font-medium"></span>
-        <button onclick="nextWeek()" class="px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">Semaine suivante →</button>
+      <div class="flex gap-4 items-center">
+        <button onclick="exportGanttPdf()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center text-sm font-medium">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+          Exporter PDF
+        </button>
+
+        <div class="flex gap-2">
+          <button onclick="previousWeek()" class="px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">← Semaine précédente</button>
+          <span id="week-info" class="px-4 py-2 text-sm font-medium"></span>
+          <button onclick="nextWeek()" class="px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">Semaine suivante →</button>
+        </div>
       </div>
     </div>
 
@@ -109,7 +116,7 @@ function initCalendar() {
   const calendarEl = document.getElementById('calendar');
   
   if (calendar) {
-    calendar.destroy(); // Détruire l'instance précédente si elle existe
+    calendar.destroy();
   }
 
   calendar = new FullCalendar.Calendar(calendarEl, {
@@ -175,8 +182,8 @@ Statut: ${props.status || 'Confirmé'}
           const transformedEvents = events.map(event => ({
               ...event,
               extendedProps: {
-                  ...event, // Inclure toutes les extendedProps de l'API
-                  shift_color: event.color, // Utiliser 'color' de l'API pour fullcalendar
+                  ...event, 
+                  shift_color: event.color,
               }
           }));
           successCallback(transformedEvents);
@@ -242,7 +249,6 @@ function renderGantt(data) {
     
     const assignmentsByEmployeeAndDay = {};
 
-    // Regrouper les assignations par employé et par jour
     data.assignments.forEach(a => {
         const date = a.start.substring(0, 10);
         const dayOfWeek = new Date(date).getDay(); 
@@ -258,7 +264,6 @@ function renderGantt(data) {
         assignmentsByEmployeeAndDay[employeeId][dayOfWeek].push(a);
     });
 
-    // Générer le tableau
     data.employees.forEach(employee => {
         const row = tbody.insertRow();
         row.className = 'hover:bg-gray-50';
@@ -272,7 +277,6 @@ function renderGantt(data) {
         for (let i = 1; i <= 7; i++) {
             const dayIndex = i % 7; 
             const dayCell = row.insertCell();
-            // CLASSE AJUSTÉE pour plus d'espace vertical
             dayCell.className = 'py-2 px-1 text-center text-sm align-top gantt-cell';
             
             const assignments = assignmentsByEmployeeAndDay[employee.id] ? assignmentsByEmployeeAndDay[employee.id][dayIndex] || [] : [];
@@ -280,24 +284,21 @@ function renderGantt(data) {
             assignments.forEach(a => {
                 const shiftDiv = document.createElement('div');
                 
-                // STYLE AMÉLIORÉ: Plus grand et plus lisible (gantt-shift-block-large)
+                // Utilisation de la classe pour les blocs plus grands
                 shiftDiv.className = 'p-1 rounded text-sm font-semibold my-1 whitespace-nowrap overflow-hidden text-ellipsis shadow-md cursor-pointer gantt-shift-block-large';
                 shiftDiv.style.backgroundColor = a.shift_color;
                 
-                // Changer la couleur du texte
                 if (isDark(a.shift_color)) {
                     shiftDiv.style.color = 'white';
                 } else {
                     shiftDiv.style.color = '#333';
                 }
 
-                // CONTENU: Nom + Heures
                 shiftDiv.innerHTML = `
                     <div class="truncate leading-tight">${a.shift_name}</div>
                     <div class="font-normal leading-tight text-opacity-90 text-xs">${a.start_time}-${a.end_time}</div>
                 `;
                 
-                // Ajouter le pop-up (alert simple)
                 shiftDiv.onclick = function() {
                     const start = new Date(a.start).toLocaleString('fr-FR');
                     const end = new Date(a.end).toLocaleString('fr-FR');
@@ -330,6 +331,16 @@ function previousWeek() {
     loadGanttView();
 }
 
+// --- NOUVELLE FONCTION PDF ---
+function exportGanttPdf() {
+    // currentWeekStart contient la date de début de la semaine affichée
+    const startIso = formatDate(currentWeekStart);
+    
+    // Ouvre la nouvelle route d'API Flask dans un nouvel onglet pour déclencher le téléchargement
+    const url = `/api/export-gantt-pdf?start=${startIso}`;
+    window.open(url, '_blank');
+}
+
 
 // --- Fonctions de Contrôle de la Vue ---
 
@@ -342,7 +353,6 @@ function switchView(view) {
   if (view === 'calendar') {
     calendarView.classList.remove('hidden');
     ganttView.classList.add('hidden');
-    // Mise à jour des classes
     btnCalendar.classList.remove('bg-gray-200', 'text-gray-800');
     btnCalendar.classList.add('bg-blue-600', 'text-white');
     btnGantt.classList.add('bg-gray-200', 'text-gray-800');
@@ -352,7 +362,6 @@ function switchView(view) {
   } else if (view === 'gantt') {
     calendarView.classList.add('hidden');
     ganttView.classList.remove('hidden');
-    // Mise à jour des classes
     btnGantt.classList.remove('bg-gray-200', 'text-gray-800');
     btnGantt.classList.add('bg-blue-600', 'text-white');
     btnCalendar.classList.add('bg-gray-200', 'text-gray-800');
