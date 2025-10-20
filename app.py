@@ -4,12 +4,13 @@ from models import db, User, Employee, Shift, Assignment, Team
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from datetime import datetime, timedelta
 import os
-# Ajoutez ces importations avec les autres
+# --- NOUVEAUX IMPORTS POUR L'EXPORT PDF ---
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
+# ------------------------------------------
 
 app = Flask(__name__)
 
@@ -60,6 +61,48 @@ def get_manageable_employees(user):
     unique_employees = {emp.id: emp for emp in all_employees}.values()
     
     return list(unique_employees)
+
+# --- NOUVELLE FONCTION HELPER POUR LA RÉCUPÉRATION DES DONNÉES DE PLANNING ---
+def get_gantt_data_for_week(start_date, user):
+    """Récupère les données d'employés et d'assignations pour une semaine donnée."""
+    manageable_employees = get_manageable_employees(user)
+    manageable_ids = [emp.id for emp in manageable_employees]
+
+    # Calculer le début de la semaine (Lundi)
+    week_start = start_date - timedelta(days=start_date.weekday())
+    week_end = week_start + timedelta(days=7)
+    
+    if manageable_ids:
+        assignments_db = Assignment.query.filter(
+            Assignment.employee_id.in_(manageable_ids),
+            Assignment.start >= week_start,
+            Assignment.start < week_end
+        ).all()
+    else:
+        assignments_db = []
+
+    # Formatage pour le frontend (et potentiellement le PDF)
+    assignments_data = []
+    for a in assignments_db:
+        shift_color = a.shift.color if a.shift and a.shift.color else '#888888'
+        assignments_data.append({
+            'id': a.id,
+            'employee_id': a.employee_id,
+            'shift_name': a.shift.name if a.shift else 'N/A',
+            'shift_color': shift_color,
+            'start': a.start, # Format datetime.datetime
+            'end': a.end,     # Format datetime.datetime
+            'start_time': a.start.strftime('%H:%M'),
+            'end_time': a.end.strftime('%H:%M'),
+        })
+
+    return {
+        'employees': [{'id': emp.id, 'name': emp.full_name} for emp in manageable_employees],
+        'assignments': assignments_data,
+        'week_start': week_start,
+        'week_end': week_end
+    }
+# --------------------------------------------------------------------------
 
 # --- Auth ---
 
@@ -292,18 +335,15 @@ def api_events():
     events = [
     {
         "id": a.id,
-            # NOUVEAU TITRE : Shift (HH:MM - HH:MM) - Nom Employé
-            "title": f"{a.shift.name} ({a.start.strftime('%H:%M')} - {a.end.strftime('%H:%M')}) - {a.employee.full_name}", 
+            "title": f"{a.employee.full_name} - {a.shift.name}" if a.shift else f"{a.employee.full_name} - Shift",
             "start": a.start.isoformat(),
             "end": a.end.isoformat(),
             "allDay": False,
-            
-            # PROPRIÉTÉS SUPPLÉMENTAIRES POUR LE STYLE ET LE POP-UP
-            "shift_name": a.shift.name,
-            "employee_name": a.employee.full_name,
-            "color": a.shift.color, # 👈 Utiliser la couleur du Shift pour le calendrier
-            "duration": round((a.end - a.start).total_seconds() / 3600, 1), 
-            "status": "Planifié",
+            "color": a.shift.color if a.shift else '#888888',
+            "extendedProps": {
+                "employee_name": a.employee.full_name,
+                "shift_name": a.shift.name if a.shift else 'N/A'
+            }
     }
     for a in q.all()
 ]
@@ -399,6 +439,8 @@ def show_employees():
         teams = Team.query.all()
     elif current_user.employee:
         teams = Team.query.filter_by(manager_id=current_user.employee.id).all()
+    else:
+        teams = []
     
     return render_template("employees.html", employees=employees, teams=teams)
 
@@ -1078,54 +1120,32 @@ def planning():
 @login_required
 def api_gantt_data():
     """Récupère les données pour afficher la vue Gantt"""
-    from datetime import datetime, timedelta
-    
     start_str = request.args.get("start")
     
+    # Déterminer la date de début pour le helper
     if not start_str:
-        start_date = datetime.now()
-        start_date = start_date - timedelta(days=start_date.weekday())
+        start_date = datetime.now().date()
     else:
-        start_date = datetime.fromisoformat(start_str)
+        # Assurez-vous d'avoir une date simple pour le calcul du Lundi
+        start_date = datetime.fromisoformat(start_str).date()
     
-    end_date = start_date + timedelta(days=7)
-    
-    # Récupérer les employés gérables
-    manageable_employees = get_manageable_employees(current_user)
-    manageable_ids = [emp.id for emp in manageable_employees]
-    
-    # Récupérer les assignations de la semaine
-    if manageable_ids:
-        assignments = Assignment.query.filter(
-            Assignment.employee_id.in_(manageable_ids),
-            Assignment.start >= start_date,
-            Assignment.start < end_date
-        ).all()
-    else:
-        assignments = []
-    
-    # Formater les données
-    employees = [{"id": emp.id, "name": emp.full_name} for emp in manageable_employees]
-    
-    assignments_data = [
+    # Utiliser le helper
+    data = get_gantt_data_for_week(start_date, current_user)
+
+    # Convertir les objets datetime en ISO string pour JSON
+    assignments_json = [
         {
-            "employee_id": a.employee_id,
-            "shift_id": a.shift_id,
-            "shift_name": a.shift.name,
-            "shift_color": a.shift.color,
-            "start": a.start.isoformat(),
-            "start_time": a.start.strftime("%H:%M"),
-            "end": a.end.isoformat(),
-            "end_time": a.end.strftime("%H:%M"),
-        }
-        for a in assignments
+            **a, 
+            'start': a['start'].isoformat(), 
+            'end': a['end'].isoformat()
+        } for a in data['assignments']
     ]
     
     return jsonify({
-        "employees": employees,
-        "assignments": assignments_data,
-        "start": start_date.isoformat(),
-        "end": end_date.isoformat()
+        "employees": data['employees'],
+        "assignments": assignments_json,
+        "start": data['week_start'].isoformat(),
+        "end": data['week_end'].isoformat()
     })
 
 
@@ -1134,7 +1154,6 @@ def api_gantt_data():
 @login_required
 def api_planning_stats():
     """Récupère les statistiques du planning"""
-    from datetime import datetime, timedelta
     
     manageable_employees = get_manageable_employees(current_user)
     manageable_ids = [emp.id for emp in manageable_employees]
@@ -1170,40 +1189,36 @@ def api_planning_stats():
     })
 
 
-# ... après les autres routes existantes
-
+# --- NOUVELLE ROUTE POUR L'EXPORT PDF (REMPLACE LE PLACEHOLDER) ---
 @app.route('/api/export-gantt-pdf', methods=['GET'])
 @login_required
 def export_gantt_pdf():
+    if not current_user.is_manager:
+        return jsonify({'error': 'Accès refusé'}), 403
+
     # 1. Préparation de la date de début de semaine
     start_date_str = request.args.get('start')
     if start_date_str:
         start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
     else:
-        # Si aucune date n'est fournie, prendre le début de la semaine actuelle
         today = datetime.now().date()
         start_date = today - timedelta(days=today.weekday())
 
-    week_start = start_date
-    week_end = week_start + timedelta(days=6)
-    
     # 2. Récupération des données Gantt
-    try:
-        data = get_gantt_data(week_start) # Réutiliser la fonction qui sert /api/gantt-data
-        employees = data['employees']
-        assignments = data['assignments']
-    except Exception as e:
-        # En cas d'erreur de base de données
-        print(f"Erreur lors de la récupération des données Gantt: {e}")
-        return jsonify({'error': 'Erreur lors de la récupération des données de planning.'}), 500
+    data = get_gantt_data_for_week(start_date, current_user)
+    employees = data['employees']
+    assignments = data['assignments']
+    week_start = data['week_start'].date() # On ne garde que la date pour le titre
+    week_end = data['week_end'].date() - timedelta(days=1) # Le dernier jour de la semaine
 
     # 3. Préparation du PDF
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4, leftMargin=30, rightMargin=30, topMargin=30, bottomMargin=30)
+    # Utiliser un document plus large (Landscape A4) pour le planning
+    doc = SimpleDocTemplate(buffer, pagesize=(A4[1], A4[0]), leftMargin=30, rightMargin=30, topMargin=30, bottomMargin=30)
     styles = getSampleStyleSheet()
     story = []
 
-    # 4. Titre
+    # 4. Titre et plage de dates
     title = f"PLANNING HEBDOMADAIRE Maihlili PAIE"
     story.append(Paragraph(title, styles['Title']))
     date_range = f"Du {week_start.strftime('%d/%m/%Y')} au {week_end.strftime('%d/%m/%Y')}"
@@ -1211,52 +1226,54 @@ def export_gantt_pdf():
     story.append(Spacer(1, 12))
 
     # 5. Préparation des données du tableau
-    
-    # En-tête du tableau
-    days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
-    header = ['Employé'] + days
+    days_full = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
+    header = [Paragraph(d, styles['Normal']) for d in ['Employé'] + days_full]
     table_data = [header]
 
-    # Données par employé
-    assignments_by_employee_and_day = {}
+    # Structure pour regrouper les assignations par employé et par jour
+    assignments_by_employee_and_day = {emp['id']: {i: [] for i in range(7)} for emp in employees}
+    
     for a in assignments:
-        date = datetime.strptime(a['start'].split('T')[0], '%Y-%m-%d')
-        day_of_week_index = date.weekday() # 0=Lun, 6=Dim
+        # Trouver le jour de la semaine (0=Lun à 6=Dim)
+        day_of_week_index = a['start'].weekday()
         employee_id = a['employee_id']
         
-        if employee_id not in assignments_by_employee_and_day:
-            assignments_by_employee_and_day[employee_id] = {i: [] for i in range(7)}
-            
         assignments_by_employee_and_day[employee_id][day_of_week_index].append(f"{a['shift_name']} ({a['start_time']}-{a['end_time']})")
 
+    # Remplissage des lignes du tableau
     for emp in employees:
-        row = [emp.full_name]
-        emp_assignments = assignments_by_employee_and_day.get(emp.id, {i: [] for i in range(7)})
+        row = [Paragraph(emp['name'], styles['Normal'])]
+        emp_assignments = assignments_by_employee_and_day.get(emp['id'], {i: [] for i in range(7)})
         
         for i in range(7):
-            # Récupérer les shifts pour ce jour (index 0=Lun à 6=Dim)
             shifts = emp_assignments[i]
-            row.append('\n'.join(shifts) if shifts else '-')
+            # Utiliser '<br/>' pour les sauts de ligne et Paragraph pour le contenu
+            content = '<br/>'.join(shifts) if shifts else '-'
+            style = styles['BodyText']
+            # Styles plus petits pour le contenu des cellules
+            style.fontSize = 8
+            style.leading = 10
+            row.append(Paragraph(content, style))
         
         table_data.append(row)
 
 
     # 6. Création et style du tableau
-    col_widths = [100] + [ (A4[0] - 160) / 7 ] * 7 # 100px pour Employé, le reste divisé
+    page_width = A4[1] - 60 
+    col_widths = [page_width * 0.15] + [ (page_width * 0.85) / 7 ] * 7 
+    
     table = Table(table_data, colWidths=col_widths)
     
     table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2563EB')), # En-tête bleu
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2563EB')),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('ALIGN', (0, 0), (0, -1), 'LEFT'), # Nom de l'employé à gauche
+        ('ALIGN', (0, 0), (0, -1), 'LEFT'),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
         ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#CCCCCC')),
         ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 0), (-1, -1), 8), # Texte plus petit pour que ça rentre
-        ('LEFTPADDING', (0, 0), (-1, -1), 4),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 4),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
     ]))
 
@@ -1268,7 +1285,6 @@ def export_gantt_pdf():
         pdf = buffer.getvalue()
         buffer.close()
         
-        # Retourner le PDF
         return pdf, 200, {
             'Content-Type': 'application/pdf',
             'Content-Disposition': f'attachment; filename="planning_gantt_{week_start.strftime("%Y%m%d")}.pdf"'
@@ -1276,7 +1292,6 @@ def export_gantt_pdf():
     except Exception as e:
         print(f"Erreur lors de la construction du PDF: {e}")
         return jsonify({'error': 'Erreur lors de la construction du PDF.'}), 500
-    }
 
 # --- Lancement de l'application ---
 
@@ -1287,13 +1302,3 @@ if __name__ == "__main__":
     # Configuration pour production Render
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
-
-
-
-
-
-
-
-
-
-
