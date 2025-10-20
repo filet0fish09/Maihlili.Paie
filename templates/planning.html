@@ -31,6 +31,7 @@
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
             Exporter PDF
         </a>
+
         <div class="flex gap-2">
           <button onclick="previousWeek()" class="px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">← Semaine précédente</button>
           <span id="week-info" class="px-4 py-2 text-sm font-medium"></span>
@@ -107,18 +108,26 @@
 let calendar = null;
 let currentWeekStart = new Date();
 
-// Initialisation de la variable de semaine au lundi
+// CORRECTION #2 (Décalage de date): Logique plus robuste pour trouver le lundi
 function initializeWeekStart() {
     const today = new Date();
-    const dayOfWeek = today.getDay(); 
-    const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); 
-    currentWeekStart = new Date(today.setDate(diff));
+    today.setHours(0, 0, 0, 0); 
+    
+    // 0=Dimanche, 1=Lundi, ..., 6=Samedi
+    let day = today.getDay();
+    // Calcule le nombre de jours à soustraire pour revenir au Lundi (1)
+    // Si c'est Dimanche (0), soustraire 6 jours pour le Lundi précédent.
+    // Sinon, soustraire (day - 1).
+    let dayDifference = day === 0 ? 6 : day - 1;
+    
+    currentWeekStart = new Date(today); // Crée une copie
+    currentWeekStart.setDate(today.getDate() - dayDifference);
     currentWeekStart.setHours(0, 0, 0, 0); 
 }
 initializeWeekStart();
 
 
-// --- Fonctions de la vue Calendrier ---
+// --- Fonctions de la vue Calendrier (inchangées) ---
 
 function initCalendar() {
   const calendarEl = document.getElementById('calendar');
@@ -234,7 +243,6 @@ function loadGanttView() {
     const startIso = formatDate(currentWeekStart);
     document.getElementById('week-info').textContent = `Semaine du ${currentWeekStart.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}`;
     
-    // Mise à jour du lien d'export PDF (fix du bug Cannot set properties of null)
     const exportLink = document.getElementById('export-pdf-link');
     if (exportLink) {
         exportLink.href = `/api/export-gantt-pdf?start=${startIso}`;
@@ -245,7 +253,6 @@ function loadGanttView() {
     fetch(`/api/gantt-data?start=${startIso}`)
         .then(response => {
             if (!response.ok) {
-                // Si le serveur renvoie une erreur, affichez un message d'erreur
                 throw new Error(`Erreur HTTP: ${response.status}`);
             }
             return response.json();
@@ -266,14 +273,13 @@ function renderGantt(data) {
     const assignmentsByEmployeeAndDay = {};
 
     data.assignments.forEach(a => {
-        // Attention : a.start doit être une chaîne de caractères ISO
         if (typeof a.start !== 'string') {
              console.error("Erreur de données: a.start n'est pas une chaîne. Vérifiez votre backend Flask.");
              return;
         }
         
         const date = a.start.substring(0, 10); 
-        const dayOfWeek = new Date(date).getDay(); // 0 (Dim) à 6 (Sam)
+        const dayOfWeek = new Date(date).getDay(); 
         const employeeId = a.employee_id;
         
         if (!assignmentsByEmployeeAndDay[employeeId]) {
@@ -420,11 +426,19 @@ function updateStatistics(startIso = null) {
 let draggedAssignmentId = null;
 
 document.addEventListener('dragstart', function(event) {
+    // Le drag doit se lancer sur le shift block
     const shiftBlock = event.target.closest('.gantt-shift-block-large');
     if (shiftBlock && shiftBlock.getAttribute('draggable') === 'true') {
         draggedAssignmentId = shiftBlock.dataset.assignmentId;
         event.dataTransfer.setData('text/plain', draggedAssignmentId);
         shiftBlock.classList.add('is-dragging'); 
+        
+        // CORRECTION #1 (D&D): Ajout temporaire de l'effet "pointer-events: none" 
+        // LORS du drag pour que la cible soit la cellule <td> sous-jacente.
+        // C'est un meilleur compromis que de le mettre globalement dans le CSS.
+        event.dataTransfer.setDragImage(shiftBlock, shiftBlock.offsetWidth / 2, shiftBlock.offsetHeight / 2);
+
+        document.querySelectorAll('.gantt-shift-block-large').forEach(el => el.style.pointerEvents = 'none');
     }
 });
 
@@ -433,6 +447,10 @@ document.addEventListener('dragend', function(event) {
     if (shiftBlock) {
         shiftBlock.classList.remove('is-dragging');
     }
+    
+    // CORRECTION #1 (D&D): Réactiver pointer-events après la fin du drag
+    document.querySelectorAll('.gantt-shift-block-large').forEach(el => el.style.pointerEvents = 'auto');
+    
     document.querySelectorAll('.drag-drop-target').forEach(cell => cell.classList.remove('drag-over'));
     draggedAssignmentId = null;
 });
@@ -455,8 +473,7 @@ document.addEventListener('dragleave', function(event) {
 document.addEventListener('drop', function(event) {
     event.preventDefault();
     
-    // Le fix pour la précision du drop : on cherche la cellule la plus proche.
-    // Grâce au CSS `pointer-events: none` ajouté ci-dessous, cela devrait toujours pointer vers la bonne <td>.
+    // La cible est maintenant garantie d'être la <td> grâce au pointer-events:none temporaire
     const targetCell = event.target.closest('.drag-drop-target'); 
     
     document.querySelectorAll('.drag-drop-target').forEach(cell => cell.classList.remove('drag-over'));
@@ -514,7 +531,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <style>
-/* --- Styles de la vue Gantt (incluant le fix de précision D&D) --- */
+/* --- Styles de la vue Gantt (Mise à jour pour le fix D&D) --- */
 
 .view-toggle {
   transition: all 0.3s ease;
@@ -538,7 +555,7 @@ document.addEventListener('DOMContentLoaded', function() {
   vertical-align: top;
 }
 
-/* FIX DE PRÉCISION D&D : pointer-events: none */
+/* FIX D&D : Suppression du pointer-events: none; ici pour permettre le dragstart */
 .gantt-shift-block-large {
     padding: 4px 6px !important; 
     line-height: 1.3;
@@ -547,8 +564,8 @@ document.addEventListener('DOMContentLoaded', function() {
     opacity: 0.98;
     transition: all 0.1s ease;
     
-    /* FIX CRITIQUE : Permet aux événements de drop de passer à la <td> sous-jacente */
-    pointer-events: none; 
+    /* REMOVED: pointer-events: none; */
+    pointer-events: auto; /* Laisser par défaut (auto) pour que dragstart fonctionne */
 }
 
 .gantt-shift-block-large:hover {
@@ -558,13 +575,13 @@ document.addEventListener('DOMContentLoaded', function() {
     z-index: 10;
 }
 
-/* On réactive les événements seulement pendant le glissement */
+/* Style de glissement */
 .gantt-shift-block-large.is-dragging {
     opacity: 0.4;
     border: 2px dashed #3B82F6;
     box-shadow: none;
     cursor: grabbing !important;
-    pointer-events: auto; /* IMPORTANT : doit être réactivé pour pouvoir glisser */
+    /* On laisse pointer-events: auto pour éviter les interférences */
 }
 
 
