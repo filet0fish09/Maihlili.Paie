@@ -2392,14 +2392,16 @@ def api_planning_stats():
 
 
 # --- NOUVELLE ROUTE POUR L'EXPORT PDF (REMPLACE LE PLACEHOLDER) ---
+# NOTE: Cette fonction doit se trouver DANS votre fichier app.py
 @app.route('/api/export-gantt-pdf', methods=['GET'])
 @login_required
 def export_gantt_pdf():
     if not current_user.is_manager:
         return jsonify({'error': 'Accès refusé'}), 403
 
-    # Fonction pour déterminer la couleur du texte (noir ou blanc) en fonction du fond
-    def get_text_color(hex_color_str):
+    # --- 1. Fonction HELPER pour déterminer la couleur du texte (CORRIGÉE) ---
+    def get_text_color_name(hex_color_str):
+        """Détermine si le texte doit être blanc ou noir en fonction de la couleur de fond."""
         try:
             color_obj = colors.HexColor(hex_color_str)
         except: 
@@ -2409,7 +2411,7 @@ def export_gantt_pdf():
         brightness = (r * 0.299 + g * 0.587 + b * 0.114)
         return "white" if brightness < 0.5 else "black"
 
-    # 1. Préparation de la date de début de semaine
+    # --- 2. Préparation des dates et récupération des données ---
     start_date_str = request.args.get('start')
     if start_date_str:
         start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
@@ -2417,33 +2419,38 @@ def export_gantt_pdf():
         today = datetime.now().date()
         start_date = today - timedelta(days=today.weekday())
 
-    # 2. Récupération des données Gantt
-    # (Assurez-vous que get_gantt_data_for_week existe et retourne les bonnes données)
-    data = get_gantt_data_for_week(start_date, current_user)
-    employees = data['employees']
-    assignments = data['assignments']
+    try:
+        # Assurez-vous que cette fonction est correctement importée ou définie.
+        data = get_gantt_data_for_week(start_date, current_user)
+        employees = data['employees']
+        assignments = data['assignments']
+    except NameError:
+        return jsonify({'error': 'La fonction get_gantt_data_for_week est introuvable.'}), 500
     
     week_start = data['week_start']
-    week_end = data.get('week_end', week_start + timedelta(days=7)) - timedelta(days=1)
+    week_end = week_start + timedelta(days=6) # 6 jours après le début de semaine
 
-    # 3. Préparation du PDF
+    # --- 3. Préparation du PDF ---
     buffer = BytesIO()
+    # Format Paysage (A4[1], A4[0])
     doc = SimpleDocTemplate(buffer, pagesize=(A4[1], A4[0]), leftMargin=30, rightMargin=30, topMargin=30, bottomMargin=30)
     styles = getSampleStyleSheet()
     story = []
 
-    # 4. En-tête (Logo et Titre)
+    # Définition des couleurs ReportLab
+    MAIHLILI_TITRES_BLEU = colors.HexColor('#3055FF') 
+    MAIHLILI_BLANC = colors.white
+    MAIHLILI_FOND_TABLE = colors.HexColor('#F8F8F8') 
+
+    # --- 4. En-tête (Logo et Titre) ---
     logo_path = os.path.join(app.root_path, 'static', 'images', 'maihlili-logo-light.png') 
     
     logo_element = Spacer(1, 1) 
     if os.path.exists(logo_path):
-        # CORRECTION DU LOGO : Utilisation de 'hAlign'='LEFT' et 'vAlign'='TOP' 
-        # et ajustement des dimensions pour éviter l'étirement.
+        # Logo non étiré, taille fixée
         logo_element = Image(logo_path, width=70, height=35) 
         logo_element.hAlign = 'LEFT'
-        logo_element.vAlign = 'TOP'
-    
-    # Titre centré
+        
     title_text = f"""
     <font size='18' color='{MAIHLILI_TITRES_BLEU}'><b>PLANNING HEBDOMADAIRE</b></font><br/>
     <font size='10' color='#555555'>Du {week_start.strftime('%d/%m/%Y')} au {week_end.strftime('%d/%m/%Y')}</font>
@@ -2451,7 +2458,6 @@ def export_gantt_pdf():
     title_element = Paragraph(title_text, styles['Normal'])
     title_element.alignment = 1 # Center
 
-    # Création du tableau d'en-tête pour l'alignement
     header_table = Table([[logo_element, title_element, Spacer(1, 1)]], colWidths=[70, doc.width - 140, 70])
     header_table.setStyle(TableStyle([
         ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
@@ -2462,7 +2468,7 @@ def export_gantt_pdf():
     story.append(header_table)
     story.append(Spacer(1, 18)) 
 
-    # 5. Préparation des données du tableau
+    # --- 5. Préparation des données du tableau ---
     days_full = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
     
     # En-tête du planning
@@ -2488,12 +2494,7 @@ def export_gantt_pdf():
         
         assignments_by_employee_and_day[employee_id][day_of_week_index].append((content_str, color_hex))
 
-    # Remplissage des lignes du tableau
-    day_cell_style = styles['BodyText']
-    day_cell_style.fontSize = 8
-    day_cell_style.leading = 9
-    day_cell_style.alignment = 1 
-    
+    # Remplissage des lignes du tableau (Gantt)
     for emp_index, emp in enumerate(employees):
         emp_name_text = f"<b>{emp['name']}</b><br/><font size='7' color='#555555'>{emp.get('position', 'Employé')}</font>"
         row = [Paragraph(emp_name_text, styles['Normal'])]
@@ -2506,54 +2507,41 @@ def export_gantt_pdf():
             
             if shifts:
                 for content_str, color_hex in shifts:
-                    # 1. Obtenir le nom de la couleur de texte (white ou black)
+                    # Détermine si le texte doit être 'white' ou 'black' (chaîne)
                     text_color_name = get_text_color_name(color_hex)
                     
-                    # 2. Convertir le nom en objet couleur ReportLab (CORRECTION DE L'ERREUR)
+                    # CORRECTION MAJEURE: Obtient l'objet couleur (colors.white/colors.black)
                     text_color_obj = getattr(colors, text_color_name) 
                     
-                    # 3. Cloner le style pour éviter de modifier le style global BodyText (MEILLEURE PRATIQUE)
+                    # CRÉATION DU STYLE STABLE: Utilise .clone()
                     p_style = styles['BodyText'].clone('ShiftBlockStyle') 
                     
-                    # 4. Appliquer les styles pour le rendu Gantt (Rectangle)
+                    # Appliquer les styles pour le rendu Gantt (Rectangle plein)
                     p_style.alignment = 1
                     p_style.textColor = text_color_obj
                     p_style.backColor = colors.HexColor(color_hex)
                     p_style.fontSize = 8
                     p_style.fontName = 'Helvetica'
-                    p_style.borderPadding = 3 # Augmente le padding à l'intérieur du rectangle
+                    p_style.borderPadding = 3 
                     p_style.borderRadius = 3 
                     
-                    markup = f'{content_str}'
+                    markup = f'{content_str}' # Ligne à l'origine du problème d'indentation
                     
                     shift_p = Paragraph(markup, p_style)
                     cell_content_html.append(shift_p)
                 
-                # Les éléments Paragraphs (les shifts) sont ajoutés directement à la cellule comme une liste
+                # Ajout des objets Paragraphs (les shifts) à la cellule
                 row.append(cell_content_html)
             else:
-                # Créer un Paragraph simple pour les cellules vides ou sans shift
+                # Créer un Paragraph vide pour les cellules sans shift
                 empty_p = Paragraph('', styles['BodyText'].clone('EmptyCell'))
                 empty_p.alignment = 1
-                row.append(empty_p)
-                    
-                    # On utilise <para> pour créer le bloc stylé
-                    markup = f'{content_str}'
-                    
-                    # Utiliser un Paragraph direct au lieu d'une longue chaîne HTML pour le bloc.
-                    shift_p = Paragraph(markup, p_style)
-                    shift_p.wrapOn(doc, 80, 10) # Force une largeur maximum pour le bloc (80 pts)
-                    cell_content_html.append(shift_p)
-                
-                # Les éléments Paragraphs (les shifts) sont ajoutés directement à la cellule comme une liste
-                row.append(cell_content_html)
-            else:
-                row.append(Paragraph('', day_cell_style)) 
+                row.append(empty_p) 
         
         table_data.append(row)
 
 
-    # 6. Création et style du tableau
+    # --- 6. Création et style du tableau ---
     page_width = doc.width 
     col_widths = [page_width * 0.18] + [ (page_width * 0.82) / 7 ] * 7 
     
@@ -2566,29 +2554,30 @@ def export_gantt_pdf():
         ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 10),
         ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
         
-        # Corps du tableau (Fond en #FFF0F8)
-        ('BACKGROUND', (0, 1), (-1, -1), MAIHLILI_FOND_TABLE), 
-        
-        # Lignes alternées
+        # Corps du tableau (Lignes alternées)
         ('ROWBACKGROUNDS', (0, 1), (-1, -1), [MAIHLILI_FOND_TABLE, MAIHLILI_BLANC]), 
 
+        # Alignements et bordures
         ('ALIGN', (0, 0), (0, -1), 'LEFT'), 
         ('VALIGN', (0, 1), (-1, -1), 'TOP'), 
         ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#DDDDDD')), 
         ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
         
+        # Paddings généraux
         ('LEFTPADDING', (0, 1), (0, -1), 8), 
         ('RIGHTPADDING', (0, 1), (0, -1), 4),
         ('TOPPADDING', (1, 1), (-1, -1), 6), 
         ('BOTTOMPADDING', (1, 1), (-1, -1), 6), 
+        
+        # Alignement des jours au centre (important pour les blocs de shift)
+        ('ALIGN', (1, 1), (-1, -1), 'CENTER'), 
     ]))
 
     story.append(table)
 
-    # 7. Génération du document
+    # --- 7. Génération du document ---
     try:
         doc.build(story)
         pdf = buffer.getvalue()
@@ -2599,6 +2588,7 @@ def export_gantt_pdf():
             'Content-Disposition': f'attachment; filename="planning_maihlili_{week_start.strftime("%Y%m%d")}.pdf"'
         }
     except Exception as e:
+        # Affiche l'erreur pour le débogage et retourne une erreur Flask
         print(f"Erreur lors de la construction du PDF: {e}")
         return jsonify({'error': 'Erreur lors de la construction du PDF.'}), 500
 
@@ -2612,22 +2602,6 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
 
-
-
-
-
-
-
-
-# --- Lancement de l'application ---
-
-if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
-    
-    # Configuration pour production Render
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=False)
 
 
 
