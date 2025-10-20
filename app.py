@@ -10,6 +10,7 @@ from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
 # ------------------------------------------
 
 # Définition de la couleur de branding à partir de votre logo
@@ -1381,6 +1382,7 @@ if __name__ == "__main__":
     # Configuration pour production Render
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
