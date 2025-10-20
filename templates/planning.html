@@ -35,13 +35,13 @@
         <thead class="bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0">
           <tr>
             <th class="text-left py-3 px-4 font-semibold w-[180px] sticky left-0 z-20 bg-blue-600">Employé</th>
-            <th class="text-center py-3 px-2 font-semibold w-[120px]">Lun</th>
-            <th class="text-center py-3 px-2 font-semibold w-[120px]">Mar</th>
-            <th class="text-center py-3 px-2 font-semibold w-[120px]">Mer</th>
-            <th class="text-center py-3 px-2 font-semibold w-[120px]">Jeu</th>
-            <th class="text-center py-3 px-2 font-semibold w-[120px]">Ven</th>
-            <th class="text-center py-3 px-2 font-semibold w-[120px]">Sam</th>
-            <th class="text-center py-3 px-2 font-semibold w-[120px]">Dim</th>
+            <th class="text-center py-3 px-2 font-semibold">Lun</th>
+            <th class="text-center py-3 px-2 font-semibold">Mar</th>
+            <th class="text-center py-3 px-2 font-semibold">Mer</th>
+            <th class="text-center py-3 px-2 font-semibold">Jeu</th>
+            <th class="text-center py-3 px-2 font-semibold">Ven</th>
+            <th class="text-center py-3 px-2 font-semibold">Sam</th>
+            <th class="text-center py-3 px-2 font-semibold">Dim</th>
           </tr>
         </thead>
         <tbody id="gantt-tbody" class="divide-y divide-gray-200">
@@ -103,7 +103,7 @@ if (currentWeekStart.getDay() === 0) { // S'assurer que le Lundi est bien le dé
 }
 
 
-// --- Fonctions de la vue Calendrier (FIXED: Pop-up et Couleurs) ---
+// --- Fonctions de la vue Calendrier ---
 
 function initCalendar() {
   const calendarEl = document.getElementById('calendar');
@@ -135,26 +135,24 @@ function initCalendar() {
     dayMaxEvents: true,
     editable: true,
     
-    // NOUVEAU: Mettre la couleur des événements (utilise extendedProps.color de l'API)
+    // Mettre la couleur des événements
     eventDidMount: function(info) {
       if (info.event.extendedProps.shift_color) {
         info.el.style.backgroundColor = info.event.extendedProps.shift_color;
         info.el.style.borderColor = info.event.extendedProps.shift_color;
       }
-      // Rendre le texte lisible sur les couleurs sombres
       if (info.event.extendedProps.shift_color && isDark(info.event.extendedProps.shift_color)) {
           info.el.style.color = 'white';
       }
     },
 
-    // NOUVEAU: Afficher un pop-up détaillé
+    // Afficher un pop-up détaillé
     eventClick: function(info) {
       const props = info.event.extendedProps;
       const title = info.event.title;
       const start = new Date(info.event.start).toLocaleString('fr-FR');
       const end = new Date(info.event.end).toLocaleString('fr-FR');
 
-      // Le calcul de la durée doit se faire ici ou être passé via l'API
       const durationMs = new Date(info.event.end).getTime() - new Date(info.event.start).getTime();
       const durationHours = (durationMs / (1000 * 60 * 60)).toFixed(1);
       
@@ -170,24 +168,18 @@ Statut: ${props.status || 'Confirmé'}
       alert('Détails de l\'assignation\n\n' + details);
     },
     
-    // FETCH (CORRIGÉ POUR INCLURE LES PROPRIÉTÉS ÉTENDUES)
     events: function(info, successCallback, failureCallback) {
       fetch(`/api/assignments/events?start=${info.startStr}&end=${info.endStr}`)
         .then(response => response.json())
         .then(events => {
-          // Transformer les événements pour inclure les extendedProps pour le pop-up
           const transformedEvents = events.map(event => ({
               ...event,
               extendedProps: {
-                  shift_name: event.shift_name,
-                  employee_name: event.employee_name,
-                  shift_color: event.shift_color,
-                  // Ajoutez d'autres propriétés si nécessaire
+                  ...event, // Inclure toutes les extendedProps de l'API
+                  shift_color: event.color, // Utiliser 'color' de l'API pour fullcalendar
               }
           }));
           successCallback(transformedEvents);
-          // Mettre à jour les stats en fonction de la vue calendrier si elle est active
-          // On ne met à jour que si c'est la vue initiale ou si on bascule
           if (document.getElementById('calendar-view').classList.contains('hidden') === false) {
               updateStatistics(info.startStr); 
           }
@@ -221,7 +213,7 @@ function isDark(hex) {
     return (0.2126 * r + 0.7152 * g + 0.0722 * b) < 140; 
 }
 
-// --- Fonctions de la vue Gantt (AMÉLIORÉES) ---
+// --- Fonctions de la vue Gantt ---
 
 function formatDate(date) {
     return date.toISOString().split('T')[0];
@@ -231,7 +223,6 @@ function loadGanttView() {
     const startIso = formatDate(currentWeekStart);
     document.getElementById('week-info').textContent = `Semaine du ${currentWeekStart.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}`;
     
-    // Mettre à jour les statistiques pour la semaine affichée
     updateStatistics(startIso);
 
     fetch(`/api/gantt-data?start=${startIso}`)
@@ -254,7 +245,6 @@ function renderGantt(data) {
     // Regrouper les assignations par employé et par jour
     data.assignments.forEach(a => {
         const date = a.start.substring(0, 10);
-        // Le jour de la semaine (0=Dim, 1=Lun, ..., 6=Sam)
         const dayOfWeek = new Date(date).getDay(); 
         const employeeId = a.employee_id;
         
@@ -275,38 +265,36 @@ function renderGantt(data) {
         
         // Cellule Employé (Sticky)
         const nameCell = row.insertCell();
-        // CLASSE AJUSTÉE pour un look plus pro et pour la position sticky
         nameCell.className = 'py-2 px-4 font-medium text-gray-800 sticky left-0 z-10 bg-white border-r border-gray-200 text-sm';
         nameCell.textContent = employee.name;
         
         // Cellules des jours (Lundi=1 à Dimanche=0)
-        // La boucle commence à 1 (Lundi) et va jusqu'à 7 (pour couvrir Dimanche)
         for (let i = 1; i <= 7; i++) {
-            const dayIndex = i % 7; // 1=Lun, ..., 6=Sam, 0=Dim
+            const dayIndex = i % 7; 
             const dayCell = row.insertCell();
-            // CLASSE AJUSTÉE pour plus de compacité
-            dayCell.className = 'py-1 px-1 text-center text-sm align-top gantt-cell';
+            // CLASSE AJUSTÉE pour plus d'espace vertical
+            dayCell.className = 'py-2 px-1 text-center text-sm align-top gantt-cell';
             
             const assignments = assignmentsByEmployeeAndDay[employee.id] ? assignmentsByEmployeeAndDay[employee.id][dayIndex] || [] : [];
             
             assignments.forEach(a => {
                 const shiftDiv = document.createElement('div');
                 
-                // STYLE AMÉLIORÉ: Compact et professionnel
-                shiftDiv.className = 'p-1 rounded text-xs font-semibold my-0.5 whitespace-nowrap overflow-hidden text-ellipsis shadow-sm cursor-pointer gantt-shift-block';
+                // STYLE AMÉLIORÉ: Plus grand et plus lisible (gantt-shift-block-large)
+                shiftDiv.className = 'p-1 rounded text-sm font-semibold my-1 whitespace-nowrap overflow-hidden text-ellipsis shadow-md cursor-pointer gantt-shift-block-large';
                 shiftDiv.style.backgroundColor = a.shift_color;
                 
-                // Changer la couleur du texte si la couleur de fond est sombre
+                // Changer la couleur du texte
                 if (isDark(a.shift_color)) {
                     shiftDiv.style.color = 'white';
                 } else {
                     shiftDiv.style.color = '#333';
                 }
 
-                // CONTENU AMÉLIORÉ: Nom + Heures
+                // CONTENU: Nom + Heures
                 shiftDiv.innerHTML = `
-                    <div class="truncate leading-none">${a.shift_name}</div>
-                    <div class="font-normal leading-none text-opacity-80">${a.start_time}-${a.end_time}</div>
+                    <div class="truncate leading-tight">${a.shift_name}</div>
+                    <div class="font-normal leading-tight text-opacity-90 text-xs">${a.start_time}-${a.end_time}</div>
                 `;
                 
                 // Ajouter le pop-up (alert simple)
@@ -345,7 +333,6 @@ function previousWeek() {
 
 // --- Fonctions de Contrôle de la Vue ---
 
-// Changer la vue (Calendrier / Gantt)
 function switchView(view) {
   const calendarView = document.getElementById('calendar-view');
   const ganttView = document.getElementById('gantt-view');
@@ -377,13 +364,6 @@ function switchView(view) {
 // Mettre à jour les statistiques
 function updateStatistics(startIso = null) {
   let url = '/api/planning-stats';
-  // Si on passe une date de début, on l'utilise pour cibler la semaine des stats
-  if (startIso) {
-      // Pour les statistiques, on ne passe pas de date spécifique pour l'instant
-      // L'API est codée pour la semaine actuelle, mais on pourrait l'adapter
-      // pour le moment, on garde l'appel simple pour l'API existante
-      // (sinon il faudrait modifier la route /api/planning-stats dans app.py)
-  }
   
   fetch(url)
     .then(response => response.json())
@@ -399,13 +379,13 @@ function updateStatistics(startIso = null) {
 
 // --- Initialisation au chargement (AFFICHER GANTT PAR DÉFAUT) ---
 document.addEventListener('DOMContentLoaded', function() {
-  initCalendar(); // Initialiser le calendrier (il est caché mais nécessaire pour l'objet global)
-  switchView('gantt'); // Affiche le Gantt et lance loadGanttView()
+  initCalendar(); 
+  switchView('gantt'); 
 });
 </script>
 
 <style>
-/* Améliorations visuelles */
+/* 1. Améliorations générales et Table Gantt optimisée */
 .view-toggle {
   transition: all 0.3s ease;
 }
@@ -415,64 +395,64 @@ document.addEventListener('DOMContentLoaded', function() {
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
-/* Table Gantt optimisée */
 .gantt-table {
-  /* Assurer que la table prend toute la largeur et permet la largeur fixe des colonnes */
   table-layout: fixed;
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
 }
 
-/* Rendre la colonne Employé et son contenu compact et sticky */
-.gantt-table tbody td:first-child {
-  /* Utilisation de !important car Tailwind peut être prioritaire */
-  padding-top: 4px !important; 
-  padding-bottom: 4px !important;
-  line-height: 1.2;
-}
-
+/* 2. Rendre les LIGNES plus grandes */
 .gantt-table tbody td {
-  /* Réduire le padding des cellules de jours pour plus de densité */
-  padding-top: 4px !important; 
-  padding-bottom: 4px !important;
-  vertical-align: top; /* Aligner le contenu en haut des cellules */
+  /* AUGMENTATION DU PADDING VERTICAL pour plus d'espace */
+  padding-top: 8px !important; 
+  padding-bottom: 8px !important;
+  vertical-align: top;
 }
 
-/* Style des blocs de shift dans le Gantt */
-.gantt-shift-block {
-    /* Rendre le bloc de shift très compact */
-    padding: 2px 4px !important; 
-    line-height: 1.2;
-    font-size: 0.65rem; /* Très petit texte, comme dans l'exemple */
-    letter-spacing: 0.02em;
-    opacity: 0.95;
+/* 3. Style des blocs de shift (PLUS GRANDS) */
+.gantt-shift-block-large {
+    /* AUGMENTATION DU PADDING et de la FONT SIZE */
+    padding: 4px 6px !important; 
+    line-height: 1.3;
+    font-size: 0.8rem; /* Taille de police plus lisible */
+    letter-spacing: 0.01em;
+    opacity: 0.98;
     transition: all 0.1s ease;
 }
 
-.gantt-shift-block:hover {
+.gantt-shift-block-large:hover {
     opacity: 1;
     transform: scale(1.02);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.25);
     z-index: 10;
 }
 
-/* Fixer la colonne Employé à gauche */
+/* 4. Fixer la colonne Employé à gauche */
 .gantt-table thead th:first-child,
 .gantt-table tbody td:first-child {
-  z-index: 20; /* Plus haut que les shifts */
+  z-index: 20; 
+  position: sticky;
+  left: 0;
+  background-color: white; /* S'assurer que le fond est blanc lors du défilement */
+}
+
+/* S'assurer que le fond de l'en-tête Employé reste bleu */
+.gantt-table thead th:first-child {
+    background-color: #2563EB; 
 }
 
 .gantt-table tbody td:first-child {
-  border-right: 1px solid #e5e7eb; /* Séparateur visuel */
+  border-right: 1px solid #e5e7eb; 
 }
 
-/* Ajuster les largeurs des colonnes */
+/* 5. Ajuster les largeurs des colonnes */
 .gantt-table th:not(:first-child),
 .gantt-table td:not(:first-child) {
-  width: calc((100% - 180px) / 7); /* 180px pour l'employé, le reste divisé par 7 */
-  min-width: 120px; /* Assurer une largeur minimale pour un affichage correct */
-  max-width: 140px;
+  /* Largeur des colonnes de jours (légèrement plus large que précédemment) */
+  width: calc((100% - 180px) / 7); 
+  min-width: 150px; 
+  max-width: 180px;
 }
 </style>
 {% endblock %}
