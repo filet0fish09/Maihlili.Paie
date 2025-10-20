@@ -286,10 +286,18 @@ def api_events():
     events = [
     {
         "id": a.id,
-            "title": f"Shift {a.shift_id} - Employee {a.employee_id}",  # titre lisible
+            # NOUVEAU TITRE : Shift (HH:MM - HH:MM) - Nom Employé
+            "title": f"{a.shift.name} ({a.start.strftime('%H:%M')} - {a.end.strftime('%H:%M')}) - {a.employee.full_name}", 
             "start": a.start.isoformat(),
             "end": a.end.isoformat(),
             "allDay": False,
+            
+            # PROPRIÉTÉS SUPPLÉMENTAIRES POUR LE STYLE ET LE POP-UP
+            "shift_name": a.shift.name,
+            "employee_name": a.employee.full_name,
+            "color": a.shift.color, # 👈 Utiliser la couleur du Shift pour le calendrier
+            "duration": round((a.end - a.start).total_seconds() / 3600, 1), 
+            "status": "Planifié",
     }
     for a in q.all()
 ]
@@ -1213,6 +1221,7 @@ if __name__ == "__main__":
     # Configuration pour production Render
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
