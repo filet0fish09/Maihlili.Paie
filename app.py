@@ -4,6 +4,12 @@ from models import db, User, Employee, Shift, Assignment, Team
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from datetime import datetime, timedelta
 import os
+# Ajoutez ces importations avec les autres
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
+from io import BytesIO
 
 app = Flask(__name__)
 
@@ -1164,52 +1170,112 @@ def api_planning_stats():
     })
 
 
-# --- Route pour exporter le planning en PDF (optionnel) ---
-@app.route("/export/planning/pdf")
+# ... après les autres routes existantes
+
+@app.route('/api/export-gantt-pdf', methods=['GET'])
 @login_required
-def export_planning_pdf():
-    """Exporte le planning en PDF"""
-    if not current_user.is_manager:
-        flash("Accès refusé", "error")
-        return redirect(url_for("planning"))
-    
-    # Nécessite: pip install reportlab PyPDF2
-    from io import BytesIO
-    from datetime import datetime, timedelta
-    
-    manageable_employees = get_manageable_employees(current_user)
-    manageable_ids = [emp.id for emp in manageable_employees]
-    
-    now = datetime.now()
-    week_start = now - timedelta(days=now.weekday())
-    
-    if manageable_ids:
-        assignments = Assignment.query.filter(
-            Assignment.employee_id.in_(manageable_ids),
-            Assignment.start >= week_start,
-            Assignment.start < week_start + timedelta(days=7)
-        ).all()
+def export_gantt_pdf():
+    # 1. Préparation de la date de début de semaine
+    start_date_str = request.args.get('start')
+    if start_date_str:
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
     else:
-        assignments = []
+        # Si aucune date n'est fournie, prendre le début de la semaine actuelle
+        today = datetime.now().date()
+        start_date = today - timedelta(days=today.weekday())
+
+    week_start = start_date
+    week_end = week_start + timedelta(days=6)
     
-    # Créer un simple document texte pour commencer
-    content = "PLANNING MAIHLILI PAIE\n"
-    content += f"Semaine du {week_start.strftime('%d/%m/%Y')}\n\n"
+    # 2. Récupération des données Gantt
+    try:
+        data = get_gantt_data(week_start) # Réutiliser la fonction qui sert /api/gantt-data
+        employees = data['employees']
+        assignments = data['assignments']
+    except Exception as e:
+        # En cas d'erreur de base de données
+        print(f"Erreur lors de la récupération des données Gantt: {e}")
+        return jsonify({'error': 'Erreur lors de la récupération des données de planning.'}), 500
+
+    # 3. Préparation du PDF
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, leftMargin=30, rightMargin=30, topMargin=30, bottomMargin=30)
+    styles = getSampleStyleSheet()
+    story = []
+
+    # 4. Titre
+    title = f"PLANNING HEBDOMADAIRE Maihlili PAIE"
+    story.append(Paragraph(title, styles['Title']))
+    date_range = f"Du {week_start.strftime('%d/%m/%Y')} au {week_end.strftime('%d/%m/%Y')}"
+    story.append(Paragraph(date_range, styles['h2']))
+    story.append(Spacer(1, 12))
+
+    # 5. Préparation des données du tableau
     
-    for emp in manageable_employees:
-        emp_assignments = [a for a in assignments if a.employee_id == emp.id]
-        if emp_assignments:
-            content += f"\n{emp.full_name} ({emp.position or 'Employé'}):\n"
-            for a in sorted(emp_assignments, key=lambda x: x.start):
-                content += f"  - {a.start.strftime('%a %d/%m')} : {a.shift.name} ({a.start.strftime('%H:%M')}-{a.end.strftime('%H:%M')})\n"
+    # En-tête du tableau
+    days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
+    header = ['Employé'] + days
+    table_data = [header]
+
+    # Données par employé
+    assignments_by_employee_and_day = {}
+    for a in assignments:
+        date = datetime.strptime(a['start'].split('T')[0], '%Y-%m-%d')
+        day_of_week_index = date.weekday() # 0=Lun, 6=Dim
+        employee_id = a['employee_id']
+        
+        if employee_id not in assignments_by_employee_and_day:
+            assignments_by_employee_and_day[employee_id] = {i: [] for i in range(7)}
+            
+        assignments_by_employee_and_day[employee_id][day_of_week_index].append(f"{a['shift_name']} ({a['start_time']}-{a['end_time']})")
+
+    for emp in employees:
+        row = [emp.full_name]
+        emp_assignments = assignments_by_employee_and_day.get(emp.id, {i: [] for i in range(7)})
+        
+        for i in range(7):
+            # Récupérer les shifts pour ce jour (index 0=Lun à 6=Dim)
+            shifts = emp_assignments[i]
+            row.append('\n'.join(shifts) if shifts else '-')
+        
+        table_data.append(row)
+
+
+    # 6. Création et style du tableau
+    col_widths = [100] + [ (A4[0] - 160) / 7 ] * 7 # 100px pour Employé, le reste divisé
+    table = Table(table_data, colWidths=col_widths)
     
-    response = BytesIO()
-    response.write(content.encode('utf-8'))
-    response.seek(0)
-    
-    return response.getvalue(), 200, {
-        'Content-Type': 'text/plain',
-        'Content-Disposition': 'attachment; filename="planning_maihlili_paie.txt"'
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2563EB')), # En-tête bleu
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('ALIGN', (0, 0), (0, -1), 'LEFT'), # Nom de l'employé à gauche
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#CCCCCC')),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 0), (-1, -1), 8), # Texte plus petit pour que ça rentre
+        ('LEFTPADDING', (0, 0), (-1, -1), 4),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+    ]))
+
+    story.append(table)
+
+    # 7. Génération du document
+    try:
+        doc.build(story)
+        pdf = buffer.getvalue()
+        buffer.close()
+        
+        # Retourner le PDF
+        return pdf, 200, {
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': f'attachment; filename="planning_gantt_{week_start.strftime("%Y%m%d")}.pdf"'
+        }
+    except Exception as e:
+        print(f"Erreur lors de la construction du PDF: {e}")
+        return jsonify({'error': 'Erreur lors de la construction du PDF.'}), 500
     }
 
 # --- Lancement de l'application ---
@@ -1221,6 +1287,7 @@ if __name__ == "__main__":
     # Configuration pour production Render
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
