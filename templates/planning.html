@@ -24,11 +24,13 @@
     <div class="p-6 border-b border-gray-200 flex justify-between items-center">
       <h3 class="text-lg font-semibold">📊 Vue Gantt - Planning hebdomadaire</h3>
       <div class="flex gap-4 items-center">
-        <button onclick="exportGanttPdf()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center text-sm font-medium">
-          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-          Exporter PDF
-        </button>
-
+        
+        <a id="export-pdf-link" 
+           href="#" 
+           class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center text-sm font-medium">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            Exporter PDF
+        </a>
         <div class="flex gap-2">
           <button onclick="previousWeek()" class="px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">← Semaine précédente</button>
           <span id="week-info" class="px-4 py-2 text-sm font-medium"></span>
@@ -110,9 +112,8 @@ function initializeWeekStart() {
     const today = new Date();
     // 0 = Dimanche, 1 = Lundi, ... 6 = Samedi
     const dayOfWeek = today.getDay(); 
-    const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Ajuste pour que le lundi soit le jour 1
+    const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); 
     currentWeekStart = new Date(today.setDate(diff));
-    // Réinitialiser les heures pour éviter les problèmes de fuseau horaire
     currentWeekStart.setHours(0, 0, 0, 0); 
 }
 initializeWeekStart();
@@ -130,7 +131,7 @@ function initCalendar() {
   calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: 'dayGridMonth',
     locale: 'fr',
-    firstDay: 1, // Lundi
+    firstDay: 1, 
     
     headerToolbar: {
       left: 'prev,next today',
@@ -234,9 +235,12 @@ function loadGanttView() {
     const startIso = formatDate(currentWeekStart);
     document.getElementById('week-info').textContent = `Semaine du ${currentWeekStart.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}`;
     
-    // Mise à jour du lien d'export PDF
-    document.getElementById('export-pdf-link').href = `/api/export-gantt-pdf?start=${startIso}`;
-
+    // CORRECTION APPLIQUÉE ICI: Cette ligne modifie l'attribut href du lien <a>
+    const exportLink = document.getElementById('export-pdf-link');
+    if (exportLink) {
+        exportLink.href = `/api/export-gantt-pdf?start=${startIso}`;
+    }
+    
     updateStatistics(startIso);
 
     fetch(`/api/gantt-data?start=${startIso}`)
@@ -256,8 +260,11 @@ function renderGantt(data) {
     
     const assignmentsByEmployeeAndDay = {};
 
+    // S'assurer que les dates sont des chaînes de caractères avant d'utiliser .substring()
     data.assignments.forEach(a => {
-        const date = a.start.substring(0, 10);
+        // NOTE: Si vous avez une erreur 'substring is not a function', 
+        // cela veut dire que votre Flask n'a pas sérialisé la date en string (a.start)
+        const date = a.start.substring(0, 10); 
         const dayOfWeek = new Date(date).getDay(); // 0 (Dim) à 6 (Sam)
         const employeeId = a.employee_id;
         
@@ -284,10 +291,10 @@ function renderGantt(data) {
         
         // Cellules des jours (Lundi=1 à Dimanche=0)
         for (let i = 1; i <= 7; i++) {
-            const dayIndex = i % 7; // 1=Lun, ..., 6=Sam, 0=Dim
+            const dayIndex = i % 7; 
             const dayCell = row.insertCell();
             
-            // --- 1. Préparation de la destination D&D ---
+            // --- Préparation de la destination D&D ---
             const cellDate = new Date(weekStartDate);
             cellDate.setDate(weekStartDate.getDate() + (i - 1));
             const cellDateIso = formatDate(cellDate);
@@ -302,7 +309,7 @@ function renderGantt(data) {
             assignments.forEach(a => {
                 const shiftDiv = document.createElement('div');
                 
-                // --- 2. Préparation de la source D&D ---
+                // --- Préparation de la source D&D ---
                 shiftDiv.className = 'p-1 rounded text-sm font-semibold my-1 whitespace-nowrap overflow-hidden text-ellipsis shadow-md cursor-pointer gantt-shift-block-large';
                 shiftDiv.setAttribute('draggable', 'true');
                 shiftDiv.setAttribute('data-assignment-id', a.id);
@@ -322,7 +329,7 @@ function renderGantt(data) {
                 `;
                 
                 shiftDiv.onclick = function(event) {
-                    event.stopPropagation(); // Empêche l'événement de drop si on clique
+                    event.stopPropagation(); 
                     const start = new Date(a.start).toLocaleString('fr-FR');
                     const end = new Date(a.end).toLocaleString('fr-FR');
                     const durationMs = new Date(a.end).getTime() - new Date(a.start).getTime();
@@ -352,12 +359,6 @@ function nextWeek() {
 function previousWeek() {
     currentWeekStart.setDate(currentWeekStart.getDate() - 7);
     loadGanttView();
-}
-
-function exportGanttPdf() {
-    const startIso = formatDate(currentWeekStart);
-    const url = `/api/export-gantt-pdf?start=${startIso}`;
-    window.open(url, '_blank');
 }
 
 
@@ -432,7 +433,7 @@ document.addEventListener('dragend', function(event) {
 document.addEventListener('dragover', function(event) {
     const targetCell = event.target.closest('.drag-drop-target');
     if (targetCell) {
-        event.preventDefault(); // ESSENTIEL : autorise le dépôt
+        event.preventDefault(); 
         targetCell.classList.add('drag-over'); 
     }
 });
@@ -482,7 +483,6 @@ document.addEventListener('drop', function(event) {
             if (data.success) {
                 // 2. Recharger les données du planning pour rafraîchir l'interface
                 loadGanttView(); 
-                // Optionnel: alert('Shift déplacé avec succès !');
             } else {
                 alert('Erreur lors du déplacement : ' + (data.error || 'Erreur inconnue'));
             }
@@ -505,9 +505,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <style>
-/* ... Styles existants (inchangés) ... */
-
-/* 1. Améliorations générales et Table Gantt optimisée */
+/* ... Styles CSS ... */
 .view-toggle {
   transition: all 0.3s ease;
 }
@@ -524,20 +522,16 @@ document.addEventListener('DOMContentLoaded', function() {
   border-spacing: 0;
 }
 
-/* 2. Rendre les LIGNES plus grandes */
 .gantt-table tbody td {
-  /* AUGMENTATION DU PADDING VERTICAL pour plus d'espace */
   padding-top: 8px !important; 
   padding-bottom: 8px !important;
   vertical-align: top;
 }
 
-/* 3. Style des blocs de shift (PLUS GRANDS) */
 .gantt-shift-block-large {
-    /* AUGMENTATION DU PADDING et de la FONT SIZE */
     padding: 4px 6px !important; 
     line-height: 1.3;
-    font-size: 0.8rem; /* Taille de police plus lisible */
+    font-size: 0.8rem; 
     letter-spacing: 0.01em;
     opacity: 0.98;
     transition: all 0.1s ease;
@@ -550,16 +544,14 @@ document.addEventListener('DOMContentLoaded', function() {
     z-index: 10;
 }
 
-/* 4. Fixer la colonne Employé à gauche */
 .gantt-table thead th:first-child,
 .gantt-table tbody td:first-child {
   z-index: 20; 
   position: sticky;
   left: 0;
-  background-color: white; /* S'assurer que le fond est blanc lors du défilement */
+  background-color: white; 
 }
 
-/* S'assurer que le fond de l'en-tête Employé reste bleu */
 .gantt-table thead th:first-child {
     background-color: #2563EB; 
 }
@@ -568,16 +560,13 @@ document.addEventListener('DOMContentLoaded', function() {
   border-right: 1px solid #e5e7eb; 
 }
 
-/* 5. Ajuster les largeurs des colonnes */
 .gantt-table th:not(:first-child),
 .gantt-table td:not(:first-child) {
-  /* Largeur des colonnes de jours (légèrement plus large que précédemment) */
   width: calc((100% - 180px) / 7); 
   min-width: 150px; 
   max-width: 180px;
 }
 
-/* 6. NOUVEAU CSS : Feedback pour le Glisser-Déposer */
 .gantt-shift-block-large.is-dragging {
     opacity: 0.4;
     border: 2px dashed #3B82F6;
@@ -586,7 +575,7 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 .drag-drop-target.drag-over {
-    background-color: #EBF8FF !important; /* Ajout d'un feedback visuel */
+    background-color: #EBF8FF !important; 
     box-shadow: inset 0 0 0 2px #3B82F6;
     transition: background-color 0.1s;
 }
