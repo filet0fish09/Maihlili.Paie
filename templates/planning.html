@@ -24,13 +24,10 @@
     <div class="p-6 border-b border-gray-200 flex justify-between items-center">
       <h3 class="text-lg font-semibold">📊 Vue Gantt - Planning hebdomadaire</h3>
       <div class="flex gap-4 items-center">
-        
-        <a id="export-pdf-link" 
-           href="#" 
-           class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center text-sm font-medium">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-            Exporter PDF
-        </a>
+        <button onclick="exportGanttPdf()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center text-sm font-medium">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+          Exporter PDF
+        </button>
 
         <div class="flex gap-2">
           <button onclick="previousWeek()" class="px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">← Semaine précédente</button>
@@ -107,24 +104,13 @@
 <script>
 let calendar = null;
 let currentWeekStart = new Date();
-
-// CORRECTION DÉCALAGE DE DATE : Logique robuste pour trouver le lundi
-function initializeWeekStart() {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); 
-    
-    let day = today.getDay(); // 0=Dimanche, 1=Lundi, ..., 6=Samedi
-    // Calcule le nombre de jours à soustraire pour revenir au Lundi (1)
-    let dayDifference = day === 0 ? 6 : day - 1;
-    
-    currentWeekStart = new Date(today); 
-    currentWeekStart.setDate(today.getDate() - dayDifference);
-    currentWeekStart.setHours(0, 0, 0, 0); 
+currentWeekStart.setDate(currentWeekStart.getDate() - currentWeekStart.getDay() + 1);
+if (currentWeekStart.getDay() === 0) { // S'assurer que le Lundi est bien le début (jour 1 en JS)
+    currentWeekStart.setDate(currentWeekStart.getDate() - 7);
 }
-initializeWeekStart();
 
 
-// --- Fonctions de la vue Calendrier (inchangées) ---
+// --- Fonctions de la vue Calendrier ---
 
 function initCalendar() {
   const calendarEl = document.getElementById('calendar');
@@ -136,7 +122,7 @@ function initCalendar() {
   calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: 'dayGridMonth',
     locale: 'fr',
-    firstDay: 1, 
+    firstDay: 1, // Lundi
     
     headerToolbar: {
       left: 'prev,next today',
@@ -156,6 +142,7 @@ function initCalendar() {
     dayMaxEvents: true,
     editable: true,
     
+    // Mettre la couleur des événements
     eventDidMount: function(info) {
       if (info.event.extendedProps.shift_color) {
         info.el.style.backgroundColor = info.event.extendedProps.shift_color;
@@ -166,8 +153,10 @@ function initCalendar() {
       }
     },
 
+    // Afficher un pop-up détaillé
     eventClick: function(info) {
       const props = info.event.extendedProps;
+      const title = info.event.title;
       const start = new Date(info.event.start).toLocaleString('fr-FR');
       const end = new Date(info.event.end).toLocaleString('fr-FR');
 
@@ -212,6 +201,7 @@ Statut: ${props.status || 'Confirmé'}
   calendar.render();
 }
 
+// Fonction utilitaire pour vérifier si une couleur est sombre (pour texte blanc)
 function isDark(hex) {
     if (!hex) return false;
     const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
@@ -226,6 +216,7 @@ function isDark(hex) {
     const g = parseInt(result[2], 16);
     const b = parseInt(result[3], 16);
 
+    // Formule Luma pour la luminosité
     return (0.2126 * r + 0.7152 * g + 0.0722 * b) < 140; 
 }
 
@@ -239,27 +230,16 @@ function loadGanttView() {
     const startIso = formatDate(currentWeekStart);
     document.getElementById('week-info').textContent = `Semaine du ${currentWeekStart.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}`;
     
-    // CORRECTION BUG PDF : Mise à jour de l'URL d'export
-    const exportLink = document.getElementById('export-pdf-link');
-    if (exportLink) {
-        exportLink.href = `/api/export-gantt-pdf?start=${startIso}`;
-    }
-    
     updateStatistics(startIso);
 
     fetch(`/api/gantt-data?start=${startIso}`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`Erreur HTTP: ${response.status}`);
-            }
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
             renderGantt(data);
         })
         .catch(error => {
             console.error('Erreur lors du chargement de la vue Gantt:', error);
-            document.getElementById('gantt-tbody').innerHTML = '<tr><td colspan="9" class="text-center py-4 text-red-500">Erreur lors du chargement du planning Gantt. Vérifiez votre backend Flask.</td></tr>';
+            document.getElementById('gantt-tbody').innerHTML = '<tr><td colspan="9" class="text-center py-4 text-red-500">Erreur lors du chargement du planning Gantt.</td></tr>';
         });
 }
 
@@ -270,12 +250,7 @@ function renderGantt(data) {
     const assignmentsByEmployeeAndDay = {};
 
     data.assignments.forEach(a => {
-        if (typeof a.start !== 'string') {
-             console.error("Erreur de données: a.start n'est pas une chaîne. Vérifiez votre backend Flask.");
-             return;
-        }
-        
-        const date = a.start.substring(0, 10); 
+        const date = a.start.substring(0, 10);
         const dayOfWeek = new Date(date).getDay(); 
         const employeeId = a.employee_id;
         
@@ -289,40 +264,28 @@ function renderGantt(data) {
         assignmentsByEmployeeAndDay[employeeId][dayOfWeek].push(a);
     });
 
-    const weekStartDate = new Date(currentWeekStart);
-
     data.employees.forEach(employee => {
         const row = tbody.insertRow();
         row.className = 'hover:bg-gray-50';
         
+        // Cellule Employé (Sticky)
         const nameCell = row.insertCell();
         nameCell.className = 'py-2 px-4 font-medium text-gray-800 sticky left-0 z-10 bg-white border-r border-gray-200 text-sm';
         nameCell.textContent = employee.name;
         
-        // Boucle pour les 7 jours (Lundi=1 à Dimanche=0)
+        // Cellules des jours (Lundi=1 à Dimanche=0)
         for (let i = 1; i <= 7; i++) {
             const dayIndex = i % 7; 
             const dayCell = row.insertCell();
-            
-            const cellDate = new Date(weekStartDate);
-            cellDate.setDate(weekStartDate.getDate() + (i - 1));
-            const cellDateIso = formatDate(cellDate);
-            
-            dayCell.className = 'py-2 px-1 text-center text-sm align-top gantt-cell drag-drop-target';
-            dayCell.setAttribute('data-employee-id', employee.id);
-            dayCell.setAttribute('data-date', cellDateIso);
+            dayCell.className = 'py-2 px-1 text-center text-sm align-top gantt-cell';
             
             const assignments = assignmentsByEmployeeAndDay[employee.id] ? assignmentsByEmployeeAndDay[employee.id][dayIndex] || [] : [];
             
             assignments.forEach(a => {
                 const shiftDiv = document.createElement('div');
                 
+                // Utilisation de la classe pour les blocs plus grands
                 shiftDiv.className = 'p-1 rounded text-sm font-semibold my-1 whitespace-nowrap overflow-hidden text-ellipsis shadow-md cursor-pointer gantt-shift-block-large';
-                shiftDiv.setAttribute('draggable', 'true');
-                shiftDiv.setAttribute('data-assignment-id', a.id);
-                // IMPORTANT : Pour le D&D, on met le pointeur à auto, le fix se fera pendant le dragstart
-                shiftDiv.style.pointerEvents = 'auto'; 
-
                 shiftDiv.style.backgroundColor = a.shift_color;
                 
                 if (isDark(a.shift_color)) {
@@ -336,8 +299,7 @@ function renderGantt(data) {
                     <div class="font-normal leading-tight text-opacity-90 text-xs">${a.start_time}-${a.end_time}</div>
                 `;
                 
-                shiftDiv.onclick = function(event) {
-                    event.stopPropagation(); 
+                shiftDiv.onclick = function() {
                     const start = new Date(a.start).toLocaleString('fr-FR');
                     const end = new Date(a.end).toLocaleString('fr-FR');
                     const durationMs = new Date(a.end).getTime() - new Date(a.start).getTime();
@@ -369,8 +331,18 @@ function previousWeek() {
     loadGanttView();
 }
 
+// --- NOUVELLE FONCTION PDF ---
+function exportGanttPdf() {
+    // currentWeekStart contient la date de début de la semaine affichée
+    const startIso = formatDate(currentWeekStart);
+    
+    // Ouvre la nouvelle route d'API Flask dans un nouvel onglet pour déclencher le téléchargement
+    const url = `/api/export-gantt-pdf?start=${startIso}`;
+    window.open(url, '_blank');
+}
 
-// --- Fonctions de Contrôle et Statistiques (inchangées) ---
+
+// --- Fonctions de Contrôle de la Vue ---
 
 function switchView(view) {
   const calendarView = document.getElementById('calendar-view');
@@ -398,6 +370,7 @@ function switchView(view) {
   }
 }
 
+// Mettre à jour les statistiques
 function updateStatistics(startIso = null) {
   let url = '/api/planning-stats';
   
@@ -413,106 +386,7 @@ function updateStatistics(startIso = null) {
 }
 
 
-// ====================================================================
-// --- GESTION DU GLISSER-DÉPOSER (DRAG & DROP) ---
-// ====================================================================
-
-let draggedAssignmentId = null;
-
-document.addEventListener('dragstart', function(event) {
-    const shiftBlock = event.target.closest('.gantt-shift-block-large');
-    if (shiftBlock && shiftBlock.getAttribute('draggable') === 'true') {
-        draggedAssignmentId = shiftBlock.dataset.assignmentId;
-        event.dataTransfer.setData('text/plain', draggedAssignmentId);
-        shiftBlock.classList.add('is-dragging'); 
-        
-        // CORRECTION D&D PRÉCISION : Désactiver temporairement les événements de la souris 
-        // sur TOUS les shifts pour que l'événement DROP puisse atteindre la cellule <td> sous-jacente.
-        document.querySelectorAll('.gantt-shift-block-large').forEach(el => el.style.pointerEvents = 'none');
-    }
-});
-
-document.addEventListener('dragend', function(event) {
-    const shiftBlock = event.target.closest('.gantt-shift-block-large');
-    if (shiftBlock) {
-        shiftBlock.classList.remove('is-dragging');
-    }
-    
-    // CORRECTION D&D PRÉCISION : Réactiver les événements après le drag
-    document.querySelectorAll('.gantt-shift-block-large').forEach(el => el.style.pointerEvents = 'auto');
-    
-    document.querySelectorAll('.drag-drop-target').forEach(cell => cell.classList.remove('drag-over'));
-    draggedAssignmentId = null;
-});
-
-document.addEventListener('dragover', function(event) {
-    const targetCell = event.target.closest('.drag-drop-target');
-    if (targetCell) {
-        event.preventDefault(); 
-        targetCell.classList.add('drag-over'); 
-    }
-});
-
-document.addEventListener('dragleave', function(event) {
-    const targetCell = event.target.closest('.drag-drop-target');
-    if (targetCell) {
-        targetCell.classList.remove('drag-over');
-    }
-});
-
-document.addEventListener('drop', function(event) {
-    event.preventDefault();
-    
-    // Grâce au `pointer-events: none` dans dragstart, targetCell est la <td> correcte.
-    const targetCell = event.target.closest('.drag-drop-target'); 
-    
-    document.querySelectorAll('.drag-drop-target').forEach(cell => cell.classList.remove('drag-over'));
-    
-    if (targetCell && draggedAssignmentId) {
-        const newEmployeeId = targetCell.dataset.employeeId;
-        const newDate = targetCell.dataset.date;
-        
-        if (!newEmployeeId || !newDate) {
-             alert("Informations de destination manquantes (Employé ou Date).");
-             return;
-        }
-
-        // 1. Envoyer la requête au Backend pour la mise à jour
-        fetch('/api/assignment/move', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                assignment_id: draggedAssignmentId,
-                new_employee_id: newEmployeeId,
-                new_date: newDate
-            })
-        })
-        .then(response => {
-             if (!response.ok) {
-                return response.json().then(err => { throw new Error(err.error || 'Erreur inconnue côté serveur'); });
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                loadGanttView(); 
-            } else {
-                alert('Erreur lors du déplacement : ' + (data.error || 'Erreur inconnue'));
-            }
-        })
-        .catch(error => {
-            console.error('Erreur réseau/serveur:', error);
-            alert('Erreur lors du déplacement du shift : ' + error.message);
-        })
-        .finally(() => {
-            draggedAssignmentId = null;
-        });
-    }
-});
-
-// --- Initialisation au chargement ---
+// --- Initialisation au chargement (AFFICHER GANTT PAR DÉFAUT) ---
 document.addEventListener('DOMContentLoaded', function() {
   initCalendar(); 
   switchView('gantt'); 
@@ -520,8 +394,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <style>
-/* --- Styles de la vue Gantt (optimisés) --- */
-
+/* 1. Améliorations générales et Table Gantt optimisée */
 .view-toggle {
   transition: all 0.3s ease;
 }
@@ -538,21 +411,23 @@ document.addEventListener('DOMContentLoaded', function() {
   border-spacing: 0;
 }
 
+/* 2. Rendre les LIGNES plus grandes */
 .gantt-table tbody td {
+  /* AUGMENTATION DU PADDING VERTICAL pour plus d'espace */
   padding-top: 8px !important; 
   padding-bottom: 8px !important;
   vertical-align: top;
 }
 
-/* IMPORTANT : On le laisse sur auto ici, il sera désactivé par JS seulement pendant le drag */
+/* 3. Style des blocs de shift (PLUS GRANDS) */
 .gantt-shift-block-large {
+    /* AUGMENTATION DU PADDING et de la FONT SIZE */
     padding: 4px 6px !important; 
     line-height: 1.3;
-    font-size: 0.8rem; 
+    font-size: 0.8rem; /* Taille de police plus lisible */
     letter-spacing: 0.01em;
     opacity: 0.98;
     transition: all 0.1s ease;
-    pointer-events: auto; 
 }
 
 .gantt-shift-block-large:hover {
@@ -562,21 +437,16 @@ document.addEventListener('DOMContentLoaded', function() {
     z-index: 10;
 }
 
-.gantt-shift-block-large.is-dragging {
-    opacity: 0.4;
-    border: 2px dashed #3B82F6;
-    box-shadow: none;
-    cursor: grabbing !important;
-}
-
+/* 4. Fixer la colonne Employé à gauche */
 .gantt-table thead th:first-child,
 .gantt-table tbody td:first-child {
   z-index: 20; 
   position: sticky;
   left: 0;
-  background-color: white; 
+  background-color: white; /* S'assurer que le fond est blanc lors du défilement */
 }
 
+/* S'assurer que le fond de l'en-tête Employé reste bleu */
 .gantt-table thead th:first-child {
     background-color: #2563EB; 
 }
@@ -585,18 +455,13 @@ document.addEventListener('DOMContentLoaded', function() {
   border-right: 1px solid #e5e7eb; 
 }
 
+/* 5. Ajuster les largeurs des colonnes */
 .gantt-table th:not(:first-child),
 .gantt-table td:not(:first-child) {
+  /* Largeur des colonnes de jours (légèrement plus large que précédemment) */
   width: calc((100% - 180px) / 7); 
   min-width: 150px; 
   max-width: 180px;
 }
-
-.drag-drop-target.drag-over {
-    background-color: #EBF8FF !important; 
-    box-shadow: inset 0 0 0 2px #3B82F6;
-    transition: background-color 0.1s;
-}
-
 </style>
 {% endblock %}
