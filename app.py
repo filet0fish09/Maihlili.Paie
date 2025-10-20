@@ -2,7 +2,8 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, flash
 from models import db, User, Employee, Shift, Assignment, Team
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from datetime import datetime, timedelta
+# ------------------------------------------------------------------
+from datetime import datetime, timedelta # <-- C'EST CETTE LIGNE QU'IL FAUT GARDER
 import os
 # --- NOUVEAUX IMPORTS POUR L'EXPORT PDF ---
 from reportlab.lib.pagesizes import A4
@@ -16,6 +17,8 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 MAIHLILI_FOND_TABLE = colors.HexColor('#FFF0F8') # Fond du tableau (simule le fond du doc)
 MAIHLILI_TITRES_BLEU = colors.HexColor('#3055FF') # Bleu pour les titres et en-têtes
 MAIHLILI_BLANC = colors.white
+
+# ... le reste du fichier app.py ...
 
 app = Flask(__name__)
 
@@ -2592,6 +2595,52 @@ def export_gantt_pdf():
         print(f"Erreur lors de la construction du PDF: {e}")
         return jsonify({'error': 'Erreur lors de la construction du PDF.'}), 500
 
+@app.route('/api/assignment/move', methods=['POST'])
+@login_required
+def move_assignment():
+    # Vérification des droits du manager
+    if not current_user.is_manager:
+        return jsonify({'error': 'Accès refusé'}), 403
+
+    data = request.get_json()
+    assignment_id = data.get('assignment_id')
+    new_employee_id = data.get('new_employee_id')
+    new_date_str = data.get('new_date') # Format 'YYYY-MM-DD'
+
+    if not all([assignment_id, new_employee_id, new_date_str]):
+        return jsonify({'error': 'Données manquantes'}), 400
+
+    try:
+        assignment = Assignment.query.get(assignment_id)
+        if not assignment:
+            return jsonify({'error': 'Assignation non trouvée'}), 404
+        
+        # --- LOGIQUE CRITIQUE DE MISE À JOUR DE DATE/HEURE ---
+        
+        # 1. Calculer la durée (timedelta) du shift
+        time_delta = assignment.end - assignment.start 
+        
+        # 2. Extraire l'heure et la minute de l'ancienne heure de début
+        #    La date (jour, mois, année) sera prise de new_date_str
+        old_time = assignment.start.strftime('%H:%M:%S')
+        
+        # 3. Créer le nouvel objet datetime de début
+        new_date_start = datetime.strptime(f"{new_date_str} {old_time}", '%Y-%m-%d %H:%M:%S')
+        
+        # 4. Mettre à jour l'assignation dans la DB
+        assignment.employee_id = new_employee_id
+        assignment.start = new_date_start
+        assignment.end = new_date_start + time_delta # Nouvelle fin = nouvelle heure de début + durée
+        
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Assignation déplacée avec succès'})
+
+    except Exception as e:
+        db.session.rollback()
+        # Log l'erreur pour le débogage
+        print(f"Erreur lors du déplacement de l'assignation: {e}") 
+        return jsonify({'error': 'Erreur serveur lors de la mise à jour'}), 500
 # --- Lancement de l'application ---
 
 if __name__ == "__main__":
@@ -2601,6 +2650,7 @@ if __name__ == "__main__":
     # Configuration pour production Render
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
