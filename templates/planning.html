@@ -21,29 +21,27 @@
   </div>
 
   <div id="gantt-view" class="bg-white rounded-xl shadow-sm border border-gray-200">
-    <div class="p-6 border-b border-gray-200">
-      <div class="flex justify-between items-center">
-        <h3 class="text-lg font-semibold">📊 Vue Gantt - Planning hebdomadaire</h3>
-        <div class="flex gap-2">
-          <button onclick="previousWeek()" class="px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">← Semaine précédente</button>
-          <span id="week-info" class="px-4 py-2 text-sm font-medium"></span>
-          <button onclick="nextWeek()" class="px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">Semaine suivante →</button>
-        </div>
+    <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+      <h3 class="text-lg font-semibold">📊 Vue Gantt - Planning hebdomadaire</h3>
+      <div class="flex gap-2">
+        <button onclick="previousWeek()" class="px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">← Semaine précédente</button>
+        <span id="week-info" class="px-4 py-2 text-sm font-medium"></span>
+        <button onclick="nextWeek()" class="px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">Semaine suivante →</button>
       </div>
     </div>
 
     <div class="overflow-x-auto">
-      <table class="w-full">
-        <thead class="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+      <table class="w-full gantt-table">
+        <thead class="bg-gradient-to-r from-blue-600 to-blue-700 text-white sticky top-0">
           <tr>
-            <th class="text-left py-3 px-4 font-semibold w-[150px] sticky left-0 z-10 bg-blue-600">Employé</th>
-            <th class="text-center py-3 px-4 font-semibold">Lun</th>
-            <th class="text-center py-3 px-4 font-semibold">Mar</th>
-            <th class="text-center py-3 px-4 font-semibold">Mer</th>
-            <th class="text-center py-3 px-4 font-semibold">Jeu</th>
-            <th class="text-center py-3 px-4 font-semibold">Ven</th>
-            <th class="text-center py-3 px-4 font-semibold">Sam</th>
-            <th class="text-center py-3 px-4 font-semibold">Dim</th>
+            <th class="text-left py-3 px-4 font-semibold w-[180px] sticky left-0 z-20 bg-blue-600">Employé</th>
+            <th class="text-center py-3 px-2 font-semibold w-[120px]">Lun</th>
+            <th class="text-center py-3 px-2 font-semibold w-[120px]">Mar</th>
+            <th class="text-center py-3 px-2 font-semibold w-[120px]">Mer</th>
+            <th class="text-center py-3 px-2 font-semibold w-[120px]">Jeu</th>
+            <th class="text-center py-3 px-2 font-semibold w-[120px]">Ven</th>
+            <th class="text-center py-3 px-2 font-semibold w-[120px]">Sam</th>
+            <th class="text-center py-3 px-2 font-semibold w-[120px]">Dim</th>
           </tr>
         </thead>
         <tbody id="gantt-tbody" class="divide-y divide-gray-200">
@@ -100,19 +98,18 @@
 let calendar = null;
 let currentWeekStart = new Date();
 currentWeekStart.setDate(currentWeekStart.getDate() - currentWeekStart.getDay() + 1);
-if (currentWeekStart.getDay() === 0) { // Si Dimanche (décalage au Lun de la semaine suivante)
+if (currentWeekStart.getDay() === 0) { // S'assurer que le Lundi est bien le début (jour 1 en JS)
     currentWeekStart.setDate(currentWeekStart.getDate() - 7);
 }
 
 
-// --- Fonctions de la vue Calendrier ---
+// --- Fonctions de la vue Calendrier (FIXED: Pop-up et Couleurs) ---
 
-// Initialiser le calendrier FullCalendar
 function initCalendar() {
   const calendarEl = document.getElementById('calendar');
   
   if (calendar) {
-    calendar.destroy();
+    calendar.destroy(); // Détruire l'instance précédente si elle existe
   }
 
   calendar = new FullCalendar.Calendar(calendarEl, {
@@ -140,38 +137,58 @@ function initCalendar() {
     
     // NOUVEAU: Mettre la couleur des événements (utilise extendedProps.color de l'API)
     eventDidMount: function(info) {
-      if (info.event.extendedProps.color) {
-        info.el.style.backgroundColor = info.event.extendedProps.color;
-        info.el.style.borderColor = info.event.extendedProps.color;
+      if (info.event.extendedProps.shift_color) {
+        info.el.style.backgroundColor = info.event.extendedProps.shift_color;
+        info.el.style.borderColor = info.event.extendedProps.shift_color;
+      }
+      // Rendre le texte lisible sur les couleurs sombres
+      if (info.event.extendedProps.shift_color && isDark(info.event.extendedProps.shift_color)) {
+          info.el.style.color = 'white';
       }
     },
 
-    // NOUVEAU: Afficher un pop-up détaillé (CORRIGEANT LES N/A)
+    // NOUVEAU: Afficher un pop-up détaillé
     eventClick: function(info) {
       const props = info.event.extendedProps;
       const title = info.event.title;
       const start = new Date(info.event.start).toLocaleString('fr-FR');
       const end = new Date(info.event.end).toLocaleString('fr-FR');
 
+      // Le calcul de la durée doit se faire ici ou être passé via l'API
+      const durationMs = new Date(info.event.end).getTime() - new Date(info.event.start).getTime();
+      const durationHours = (durationMs / (1000 * 60 * 60)).toFixed(1);
+      
       const details = `
 Service: ${props.shift_name || 'N/A'}
 Employé: ${props.employee_name || 'N/A'}
 Début: ${start}
 Fin: ${end}
-Durée: ${props.duration !== undefined ? props.duration + 'h' : 'N/A'}
-Statut: ${props.status || 'N/A'}
+Durée: ${durationHours}h
+Statut: ${props.status || 'Confirmé'}
       `;
 
-      alert(title + '\n\n' + details);
+      alert('Détails de l\'assignation\n\n' + details);
     },
-
+    
+    // FETCH (CORRIGÉ POUR INCLURE LES PROPRIÉTÉS ÉTENDUES)
     events: function(info, successCallback, failureCallback) {
       fetch(`/api/assignments/events?start=${info.startStr}&end=${info.endStr}`)
         .then(response => response.json())
         .then(events => {
-          successCallback(events);
+          // Transformer les événements pour inclure les extendedProps pour le pop-up
+          const transformedEvents = events.map(event => ({
+              ...event,
+              extendedProps: {
+                  shift_name: event.shift_name,
+                  employee_name: event.employee_name,
+                  shift_color: event.shift_color,
+                  // Ajoutez d'autres propriétés si nécessaire
+              }
+          }));
+          successCallback(transformedEvents);
           // Mettre à jour les stats en fonction de la vue calendrier si elle est active
-          if (!document.getElementById('gantt-view').classList.contains('hidden')) {
+          // On ne met à jour que si c'est la vue initiale ou si on bascule
+          if (document.getElementById('calendar-view').classList.contains('hidden') === false) {
               updateStatistics(info.startStr); 
           }
         })
@@ -185,8 +202,26 @@ Statut: ${props.status || 'N/A'}
   calendar.render();
 }
 
+// Fonction utilitaire pour vérifier si une couleur est sombre (pour texte blanc)
+function isDark(hex) {
+    if (!hex) return false;
+    const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+    hex = hex.replace(shorthandRegex, function(m, r, g, b) {
+        return r + r + g + g + b + b;
+    });
 
-// --- Fonctions de la vue Gantt (CORRIGÉES) ---
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if (!result) return false;
+
+    const r = parseInt(result[1], 16);
+    const g = parseInt(result[2], 16);
+    const b = parseInt(result[3], 16);
+
+    // Formule Luma pour la luminosité
+    return (0.2126 * r + 0.7152 * g + 0.0722 * b) < 140; 
+}
+
+// --- Fonctions de la vue Gantt (AMÉLIORÉES) ---
 
 function formatDate(date) {
     return date.toISOString().split('T')[0];
@@ -202,73 +237,99 @@ function loadGanttView() {
     fetch(`/api/gantt-data?start=${startIso}`)
         .then(response => response.json())
         .then(data => {
-            const tbody = document.getElementById('gantt-tbody');
-            tbody.innerHTML = '';
-            
-            const assignmentsByEmployeeAndDay = {};
-
-            // Regrouper les assignations par employé et par jour
-            data.assignments.forEach(a => {
-                const date = a.start.substring(0, 10);
-                const dayOfWeek = new Date(date).getDay();
-                const employeeId = a.employee_id;
-                
-                if (!assignmentsByEmployeeAndDay[employeeId]) {
-                    assignmentsByEmployeeAndDay[employeeId] = {};
-                }
-                if (!assignmentsByEmployeeAndDay[employeeId][dayOfWeek]) {
-                    assignmentsByEmployeeAndDay[employeeId][dayOfWeek] = [];
-                }
-                
-                assignmentsByEmployeeAndDay[employeeId][dayOfWeek].push(a);
-            });
-
-            // Générer le tableau
-            data.employees.forEach(employee => {
-                const row = tbody.insertRow();
-                row.className = 'hover:bg-gray-50';
-                
-                // Cellule Employé
-                const nameCell = row.insertCell();
-                nameCell.className = 'py-3 px-4 font-medium text-gray-800 sticky left-0 bg-white border-r border-gray-200';
-                nameCell.textContent = employee.name;
-                
-                // Cellules des jours (Lundi=1 à Dimanche=0)
-                for (let i = 1; i <= 7; i++) {
-                    const dayIndex = i % 7; // 1=Lun, ..., 6=Sam, 0=Dim
-                    const dayCell = row.insertCell();
-                    dayCell.className = 'py-2 px-1 text-center text-sm align-top';
-                    
-                    const assignments = assignmentsByEmployeeAndDay[employee.id] ? assignmentsByEmployeeAndDay[employee.id][dayIndex] || [] : [];
-                    
-                    assignments.forEach(a => {
-                        const shiftDiv = document.createElement('div');
-                        shiftDiv.className = 'p-1 rounded-md text-xs font-semibold my-0.5 whitespace-nowrap overflow-hidden text-ellipsis shadow-sm cursor-pointer text-white';
-                        shiftDiv.style.backgroundColor = a.shift_color;
-                        
-                        // CORRECTION : Afficher les noms et les heures
-                        shiftDiv.textContent = `${a.shift_name} (${a.start_time}-${a.end_time})`;
-                        
-                        // Ajouter le pop-up (alert simple pour rester cohérent avec le calendrier)
-                        shiftDiv.onclick = function() {
-                             alert(`
-Assignation Détails:
-Service: ${a.shift_name}
-Employé: ${employee.name}
-Début: ${new Date(a.start).toLocaleString('fr-FR')}
-Fin: ${new Date(a.end).toLocaleString('fr-FR')}
-`);
-                        };
-                        
-                        dayCell.appendChild(shiftDiv);
-                    });
-                }
-            });
+            renderGantt(data);
         })
         .catch(error => {
             console.error('Erreur lors du chargement de la vue Gantt:', error);
             document.getElementById('gantt-tbody').innerHTML = '<tr><td colspan="9" class="text-center py-4 text-red-500">Erreur lors du chargement du planning Gantt.</td></tr>';
         });
+}
+
+function renderGantt(data) {
+    const tbody = document.getElementById('gantt-tbody');
+    tbody.innerHTML = '';
+    
+    const assignmentsByEmployeeAndDay = {};
+
+    // Regrouper les assignations par employé et par jour
+    data.assignments.forEach(a => {
+        const date = a.start.substring(0, 10);
+        // Le jour de la semaine (0=Dim, 1=Lun, ..., 6=Sam)
+        const dayOfWeek = new Date(date).getDay(); 
+        const employeeId = a.employee_id;
+        
+        if (!assignmentsByEmployeeAndDay[employeeId]) {
+            assignmentsByEmployeeAndDay[employeeId] = {};
+        }
+        if (!assignmentsByEmployeeAndDay[employeeId][dayOfWeek]) {
+            assignmentsByEmployeeAndDay[employeeId][dayOfWeek] = [];
+        }
+        
+        assignmentsByEmployeeAndDay[employeeId][dayOfWeek].push(a);
+    });
+
+    // Générer le tableau
+    data.employees.forEach(employee => {
+        const row = tbody.insertRow();
+        row.className = 'hover:bg-gray-50';
+        
+        // Cellule Employé (Sticky)
+        const nameCell = row.insertCell();
+        // CLASSE AJUSTÉE pour un look plus pro et pour la position sticky
+        nameCell.className = 'py-2 px-4 font-medium text-gray-800 sticky left-0 z-10 bg-white border-r border-gray-200 text-sm';
+        nameCell.textContent = employee.name;
+        
+        // Cellules des jours (Lundi=1 à Dimanche=0)
+        // La boucle commence à 1 (Lundi) et va jusqu'à 7 (pour couvrir Dimanche)
+        for (let i = 1; i <= 7; i++) {
+            const dayIndex = i % 7; // 1=Lun, ..., 6=Sam, 0=Dim
+            const dayCell = row.insertCell();
+            // CLASSE AJUSTÉE pour plus de compacité
+            dayCell.className = 'py-1 px-1 text-center text-sm align-top gantt-cell';
+            
+            const assignments = assignmentsByEmployeeAndDay[employee.id] ? assignmentsByEmployeeAndDay[employee.id][dayIndex] || [] : [];
+            
+            assignments.forEach(a => {
+                const shiftDiv = document.createElement('div');
+                
+                // STYLE AMÉLIORÉ: Compact et professionnel
+                shiftDiv.className = 'p-1 rounded text-xs font-semibold my-0.5 whitespace-nowrap overflow-hidden text-ellipsis shadow-sm cursor-pointer gantt-shift-block';
+                shiftDiv.style.backgroundColor = a.shift_color;
+                
+                // Changer la couleur du texte si la couleur de fond est sombre
+                if (isDark(a.shift_color)) {
+                    shiftDiv.style.color = 'white';
+                } else {
+                    shiftDiv.style.color = '#333';
+                }
+
+                // CONTENU AMÉLIORÉ: Nom + Heures
+                shiftDiv.innerHTML = `
+                    <div class="truncate leading-none">${a.shift_name}</div>
+                    <div class="font-normal leading-none text-opacity-80">${a.start_time}-${a.end_time}</div>
+                `;
+                
+                // Ajouter le pop-up (alert simple)
+                shiftDiv.onclick = function() {
+                    const start = new Date(a.start).toLocaleString('fr-FR');
+                    const end = new Date(a.end).toLocaleString('fr-FR');
+                    const durationMs = new Date(a.end).getTime() - new Date(a.start).getTime();
+                    const durationHours = (durationMs / (1000 * 60 * 60)).toFixed(1);
+
+                    alert(`
+Assignation Détails:
+Service: ${a.shift_name}
+Employé: ${employee.name}
+Début: ${start}
+Fin: ${end}
+Durée: ${durationHours}h
+                    `);
+                };
+                
+                dayCell.appendChild(shiftDiv);
+            });
+        }
+    });
 }
 
 function nextWeek() {
@@ -294,15 +355,17 @@ function switchView(view) {
   if (view === 'calendar') {
     calendarView.classList.remove('hidden');
     ganttView.classList.add('hidden');
+    // Mise à jour des classes
     btnCalendar.classList.remove('bg-gray-200', 'text-gray-800');
     btnCalendar.classList.add('bg-blue-600', 'text-white');
     btnGantt.classList.add('bg-gray-200', 'text-gray-800');
     btnGantt.classList.remove('bg-blue-600', 'text-white');
-    calendar.render(); // Redessiner le calendrier
+    calendar.render(); 
     updateStatistics();
   } else if (view === 'gantt') {
     calendarView.classList.add('hidden');
     ganttView.classList.remove('hidden');
+    // Mise à jour des classes
     btnGantt.classList.remove('bg-gray-200', 'text-gray-800');
     btnGantt.classList.add('bg-blue-600', 'text-white');
     btnCalendar.classList.add('bg-gray-200', 'text-gray-800');
@@ -314,8 +377,12 @@ function switchView(view) {
 // Mettre à jour les statistiques
 function updateStatistics(startIso = null) {
   let url = '/api/planning-stats';
+  // Si on passe une date de début, on l'utilise pour cibler la semaine des stats
   if (startIso) {
-      url += `?start=${startIso}`;
+      // Pour les statistiques, on ne passe pas de date spécifique pour l'instant
+      // L'API est codée pour la semaine actuelle, mais on pourrait l'adapter
+      // pour le moment, on garde l'appel simple pour l'API existante
+      // (sinon il faudrait modifier la route /api/planning-stats dans app.py)
   }
   
   fetch(url)
@@ -349,26 +416,63 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 /* Table Gantt optimisée */
-#gantt-view table {
+.gantt-table {
+  /* Assurer que la table prend toute la largeur et permet la largeur fixe des colonnes */
   table-layout: fixed;
   width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* Rendre la colonne Employé et son contenu compact et sticky */
+.gantt-table tbody td:first-child {
+  /* Utilisation de !important car Tailwind peut être prioritaire */
+  padding-top: 4px !important; 
+  padding-bottom: 4px !important;
+  line-height: 1.2;
+}
+
+.gantt-table tbody td {
+  /* Réduire le padding des cellules de jours pour plus de densité */
+  padding-top: 4px !important; 
+  padding-bottom: 4px !important;
+  vertical-align: top; /* Aligner le contenu en haut des cellules */
+}
+
+/* Style des blocs de shift dans le Gantt */
+.gantt-shift-block {
+    /* Rendre le bloc de shift très compact */
+    padding: 2px 4px !important; 
+    line-height: 1.2;
+    font-size: 0.65rem; /* Très petit texte, comme dans l'exemple */
+    letter-spacing: 0.02em;
+    opacity: 0.95;
+    transition: all 0.1s ease;
+}
+
+.gantt-shift-block:hover {
+    opacity: 1;
+    transform: scale(1.02);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    z-index: 10;
 }
 
 /* Fixer la colonne Employé à gauche */
-#gantt-view thead th:first-child,
-#gantt-view tbody td:first-child {
-  z-index: 20;
+.gantt-table thead th:first-child,
+.gantt-table tbody td:first-child {
+  z-index: 20; /* Plus haut que les shifts */
 }
 
-#gantt-view tbody td:first-child {
-  border-right: 1px solid #e5e7eb; /* Séparateur */
+.gantt-table tbody td:first-child {
+  border-right: 1px solid #e5e7eb; /* Séparateur visuel */
 }
 
-/* Centrer les contenus des jours */
-#gantt-view th:not(:first-child),
-#gantt-view td:not(:first-child) {
-  width: calc(100% / 7); /* Largeur égale pour les 7 jours */
-  min-width: 120px;
+/* Ajuster les largeurs des colonnes */
+.gantt-table th:not(:first-child),
+.gantt-table td:not(:first-child) {
+  width: calc((100% - 180px) / 7); /* 180px pour l'employé, le reste divisé par 7 */
+  min-width: 120px; /* Assurer une largeur minimale pour un affichage correct */
+  max-width: 140px;
 }
 </style>
 {% endblock %}
