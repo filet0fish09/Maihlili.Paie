@@ -1208,8 +1208,8 @@ def export_gantt_pdf():
     data = get_gantt_data_for_week(start_date, current_user)
     employees = data['employees']
     assignments = data['assignments']
-    week_start = data['week_start'].date() # On ne garde que la date pour le titre
-    week_end = data['week_end'].date() - timedelta(days=1) # Le dernier jour de la semaine
+    week_start = data['week_start'] # On ne garde que la date pour le titre
+    week_end = data['week_end'] - timedelta(days=1) # Le dernier jour de la semaine
 
     # 3. Préparation du PDF
     buffer = BytesIO()
@@ -1302,3 +1302,4 @@ if __name__ == "__main__":
     # Configuration pour production Render
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
