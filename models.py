@@ -213,6 +213,9 @@ class Shift(db.Model):
 class Assignment(db.Model):
     __tablename__ = 'assignments'
     
+    class Assignment(db.Model):
+    __tablename__ = 'assignments'
+    
     id = db.Column(db.Integer, primary_key=True)
     employee_id = db.Column(db.Integer, db.ForeignKey('employees.id'), nullable=False)
     shift_id = db.Column(db.Integer, db.ForeignKey('shifts.id'), nullable=False)
@@ -222,11 +225,15 @@ class Assignment(db.Model):
     notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
-    creator = db.relationship('User', backref='assignments_created')
     
-    # Relation vers TimeSheetEntry (pour que TimeSheetEntry puisse avoir une relation)
-    timesheet_entries = db.relationship('TimeSheetEntry', backref='assignment', lazy=True, cascade='all, delete-orphan') 
+    # ⭐ CORRECTION : Ajouter la clé étrangère pour created_by
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    
+    # Relations
+    timesheet_entries = db.relationship('TimeSheetEntry', backref='assignment', lazy=True, cascade='all, delete-orphan')
+    
+    # ⭐ CORRECTION : Ajouter la relation vers User
+    creator = db.relationship('User', backref='created_assignments', lazy=True, foreign_keys=[created_by])
 
     @property
     def duration_hours(self):
@@ -271,4 +278,5 @@ class TimeSheetEntry(db.Model):
         
     def __repr__(self):
         return f'<TimeSheetEntry {self.id} for Assignment {self.assignment_id}>'
+
 
