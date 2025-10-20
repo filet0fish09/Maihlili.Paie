@@ -110,7 +110,6 @@ let currentWeekStart = new Date();
 // Initialisation de la variable de semaine au lundi
 function initializeWeekStart() {
     const today = new Date();
-    // 0 = Dimanche, 1 = Lundi, ... 6 = Samedi
     const dayOfWeek = today.getDay(); 
     const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); 
     currentWeekStart = new Date(today.setDate(diff));
@@ -119,7 +118,7 @@ function initializeWeekStart() {
 initializeWeekStart();
 
 
-// --- Fonctions de la vue Calendrier (inchangées) ---
+// --- Fonctions de la vue Calendrier ---
 
 function initCalendar() {
   const calendarEl = document.getElementById('calendar');
@@ -235,7 +234,7 @@ function loadGanttView() {
     const startIso = formatDate(currentWeekStart);
     document.getElementById('week-info').textContent = `Semaine du ${currentWeekStart.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}`;
     
-    // CORRECTION APPLIQUÉE ICI: Cette ligne modifie l'attribut href du lien <a>
+    // Mise à jour du lien d'export PDF (fix du bug Cannot set properties of null)
     const exportLink = document.getElementById('export-pdf-link');
     if (exportLink) {
         exportLink.href = `/api/export-gantt-pdf?start=${startIso}`;
@@ -244,13 +243,19 @@ function loadGanttView() {
     updateStatistics(startIso);
 
     fetch(`/api/gantt-data?start=${startIso}`)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                // Si le serveur renvoie une erreur, affichez un message d'erreur
+                throw new Error(`Erreur HTTP: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             renderGantt(data);
         })
         .catch(error => {
             console.error('Erreur lors du chargement de la vue Gantt:', error);
-            document.getElementById('gantt-tbody').innerHTML = '<tr><td colspan="9" class="text-center py-4 text-red-500">Erreur lors du chargement du planning Gantt.</td></tr>';
+            document.getElementById('gantt-tbody').innerHTML = '<tr><td colspan="9" class="text-center py-4 text-red-500">Erreur lors du chargement du planning Gantt. Vérifiez votre console et votre backend Flask (/api/gantt-data).</td></tr>';
         });
 }
 
@@ -260,10 +265,13 @@ function renderGantt(data) {
     
     const assignmentsByEmployeeAndDay = {};
 
-    // S'assurer que les dates sont des chaînes de caractères avant d'utiliser .substring()
     data.assignments.forEach(a => {
-        // NOTE: Si vous avez une erreur 'substring is not a function', 
-        // cela veut dire que votre Flask n'a pas sérialisé la date en string (a.start)
+        // Attention : a.start doit être une chaîne de caractères ISO
+        if (typeof a.start !== 'string') {
+             console.error("Erreur de données: a.start n'est pas une chaîne. Vérifiez votre backend Flask.");
+             return;
+        }
+        
         const date = a.start.substring(0, 10); 
         const dayOfWeek = new Date(date).getDay(); // 0 (Dim) à 6 (Sam)
         const employeeId = a.employee_id;
@@ -362,7 +370,7 @@ function previousWeek() {
 }
 
 
-// --- Fonctions de Contrôle de la Vue (inchangées) ---
+// --- Fonctions de Contrôle de la Vue ---
 
 function switchView(view) {
   const calendarView = document.getElementById('calendar-view');
@@ -406,7 +414,7 @@ function updateStatistics(startIso = null) {
 
 
 // ====================================================================
-// --- NOUVEAU CODE : GESTION DU GLISSER-DÉPOSER (DRAG & DROP) ---
+// --- GESTION DU GLISSER-DÉPOSER (DRAG & DROP) ---
 // ====================================================================
 
 let draggedAssignmentId = null;
@@ -425,7 +433,6 @@ document.addEventListener('dragend', function(event) {
     if (shiftBlock) {
         shiftBlock.classList.remove('is-dragging');
     }
-    // Nettoyage des styles de toutes les cibles de dépôt
     document.querySelectorAll('.drag-drop-target').forEach(cell => cell.classList.remove('drag-over'));
     draggedAssignmentId = null;
 });
@@ -433,7 +440,7 @@ document.addEventListener('dragend', function(event) {
 document.addEventListener('dragover', function(event) {
     const targetCell = event.target.closest('.drag-drop-target');
     if (targetCell) {
-        event.preventDefault(); 
+        event.preventDefault(); // ESSENTIEL
         targetCell.classList.add('drag-over'); 
     }
 });
@@ -447,9 +454,11 @@ document.addEventListener('dragleave', function(event) {
 
 document.addEventListener('drop', function(event) {
     event.preventDefault();
-    const targetCell = event.target.closest('.drag-drop-target');
     
-    // Nettoyage immédiat du style drag-over
+    // Le fix pour la précision du drop : on cherche la cellule la plus proche.
+    // Grâce au CSS `pointer-events: none` ajouté ci-dessous, cela devrait toujours pointer vers la bonne <td>.
+    const targetCell = event.target.closest('.drag-drop-target'); 
+    
     document.querySelectorAll('.drag-drop-target').forEach(cell => cell.classList.remove('drag-over'));
     
     if (targetCell && draggedAssignmentId) {
@@ -481,7 +490,7 @@ document.addEventListener('drop', function(event) {
         })
         .then(data => {
             if (data.success) {
-                // 2. Recharger les données du planning pour rafraîchir l'interface
+                // 2. Recharger les données du planning
                 loadGanttView(); 
             } else {
                 alert('Erreur lors du déplacement : ' + (data.error || 'Erreur inconnue'));
@@ -505,7 +514,8 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <style>
-/* ... Styles CSS ... */
+/* --- Styles de la vue Gantt (incluant le fix de précision D&D) --- */
+
 .view-toggle {
   transition: all 0.3s ease;
 }
@@ -528,6 +538,7 @@ document.addEventListener('DOMContentLoaded', function() {
   vertical-align: top;
 }
 
+/* FIX DE PRÉCISION D&D : pointer-events: none */
 .gantt-shift-block-large {
     padding: 4px 6px !important; 
     line-height: 1.3;
@@ -535,6 +546,9 @@ document.addEventListener('DOMContentLoaded', function() {
     letter-spacing: 0.01em;
     opacity: 0.98;
     transition: all 0.1s ease;
+    
+    /* FIX CRITIQUE : Permet aux événements de drop de passer à la <td> sous-jacente */
+    pointer-events: none; 
 }
 
 .gantt-shift-block-large:hover {
@@ -544,6 +558,17 @@ document.addEventListener('DOMContentLoaded', function() {
     z-index: 10;
 }
 
+/* On réactive les événements seulement pendant le glissement */
+.gantt-shift-block-large.is-dragging {
+    opacity: 0.4;
+    border: 2px dashed #3B82F6;
+    box-shadow: none;
+    cursor: grabbing !important;
+    pointer-events: auto; /* IMPORTANT : doit être réactivé pour pouvoir glisser */
+}
+
+
+/* Styles de la table (Sticky Columns, etc.) */
 .gantt-table thead th:first-child,
 .gantt-table tbody td:first-child {
   z-index: 20; 
@@ -567,13 +592,7 @@ document.addEventListener('DOMContentLoaded', function() {
   max-width: 180px;
 }
 
-.gantt-shift-block-large.is-dragging {
-    opacity: 0.4;
-    border: 2px dashed #3B82F6;
-    box-shadow: none;
-    cursor: grabbing !important;
-}
-
+/* Feedback pour le Glisser-Déposer */
 .drag-drop-target.drag-over {
     background-color: #EBF8FF !important; 
     box-shadow: inset 0 0 0 2px #3B82F6;
