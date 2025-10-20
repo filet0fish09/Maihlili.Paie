@@ -1221,6 +1221,7 @@ def export_gantt_pdf():
         start_date = today - timedelta(days=today.weekday())
 
     # 2. Récupération des données Gantt
+    # (Assurez-vous que get_gantt_data_for_week existe et retourne les bonnes données)
     data = get_gantt_data_for_week(start_date, current_user)
     employees = data['employees']
     assignments = data['assignments']
@@ -1235,16 +1236,17 @@ def export_gantt_pdf():
     story = []
 
     # 4. En-tête (Logo et Titre)
-    
-    # 4a. Chemin du logo
-    # Utilisation du chemin exact demandé : static/images/maihlili-logo-light.png
     logo_path = os.path.join(app.root_path, 'static', 'images', 'maihlili-logo-light.png') 
     
     logo_element = Spacer(1, 1) 
     if os.path.exists(logo_path):
-        logo_element = Image(logo_path, width=70, height=45) # Ajustez la taille si besoin
+        # CORRECTION DU LOGO : Utilisation de 'hAlign'='LEFT' et 'vAlign'='TOP' 
+        # et ajustement des dimensions pour éviter l'étirement.
+        logo_element = Image(logo_path, width=70, height=35) 
+        logo_element.hAlign = 'LEFT'
+        logo_element.vAlign = 'TOP'
     
-    # Titre centré (Couleur du titre en bleu #3055ff)
+    # Titre centré
     title_text = f"""
     <font size='18' color='{MAIHLILI_TITRES_BLEU}'><b>PLANNING HEBDOMADAIRE</b></font><br/>
     <font size='10' color='#555555'>Du {week_start.strftime('%d/%m/%Y')} au {week_end.strftime('%d/%m/%Y')}</font>
@@ -1252,29 +1254,27 @@ def export_gantt_pdf():
     title_element = Paragraph(title_text, styles['Normal'])
     title_element.alignment = 1 # Center
 
-    # Création du tableau d'en-tête pour aligner logo à gauche et titre au centre
+    # Création du tableau d'en-tête pour l'alignement
     header_table = Table([[logo_element, title_element, Spacer(1, 1)]], colWidths=[70, doc.width - 140, 70])
     header_table.setStyle(TableStyle([
         ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ('ALIGN', (1, 0), (1, 0), 'CENTER'),
-        ('LEFTPADDING', (0, 0), (0, 0), 0),
-        ('RIGHTPADDING', (2, 0), (2, 0), 0),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
     ]))
     story.append(header_table)
-    story.append(Spacer(1, 18)) # Espace après l'en-tête
+    story.append(Spacer(1, 18)) 
 
     # 5. Préparation des données du tableau
     days_full = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
     
-    # En-tête du planning (Fond des en-têtes en bleu #3055ff)
+    # En-tête du planning
     header_content = [Paragraph("<b>Employé</b><br/><font size='7'>Poste</font>", styles['Normal'])]
     for i in range(7):
         current_date = week_start + timedelta(days=i)
         header_text = f"<b>{days_full[i]}</b><br/><font size='8'>{current_date.strftime('%d/%m')}</font>"
         p = Paragraph(header_text, styles['Normal'])
-        p.alignment = 1 # Center
+        p.alignment = 1 
         header_content.append(p)
     
     table_data = [header_content]
@@ -1295,7 +1295,7 @@ def export_gantt_pdf():
     day_cell_style = styles['BodyText']
     day_cell_style.fontSize = 8
     day_cell_style.leading = 9
-    day_cell_style.alignment = 1 # Center alignment
+    day_cell_style.alignment = 1 
     
     for emp_index, emp in enumerate(employees):
         emp_name_text = f"<b>{emp['name']}</b><br/><font size='7' color='#555555'>{emp.get('position', 'Employé')}</font>"
@@ -1311,12 +1311,34 @@ def export_gantt_pdf():
                 for content_str, color_hex in shifts:
                     text_color = get_text_color(color_hex)
                     
-                    # Markup pour les blocs de shift colorés
-                    markup = f'<span bgcolor="{color_hex}" color="{text_color}">&nbsp; {content_str} &nbsp;</span>'
-                    cell_content_html.append(markup)
+                    # CORRECTION DU BLOC DE SHIFT :
+                    # Utilisation d'un bloc <para> pour forcer le rectangle et éviter l'étirement excessif.
+                    # On retire les &nbsp; en début/fin et on utilise un padding interne.
+                    # On définit la largeur du bloc. ReportLab est difficile à cet égard,
+                    # le style est appliqué au bloc P, pas au SPAN.
+                    
+                    # Pour un meilleur rendu "rectangulaire" :
+                    p_style = styles['BodyText']
+                    p_style.alignment = 1
+                    p_style.textColor = colors.HexColor(text_color)
+                    p_style.backColor = colors.HexColor(color_hex)
+                    p_style.fontSize = 8
+                    p_style.fontName = 'Helvetica'
+                    p_style.borderPadding = 2
+                    p_style.borderRadius = 3 # Légers coins arrondis
+                    p_style.leftIndent = 5 # Padding horizontal pour centrer
+                    p_style.rightIndent = 5
+                    
+                    # On utilise <para> pour créer le bloc stylé
+                    markup = f'{content_str}'
+                    
+                    # Utiliser un Paragraph direct au lieu d'une longue chaîne HTML pour le bloc.
+                    shift_p = Paragraph(markup, p_style)
+                    shift_p.wrapOn(doc, 80, 10) # Force une largeur maximum pour le bloc (80 pts)
+                    cell_content_html.append(shift_p)
                 
-                content = '<br/><br/>'.join(cell_content_html)
-                row.append(Paragraph(content, day_cell_style))
+                # Les éléments Paragraphs (les shifts) sont ajoutés directement à la cellule comme une liste
+                row.append(cell_content_html)
             else:
                 row.append(Paragraph('', day_cell_style)) 
         
@@ -1331,7 +1353,7 @@ def export_gantt_pdf():
     
     table.setStyle(TableStyle([
         # En-tête
-        ('BACKGROUND', (0, 0), (-1, 0), MAIHLILI_TITRES_BLEU), # Bleu #3055ff
+        ('BACKGROUND', (0, 0), (-1, 0), MAIHLILI_TITRES_BLEU), 
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
         ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
@@ -1340,9 +1362,9 @@ def export_gantt_pdf():
         ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
         
         # Corps du tableau (Fond en #FFF0F8)
-        ('BACKGROUND', (0, 1), (-1, -1), MAIHLILI_FOND_TABLE), # Fond général du tableau en #FFF0F8
+        ('BACKGROUND', (0, 1), (-1, -1), MAIHLILI_FOND_TABLE), 
         
-        # Lignes alternées (lignes paires en blanc pour un contraste subtil)
+        # Lignes alternées
         ('ROWBACKGROUNDS', (0, 1), (-1, -1), [MAIHLILI_FOND_TABLE, MAIHLILI_BLANC]), 
 
         ('ALIGN', (0, 0), (0, -1), 'LEFT'), 
@@ -1381,6 +1403,7 @@ if __name__ == "__main__":
     # Configuration pour production Render
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
