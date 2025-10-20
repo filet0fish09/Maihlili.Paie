@@ -104,13 +104,21 @@
 <script>
 let calendar = null;
 let currentWeekStart = new Date();
-currentWeekStart.setDate(currentWeekStart.getDate() - currentWeekStart.getDay() + 1);
-if (currentWeekStart.getDay() === 0) { // S'assurer que le Lundi est bien le début (jour 1 en JS)
-    currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+
+// Initialisation de la variable de semaine au lundi
+function initializeWeekStart() {
+    const today = new Date();
+    // 0 = Dimanche, 1 = Lundi, ... 6 = Samedi
+    const dayOfWeek = today.getDay(); 
+    const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Ajuste pour que le lundi soit le jour 1
+    currentWeekStart = new Date(today.setDate(diff));
+    // Réinitialiser les heures pour éviter les problèmes de fuseau horaire
+    currentWeekStart.setHours(0, 0, 0, 0); 
 }
+initializeWeekStart();
 
 
-// --- Fonctions de la vue Calendrier ---
+// --- Fonctions de la vue Calendrier (inchangées) ---
 
 function initCalendar() {
   const calendarEl = document.getElementById('calendar');
@@ -142,7 +150,6 @@ function initCalendar() {
     dayMaxEvents: true,
     editable: true,
     
-    // Mettre la couleur des événements
     eventDidMount: function(info) {
       if (info.event.extendedProps.shift_color) {
         info.el.style.backgroundColor = info.event.extendedProps.shift_color;
@@ -153,10 +160,8 @@ function initCalendar() {
       }
     },
 
-    // Afficher un pop-up détaillé
     eventClick: function(info) {
       const props = info.event.extendedProps;
-      const title = info.event.title;
       const start = new Date(info.event.start).toLocaleString('fr-FR');
       const end = new Date(info.event.end).toLocaleString('fr-FR');
 
@@ -201,7 +206,6 @@ Statut: ${props.status || 'Confirmé'}
   calendar.render();
 }
 
-// Fonction utilitaire pour vérifier si une couleur est sombre (pour texte blanc)
 function isDark(hex) {
     if (!hex) return false;
     const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
@@ -216,13 +220,13 @@ function isDark(hex) {
     const g = parseInt(result[2], 16);
     const b = parseInt(result[3], 16);
 
-    // Formule Luma pour la luminosité
     return (0.2126 * r + 0.7152 * g + 0.0722 * b) < 140; 
 }
 
 // --- Fonctions de la vue Gantt ---
 
 function formatDate(date) {
+    // Format YYYY-MM-DD
     return date.toISOString().split('T')[0];
 }
 
@@ -230,6 +234,9 @@ function loadGanttView() {
     const startIso = formatDate(currentWeekStart);
     document.getElementById('week-info').textContent = `Semaine du ${currentWeekStart.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}`;
     
+    // Mise à jour du lien d'export PDF
+    document.getElementById('export-pdf-link').href = `/api/export-gantt-pdf?start=${startIso}`;
+
     updateStatistics(startIso);
 
     fetch(`/api/gantt-data?start=${startIso}`)
@@ -251,7 +258,7 @@ function renderGantt(data) {
 
     data.assignments.forEach(a => {
         const date = a.start.substring(0, 10);
-        const dayOfWeek = new Date(date).getDay(); 
+        const dayOfWeek = new Date(date).getDay(); // 0 (Dim) à 6 (Sam)
         const employeeId = a.employee_id;
         
         if (!assignmentsByEmployeeAndDay[employeeId]) {
@@ -264,6 +271,8 @@ function renderGantt(data) {
         assignmentsByEmployeeAndDay[employeeId][dayOfWeek].push(a);
     });
 
+    const weekStartDate = new Date(currentWeekStart);
+
     data.employees.forEach(employee => {
         const row = tbody.insertRow();
         row.className = 'hover:bg-gray-50';
@@ -275,17 +284,30 @@ function renderGantt(data) {
         
         // Cellules des jours (Lundi=1 à Dimanche=0)
         for (let i = 1; i <= 7; i++) {
-            const dayIndex = i % 7; 
+            const dayIndex = i % 7; // 1=Lun, ..., 6=Sam, 0=Dim
             const dayCell = row.insertCell();
-            dayCell.className = 'py-2 px-1 text-center text-sm align-top gantt-cell';
+            
+            // --- 1. Préparation de la destination D&D ---
+            const cellDate = new Date(weekStartDate);
+            cellDate.setDate(weekStartDate.getDate() + (i - 1));
+            const cellDateIso = formatDate(cellDate);
+            
+            dayCell.className = 'py-2 px-1 text-center text-sm align-top gantt-cell drag-drop-target';
+            dayCell.setAttribute('data-employee-id', employee.id);
+            dayCell.setAttribute('data-date', cellDateIso);
+            // -------------------------------------------
             
             const assignments = assignmentsByEmployeeAndDay[employee.id] ? assignmentsByEmployeeAndDay[employee.id][dayIndex] || [] : [];
             
             assignments.forEach(a => {
                 const shiftDiv = document.createElement('div');
                 
-                // Utilisation de la classe pour les blocs plus grands
+                // --- 2. Préparation de la source D&D ---
                 shiftDiv.className = 'p-1 rounded text-sm font-semibold my-1 whitespace-nowrap overflow-hidden text-ellipsis shadow-md cursor-pointer gantt-shift-block-large';
+                shiftDiv.setAttribute('draggable', 'true');
+                shiftDiv.setAttribute('data-assignment-id', a.id);
+                // ---------------------------------------
+
                 shiftDiv.style.backgroundColor = a.shift_color;
                 
                 if (isDark(a.shift_color)) {
@@ -299,7 +321,8 @@ function renderGantt(data) {
                     <div class="font-normal leading-tight text-opacity-90 text-xs">${a.start_time}-${a.end_time}</div>
                 `;
                 
-                shiftDiv.onclick = function() {
+                shiftDiv.onclick = function(event) {
+                    event.stopPropagation(); // Empêche l'événement de drop si on clique
                     const start = new Date(a.start).toLocaleString('fr-FR');
                     const end = new Date(a.end).toLocaleString('fr-FR');
                     const durationMs = new Date(a.end).getTime() - new Date(a.start).getTime();
@@ -331,18 +354,14 @@ function previousWeek() {
     loadGanttView();
 }
 
-// --- NOUVELLE FONCTION PDF ---
 function exportGanttPdf() {
-    // currentWeekStart contient la date de début de la semaine affichée
     const startIso = formatDate(currentWeekStart);
-    
-    // Ouvre la nouvelle route d'API Flask dans un nouvel onglet pour déclencher le téléchargement
     const url = `/api/export-gantt-pdf?start=${startIso}`;
     window.open(url, '_blank');
 }
 
 
-// --- Fonctions de Contrôle de la Vue ---
+// --- Fonctions de Contrôle de la Vue (inchangées) ---
 
 function switchView(view) {
   const calendarView = document.getElementById('calendar-view');
@@ -370,7 +389,6 @@ function switchView(view) {
   }
 }
 
-// Mettre à jour les statistiques
 function updateStatistics(startIso = null) {
   let url = '/api/planning-stats';
   
@@ -386,6 +404,99 @@ function updateStatistics(startIso = null) {
 }
 
 
+// ====================================================================
+// --- NOUVEAU CODE : GESTION DU GLISSER-DÉPOSER (DRAG & DROP) ---
+// ====================================================================
+
+let draggedAssignmentId = null;
+
+document.addEventListener('dragstart', function(event) {
+    const shiftBlock = event.target.closest('.gantt-shift-block-large');
+    if (shiftBlock && shiftBlock.getAttribute('draggable') === 'true') {
+        draggedAssignmentId = shiftBlock.dataset.assignmentId;
+        event.dataTransfer.setData('text/plain', draggedAssignmentId);
+        shiftBlock.classList.add('is-dragging'); 
+    }
+});
+
+document.addEventListener('dragend', function(event) {
+    const shiftBlock = event.target.closest('.gantt-shift-block-large');
+    if (shiftBlock) {
+        shiftBlock.classList.remove('is-dragging');
+    }
+    // Nettoyage des styles de toutes les cibles de dépôt
+    document.querySelectorAll('.drag-drop-target').forEach(cell => cell.classList.remove('drag-over'));
+    draggedAssignmentId = null;
+});
+
+document.addEventListener('dragover', function(event) {
+    const targetCell = event.target.closest('.drag-drop-target');
+    if (targetCell) {
+        event.preventDefault(); // ESSENTIEL : autorise le dépôt
+        targetCell.classList.add('drag-over'); 
+    }
+});
+
+document.addEventListener('dragleave', function(event) {
+    const targetCell = event.target.closest('.drag-drop-target');
+    if (targetCell) {
+        targetCell.classList.remove('drag-over');
+    }
+});
+
+document.addEventListener('drop', function(event) {
+    event.preventDefault();
+    const targetCell = event.target.closest('.drag-drop-target');
+    
+    // Nettoyage immédiat du style drag-over
+    document.querySelectorAll('.drag-drop-target').forEach(cell => cell.classList.remove('drag-over'));
+    
+    if (targetCell && draggedAssignmentId) {
+        const newEmployeeId = targetCell.dataset.employeeId;
+        const newDate = targetCell.dataset.date;
+        
+        if (!newEmployeeId || !newDate) {
+             alert("Informations de destination manquantes (Employé ou Date).");
+             return;
+        }
+
+        // 1. Envoyer la requête au Backend pour la mise à jour
+        fetch('/api/assignment/move', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                assignment_id: draggedAssignmentId,
+                new_employee_id: newEmployeeId,
+                new_date: newDate
+            })
+        })
+        .then(response => {
+             if (!response.ok) {
+                return response.json().then(err => { throw new Error(err.error || 'Erreur inconnue côté serveur'); });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // 2. Recharger les données du planning pour rafraîchir l'interface
+                loadGanttView(); 
+                // Optionnel: alert('Shift déplacé avec succès !');
+            } else {
+                alert('Erreur lors du déplacement : ' + (data.error || 'Erreur inconnue'));
+            }
+        })
+        .catch(error => {
+            console.error('Erreur réseau/serveur:', error);
+            alert('Erreur lors du déplacement du shift : ' + error.message);
+        })
+        .finally(() => {
+            draggedAssignmentId = null;
+        });
+    }
+});
+
 // --- Initialisation au chargement (AFFICHER GANTT PAR DÉFAUT) ---
 document.addEventListener('DOMContentLoaded', function() {
   initCalendar(); 
@@ -394,6 +505,8 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <style>
+/* ... Styles existants (inchangés) ... */
+
 /* 1. Améliorations générales et Table Gantt optimisée */
 .view-toggle {
   transition: all 0.3s ease;
@@ -463,5 +576,20 @@ document.addEventListener('DOMContentLoaded', function() {
   min-width: 150px; 
   max-width: 180px;
 }
+
+/* 6. NOUVEAU CSS : Feedback pour le Glisser-Déposer */
+.gantt-shift-block-large.is-dragging {
+    opacity: 0.4;
+    border: 2px dashed #3B82F6;
+    box-shadow: none;
+    cursor: grabbing !important;
+}
+
+.drag-drop-target.drag-over {
+    background-color: #EBF8FF !important; /* Ajout d'un feedback visuel */
+    box-shadow: inset 0 0 0 2px #3B82F6;
+    transition: background-color 0.1s;
+}
+
 </style>
 {% endblock %}
