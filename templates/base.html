@@ -2,36 +2,29 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Maihlili Paie</title> <script src="https://cdn.tailwindcss.com"></script>
+  <title>Maihlili Paie</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
           colors: {
-            // Couleurs exactes du logo Maihlili (bleu pur)
+            // Couleurs de marque Maihlili (vibrant blue from your config/Figma)
             'maihlili': {
               50: '#EEF2FF',
               100: '#E0E7FF', 
               200: '#C7D2FE',
               300: '#A5B4FC',
               400: '#818CF8',
-              500: '#4F46E5', // Bleu exact de votre logo
-              600: '#4338CA', 
-              700: '#3730A3',
-              800: '#312E81',
-              900: '#1E1B4B'
+              500: '#3055ff', // Utilisation de votre 'nouveau-bleu-500' du config
+              600: '#2A4CE5', 
+              700: '#2343CC',
+              800: '#1D3AAA',
+              900: '#163188'
             },
-            'nouveau-bleu': {
-                50: '#E6E9FF',
-                100: '#C8CEFF',
-                200: '#AAAEFF',
-                300: '#8C8FFF',
-                400: '#6E71FF',
-                500: '#3055ff', // Le nouveau bleu
-                600: '#2A4CE5',
-                700: '#2343CC',
-                800: '#1D3AAA',
-                900: '#163188'
+            // On conserve l'ancienne palette au cas où
+            'ancien-maihlili': {
+                500: '#4F46E5', 
             }
           }
         }
@@ -40,393 +33,192 @@
   </script>
   <style>
     /* -------------------------------------------------------------------------------------------------- */
-    /* Couleurs & Thème Maihlili Paie - BASE                                                              */
+    /* STYLES GLOBALES & FONTIONNELLES BASÉES SUR FIGMA                                                    */
     /* -------------------------------------------------------------------------------------------------- */
     :root {
-      /* Couleurs Claires */
-      --color-bg-light: #f9fafb;
-      --color-text-light: #1f2937;
-      --color-text-subtle-light: #6b7280;
-      --color-border-light: #e5e7eb;
-      --color-card-bg-light: #fff0f8; /* Garde la couleur de carte rose très clair */
+      /* Couleurs Claires (FIGMA PAGE 2) */
+      --color-bg-light: #F8F8F8; /* Fond principal */
+      --color-sidebar-bg-light: #FFFFFF;
+      --color-card-bg-light: #FFFFFF;
+      --color-text-light: #181818;
+      --color-border-light: #E0E0E0;
+      --color-shadow-light: 0 4px 12px rgba(0, 0, 0, 0.05);
     }
 
-    /* Variables du mode sombre (Conservées de votre ancien fichier) */
     [data-theme="dark"] {
-      /* Couleurs Sombres pour le tableau de bord uniquement */
-      --color-bg-dark-dashboard: #1f2937;
-      --color-text-dark-dashboard: #f9fafb;
-      --color-text-subtle-dark-dashboard: #9ca3af;
-      --color-border-dark-dashboard: #374151;
-      --color-card-bg-dark-dashboard: #2d3748;
-      
-      /* Couleurs pour la sidebar en mode sombre (bleu vif dans votre ancien code, corrigé ci-dessous) */
-      --color-bg-dark-sidebar: #3055ff; /* Variable gardée pour la structure */
-      --color-text-dark-sidebar: #f9fafb;
-      --color-text-subtle-dark-sidebar: #c7d2fe;
-      --color-border-dark-sidebar: rgba(255, 255, 255, 0.1);
-      --color-card-bg-dark-sidebar: #2a4ce5; /* Variable gardée pour la structure */
+      /* Couleurs Sombres (FIGMA PAGE 4) */
+      --color-bg-dark: #282828; /* Fond principal (Main Content) */
+      --color-sidebar-bg-dark: #1B1B1B; /* Sidebar plus foncée */
+      --color-card-bg-dark: #363636; /* Fonds des cartes/panneaux */
+      --color-text-dark: #F5F5F5;
+      --color-border-dark: #454545;
+      --color-input-bg-dark: #454545; /* Fond des inputs */
+      --color-shadow-dark: 0 4px 12px rgba(0, 0, 0, 0.4);
     }
 
     body {
       background-color: var(--color-bg-light);
       color: var(--color-text-light);
-      transition: background-color 0.4s ease, color 0.4s ease;
+      transition: background-color 0.3s, color 0.3s;
     }
     
-    .card {
-      background-color: var(--color-card-bg-light);
-      border: 1px solid var(--color-border-light);
-      transition: background-color 0.4s ease, border-color 0.4s ease;
-    }
-
-    /* -------------------------------------------------------------------------------------------------- */
-    /* CORRECTIONS MODE SOMBRE POUR LA LISIBILITÉ (Seulement des overrides)                               */
-    /* -------------------------------------------------------------------------------------------------- */
-
-    /* CORRECTION 1: Fond du body en mode sombre - plus uniforme */
     [data-theme="dark"] body {
-        background-color: #111827 !important; /* Très sombre pour meilleur contraste */
-        color: var(--color-text-dark-dashboard);
+      background-color: var(--color-bg-dark);
+      color: var(--color-text-dark);
     }
 
-    /* CORRECTION 2: Fond de la zone principale (main) */
-    [data-theme="dark"] main {
-        background-color: transparent; /* Permet au body de dominer */
-        color: var(--color-text-dark-dashboard);
+    /* Sidebar Styles */
+    aside {
+        background-color: var(--color-sidebar-bg-light);
+        border-right: 1px solid var(--color-border-light);
+        transition: background-color 0.3s, border-color 0.3s;
     }
-    
-    /* CORRECTION 3: Sidebar en mode sombre - NE DOIT PAS ÊTRE BLEU VIF */
+
     [data-theme="dark"] aside {
-        /* Utilise un fond sombre pour la cohérence et la lisibilité */
-        background-color: #1f2937 !important; 
-        color: var(--color-text-dark-sidebar);
-        border-color: var(--color-border-dark-dashboard) !important;
-        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.4) !important;
+        background-color: var(--color-sidebar-bg-dark);
+        border-right-color: var(--color-border-dark);
+        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Card Styles (including user profile) */
+    .card, .bg-white {
+        background-color: var(--color-card-bg-light) !important;
+        border: 1px solid var(--color-border-light) !important;
+        box-shadow: var(--color-shadow-light) !important;
+        transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
     }
 
-    [data-theme="dark"] aside .card {
-        /* La carte de profil utilise une couleur de fond plus sombre que la sidebar */
-        background-color: var(--color-card-bg-dark-dashboard) !important; 
-        border: 1px solid var(--color-border-dark-dashboard) !important;
-    }
-    
-    /* CORRECTION 4: Cartes et éléments 'bg-white' dans le dashboard */
-    [data-theme="dark"] main .bg-white,
-    [data-theme="dark"] .card {
-        background-color: var(--color-card-bg-dark-dashboard) !important;
-        border-color: var(--color-border-dark-dashboard) !important;
-        box-shadow: none !important; /* Assurez-vous que les ombres ne cassent pas le style */
+    [data-theme="dark"] .card,
+    [data-theme="dark"] .bg-white {
+        background-color: var(--color-card-bg-dark) !important;
+        border-color: var(--color-border-dark) !important;
+        box-shadow: var(--color-shadow-dark) !important;
     }
 
-    /* CORRECTION 5: Inputs et selects plus lisibles */
-    [data-theme="dark"] main input, 
-    [data-theme="dark"] main select, 
-    [data-theme="dark"] main textarea {
-        background-color: #374151 !important;
-        border-color: #4B5563 !important;
-        color: #F3F4F6 !important;
+    /* Text Colors */
+    [data-theme="dark"] .text-gray-800 { color: var(--color-text-dark) !important; }
+    [data-theme="dark"] .text-gray-500 { color: #A0A0A0 !important; }
+    
+    /* Navigation Links */
+    .nav-link {
+        color: #4B5563;
+        transition: all 0.2s;
+    }
+    .nav-link:hover {
+        background-color: #F0F0F0;
+        color: var(--tw-colors-maihlili-700);
+    }
+    .nav-link.active {
+        background-color: var(--tw-colors-maihlili-50);
+        color: var(--tw-colors-maihlili-700);
+        font-weight: 600;
+        border-left: 3px solid var(--tw-colors-maihlili-500); /* Accent du Figma */
     }
     
-    [data-theme="dark"] main input:focus,
-    [data-theme="dark"] main select:focus,
-    [data-theme="dark"] main textarea:focus {
-        border-color: #4F46E5 !important;
-        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.4) !important;
-        background-color: #374151 !important;
+    /* Navigation Links Dark Mode */
+    [data-theme="dark"] .nav-link {
+        color: var(--color-text-dark) !important;
     }
-
-    /* CORRECTION 6: Liens de navigation hover/actif */
-    [data-theme="dark"] aside .nav-link {
-        color: var(--color-text-subtle-dark-sidebar) !important; /* Texte de lien par défaut */
-    }
-    
-    [data-theme="dark"] aside .nav-link:hover {
-        background-color: rgba(255, 255, 255, 0.1) !important; /* Un hover discret */
-        color: var(--color-text-dark-sidebar) !important;
-    }
-    
-    /* Lien actif */
-    [data-theme="dark"] .nav-link.bg-maihlili-100 {
-        background-color: #4338CA !important; /* Maiblili 600 pour le fond actif */
-        color: #FFFFFF !important;
-        box-shadow: none !important;
-    }
-
-    /* CORRECTION 7: Couleurs du texte, bordures et tables */
-    [data-theme="dark"] main .text-gray-800,
-    [data-theme="dark"] main .text-gray-700,
-    [data-theme="dark"] main .text-gray-600 { color: #F3F4F6 !important; }
-
-    [data-theme="dark"] main .text-gray-500,
-    [data-theme="dark"] main .text-gray-400 { color: #9CA3AF !important; }
-    
-    [data-theme="dark"] main .border-gray-200,
-    [data-theme="dark"] main .border-gray-300 { border-color: #4B5563 !important; }
-    
-    [data-theme="dark"] main .bg-gray-50 { 
-        background-color: #2d3748 !important; /* Header de table lisible */
-        color: #F3F4F6 !important;
-    }
-
-    /* Le reste de votre CSS personnalisé est conservé ci-dessous */
-
-    /* Styles pour la zone de contenu principale en mode sombre */
-    /* Ces styles sont redondants après les corrections ci-dessus mais je les laisse pour garder votre structure */
-    [data-theme="dark"] main {
-        /* background-color: var(--color-bg-dark-dashboard); */
-        color: var(--color-text-dark-dashboard);
-    }
-    
-    [data-theme="dark"] main .bg-white {
-        background-color: var(--color-card-bg-dark-dashboard);
-        border-color: var(--color-border-dark-dashboard);
-    }
-    
-    [data-theme="dark"] aside {
-        /* background: var(--color-bg-dark-sidebar); */
-        color: var(--color-text-dark-sidebar);
-        /* border-color: var(--color-border-dark-sidebar); */
-    }
-    
-    [data-theme="dark"] aside .card {
-        /* background: var(--color-card-bg-dark-sidebar); */
-        /* border: 1px solid var(--color-border-dark-sidebar); */
-    }
-
-    [data-theme="dark"] main .text-gray-800 { color: var(--color-text-dark-dashboard); }
-    [data-theme="dark"] main .text-gray-500 { color: var(--color-text-subtle-dark-dashboard); }
-    [data-theme="dark"] main .border-gray-200 { border-color: var(--color-border-dark-dashboard); }
-    
-    [data-theme="dark"] aside .text-gray-800 { color: var(--color-text-dark-sidebar); }
-    [data-theme="dark"] aside .text-gray-500 { color: var(--color-text-subtle-dark-sidebar); }
-    [data-theme="dark"] aside .border-gray-200 { border-color: var(--color-border-dark-sidebar); }
-
-    
-    /* Améliorations des bordures */
-    [data-theme="dark"] main .border-gray-300 { border-color: #6B7280 !important; }
-    
-    /* Dividers plus visibles */
-    [data-theme="dark"] main .divide-gray-200 > * + * { border-color: #4B5563 !important; }
-    
-    /* Tables plus lisibles */
-    /* [data-theme="dark"] main .bg-gray-50 { 
-        background-color: #374151 !important;
-        color: #F3F4F6 !important;
-    } */
-    
-    [data-theme="dark"] main .hover\:bg-gray-50:hover { 
-        background-color: #4B5563 !important; 
-    }
-    
-    /* Cartes et conteneurs */
-    [data-theme="dark"] main .shadow-sm { 
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3) !important; 
-    }
-    
-    [data-theme="dark"] main .shadow-lg { 
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2) !important; 
-    }
-    
-    /* Inputs et selects plus lisibles */
-    [data-theme="dark"] main input::placeholder,
-    [data-theme="dark"] main textarea::placeholder {
-        color: #9CA3AF !important;
-    }
-    
-    /* Modals en mode sombre */
-    [data-theme="dark"] .fixed.bg-black.bg-opacity-50 {
-        background-color: rgba(0, 0, 0, 0.8) !important;
-    }
-    
-    [data-theme="dark"] .fixed .bg-white {
-        background-color: #1F2937 !important;
-        border: 1px solid #374151 !important;
-    }
-    
-    /* Badges et statuts plus contrastés */
-    [data-theme="dark"] main .bg-green-100 { background-color: #065F46 !important; color: #A7F3D0 !important; }
-    [data-theme="dark"] main .bg-blue-100 { background-color: #1E3A8A !important; color: #BFDBFE !important; }
-    [data-theme="dark"] main .bg-purple-100 { background-color: #581C87 !important; color: #DDD6FE !important; }
-    [data-theme="dark"] main .bg-yellow-100 { background-color: #92400E !important; color: #FED7AA !important; }
-    [data-theme="dark"] main .bg-red-100 { background-color: #7F1D1D !important; color: #FECACA !important; }
-    
-    /* Amélioration du contraste des couleurs de texte pour les badges */
-    [data-theme="dark"] main .text-green-800 { color: #A7F3D0 !important; }
-    [data-theme="dark"] main .text-blue-800 { color: #BFDBFE !important; }
-    [data-theme="dark"] main .text-purple-800 { color: #DDD6FE !important; }
-    [data-theme="dark"] main .text-yellow-800 { color: #FED7AA !important; }
-    [data-theme="dark"] main .text-red-800 { color: #FECACA !important; }
-    
-    /* Boutons hover améliorés */
-    [data-theme="dark"] main .hover\:bg-blue-50:hover { background-color: rgba(79, 70, 229, 0.2) !important; }
-    [data-theme="dark"] main .hover\:bg-green-50:hover { background-color: rgba(34, 197, 94, 0.2) !important; }
-    [data-theme="dark"] main .hover\:bg-red-50:hover { background-color: rgba(239, 68, 68, 0.2) !important; }
-    [data-theme="dark"] main .hover\:bg-gray-200:hover { background-color: #6B7280 !important; }
-    
-    /* Stats cards plus lisibles */
-    [data-theme="dark"] main .text-blue-600 { color: #60A5FA !important; }
-    [data-theme="dark"] main .text-green-600 { color: #34D399 !important; }
-    [data-theme="dark"] main .text-purple-600 { color: #A78BFA !important; }
-    [data-theme="dark"] main .text-orange-600 { color: #FB923C !important; }
-    [data-theme="dark"] main .text-red-600 { color: #F87171 !important; }
-
-    /* Logos */
-    .logo-dark { display: none; }
-    .logo-light { display: inline-block; }
-    [data-theme="dark"] .logo-light { display: none; }
-    [data-theme="dark"] .logo-dark { display: inline-block; }
-
-    /* Animations & Scrollbar */
-    * { transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease !important; }
-    
-    ::-webkit-scrollbar { width: 8px; }
-    ::-webkit-scrollbar-track { background: rgba(79, 70, 229, 0.1); border-radius: 10px; }
-    ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #4F46E5 0%, #4338CA 100%); border-radius: 10px; }
-    ::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #4338CA 0%, #3730A3 100%); }
-    
-    /* Scrollbars pour le mode sombre */
-    [data-theme="dark"] ::-webkit-scrollbar-track { 
-        background: #111827 !important; 
-    }
-    
-    [data-theme="dark"] ::-webkit-scrollbar-thumb { 
-        background: #4F46E5 !important; 
-    }
-    
-    [data-theme="dark"] ::-webkit-scrollbar-thumb:hover { 
-        background: #6366F1 !important; 
-    }
-    
-    /* Style du bouton de thème */
-    .theme-toggle {
-      position: fixed;
-      bottom: 2rem;
-      right: 2rem;
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      background: #f8fafc;
-      border: 1px solid #e5e7eb;
-      box-shadow: 0 8px 32px rgba(79, 70, 229, 0.15);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      z-index: 1000;
-      font-size: 1.5rem;
-    }
-
-    /* Toggle theme button amélioré */
-    [data-theme="dark"] .theme-toggle {
-        background: #4F46E5 !important;
-        border: none !important;
-        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4) !important;
-        color: #E0E7FF;
-    }
-    
-    [data-theme="dark"] .theme-toggle:hover {
-        transform: translateY(-1px) !important;
-        box-shadow: 0 8px 24px rgba(79, 70, 229, 0.5) !important;
-    }
-
-    /* Sidebar améliorée */
-    [data-theme="dark"] aside {
-        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3) !important;
-    }
-    
-    [data-theme="dark"] aside .nav-link {
-        color: #E0E7FF !important;
-        transition: all 0.2s ease !important;
-    }
-    
-    [data-theme="dark"] aside .nav-link:hover {
-        background-color: rgba(255, 255, 255, 0.1) !important;
-        color: #FFFFFF !important;
-        transform: none !important;
-    }
-    
-    /* User profile dans la sidebar */
-    [data-theme="dark"] aside .user-profile {
-        background-color: #374151 !important; /* Couleur plus foncée pour le contraste */
-        border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    }
-    
-    /* Flash messages améliorés */
-    [data-theme="dark"] .bg-gradient-to-r.from-maihlili-100.to-maihlili-50 {
-        background: #374151 !important;
-        border-color: #4F46E5 !important;
-        color: #E0E7FF !important;
-    }
-    
     [data-theme="dark"] .nav-link:hover {
-        background-color: var(--color-card-bg-dark-dashboard) !important;
-        color: var(--color-text-dark-sidebar) !important;
+        background-color: rgba(255, 255, 255, 0.08) !important;
+    }
+    [data-theme="dark"] .nav-link.active {
+        background-color: var(--color-card-bg-dark) !important;
+        border-left-color: var(--tw-colors-maihlili-500) !important;
+        color: #FFFFFF !important;
+    }
+    
+    /* Input Fields */
+    [data-theme="dark"] input, 
+    [data-theme="dark"] select, 
+    [data-theme="dark"] textarea {
+      background-color: var(--color-input-bg-dark) !important;
+      border-color: var(--color-border-dark) !important;
+      color: var(--color-text-dark) !important;
+    }
+    
+    [data-theme="dark"] input:focus,
+    [data-theme="dark"] select:focus,
+    [data-theme="dark"] textarea:focus {
+        border-color: var(--tw-colors-maihlili-500) !important;
+        box-shadow: 0 0 0 3px rgba(48, 85, 255, 0.4) !important;
+    }
+
+    /* Flash Messages */
+    [data-theme="dark"] .flash-message {
+        background-color: var(--color-card-bg-dark) !important;
+        border-left-color: var(--tw-colors-maihlili-500) !important;
+        color: var(--color-text-dark) !important;
+    }
+
+    /* Sticky Header fix for dark mode */
+    [data-theme="dark"] .gantt-table thead th:first-child,
+    [data-theme="dark"] .gantt-table tbody td:first-child {
+        background-color: var(--color-sidebar-bg-dark) !important;
     }
   </style>
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/main.min.css" rel="stylesheet">
 </head>
-<body class="bg-gray-50 flex min-h-screen" data-theme="light">
+<body class="flex min-h-screen" data-theme="light">
 
-  <aside class="w-64 card shadow-lg flex flex-col">
-    <div class="p-6 border-b border-gray-200">
+  <aside class="w-64 min-h-screen flex flex-col p-4 shadow-xl">
+    <div class="p-2 border-b border-gray-200 mb-4">
       <div class="flex items-center justify-center">
         <a href="{{ url_for('index') }}" class="flex items-center space-x-2">
-          <img src="{{ url_for('static', filename='images/maihlili-logo-light.png') }}" alt="Logo Maihlili clair" class="h-32 logo-light">
-          <img src="{{ url_for('static', filename='images/maihlili-logo-dark.png') }}" alt="Logo Maihlili sombre" class="h-32 logo-dark">
+          <span class="text-3xl font-bold text-maihlili-500 tracking-wider">Maihlili Paie</span>
         </a>
       </div>
     </div>
     
-    <nav class="flex-1 p-4 space-y-1">
+    <nav class="flex-1 p-2 space-y-1">
       {% if current_user.is_authenticated %}
         <a href="{{ url_for('index') if current_user.is_manager else url_for('employee_dashboard') }}" 
-           class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-maihlili-50 hover:text-maihlili-700 text-maihlili-600 font-medium">
+           class="nav-link flex items-center gap-3 p-3 rounded-lg text-maihlili-600 font-medium">
            <span class="text-lg">📊</span> Tableau de bord
         </a>
          {% if current_user.is_manager %}
           <a href="{{ url_for('planning') }}" 
-             class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-indigo-50 hover:text-indigo-700 text-indigo-600 font-medium">
-            <span class="text-lg">📅</span> Planning Avancé
+             class="nav-link flex items-center gap-3 p-3 rounded-lg text-indigo-600 font-medium">
+            <span class="text-lg">📅</span> Planning
           </a>
           
           <a href="{{ url_for('show_employees') }}" 
-             class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-green-50 hover:text-green-700 text-green-600 font-medium">
+             class="nav-link flex items-center gap-3 p-3 rounded-lg text-green-600 font-medium">
             <span class="text-lg">👥</span> Employés
           </a>
           <a href="{{ url_for('manage_teams') }}" 
-             class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 hover:text-blue-700 text-blue-600 font-medium">
+             class="nav-link flex items-center gap-3 p-3 rounded-lg text-blue-600 font-medium">
             <span class="text-lg">🏢</span> Équipes
           </a>
           <a href="{{ url_for('show_shifts') }}" 
-             class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-purple-50 hover:text-purple-700 text-purple-600 font-medium">
+             class="nav-link flex items-center gap-3 p-3 rounded-lg text-purple-600 font-medium">
             <span class="text-lg">🕐</span> Services
           </a>
           <a href="{{ url_for('assignments') }}" 
-             class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-orange-50 hover:text-orange-700 text-orange-600 font-medium">
+             class="nav-link flex items-center gap-3 p-3 rounded-lg text-orange-600 font-medium">
             <span class="text-lg">📋</span> Assignations
           </a>
         {% endif %}
         <a href="{{ url_for('settings') }}" 
-           class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 hover:text-gray-700 text-gray-600 font-medium">
+           class="nav-link flex items-center gap-3 p-3 rounded-lg text-gray-600 font-medium">
           <span class="text-lg">⚙️</span> Paramètres
         </a>
       {% else %}
         <a href="{{ url_for('login') }}" 
-           class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-maihlili-50 hover:text-maihlili-700 text-maihlili-600 font-medium">
+           class="nav-link flex items-center gap-3 p-3 rounded-lg text-maihlili-600 font-medium">
           <span class="text-lg">🔑</span> Connexion
         </a>
         <a href="{{ url_for('register') }}" 
-           class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-green-50 hover:text-green-700 text-green-600 font-medium">
+           class="nav-link flex items-center gap-3 p-3 rounded-lg text-green-600 font-medium">
           <span class="text-lg">📝</span> Inscription
         </a>
       {% endif %}
     </nav>
 
     {% if current_user.is_authenticated %}
-    <div class="p-4 border-t border-gray-200">
-      <div class="user-profile flex items-center gap-3 p-3 rounded-lg card">
-        <div class="w-10 h-10 bg-gradient-to-br from-maihlili-500 to-maihlili-600 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-md">
+    <div class="p-2 border-t border-gray-200">
+      <div class="user-profile flex items-center gap-3 p-3 rounded-xl card">
+        <div class="w-10 h-10 bg-maihlili-500 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-md">
           {{ current_user.username[0].upper() }}
         </div>
         <div class="flex-1">
@@ -446,22 +238,22 @@
     {% endif %}
   </aside>
 
-  <main class="flex-1 p-6">
-    {% with messages = get_flashed_messages() %}
+  <main class="flex-1 p-8">
+    {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
-        <ul class="mb-4">
-          {% for msg in messages %}
-            <li class="bg-gradient-to-r from-maihlili-100 to-maihlili-50 border border-maihlili-200 text-maihlili-700 px-4 py-3 rounded-lg mb-2 shadow-sm">
-              <span class="font-medium">ℹ️</span> {{ msg }}
-            </li>
-          {% endfor %}
-        </ul>
+        <div class="mb-6 space-y-3">
+            {% for category, message in messages %}
+                <div class="flash-message border-l-4 border-maihlili-500 p-4 rounded-lg shadow-sm text-sm bg-white" role="alert">
+                    <p class="font-medium text-maihlili-700">{{ message }}</p>
+                </div>
+            {% endfor %}
+        </div>
       {% endif %}
     {% endwith %}
     {% block content %}{% endblock %}
   </main>
 
-  <button class="theme-toggle" id="themeToggle">
+  <button class="theme-toggle fixed bottom-6 right-6 p-4 rounded-full text-2xl cursor-pointer shadow-lg z-50 transition-all duration-300 ease-in-out bg-gray-200 text-gray-800 hover:bg-gray-300" id="themeToggle">
     🌙
   </button>
 
@@ -484,12 +276,16 @@
     }
     
     function updateThemeToggle(theme) {
+      const activeColor = body.getAttribute('data-theme') === 'dark' ? 'text-white' : 'text-gray-800';
+      
       if (theme === 'light') {
         themeToggle.textContent = '🌙';
         themeToggle.title = 'Passer en mode sombre';
+        themeToggle.className = 'theme-toggle fixed bottom-6 right-6 p-4 rounded-full text-2xl cursor-pointer shadow-lg z-50 transition-all duration-300 ease-in-out bg-gray-200 text-gray-800 hover:bg-gray-300';
       } else {
         themeToggle.textContent = '☀️';
         themeToggle.title = 'Passer en mode clair';
+        themeToggle.className = 'theme-toggle fixed bottom-6 right-6 p-4 rounded-full text-2xl cursor-pointer shadow-lg z-50 transition-all duration-300 ease-in-out bg-maihlili-500 text-white hover:bg-maihlili-600';
       }
     }
 
@@ -500,25 +296,17 @@
       const navLinks = document.querySelectorAll('.nav-link');
       
       navLinks.forEach(link => {
-        // Nettoyer les classes actives de base
-        link.classList.remove('bg-maihlili-100', 'text-maihlili-800', 'shadow-sm');
-        
+        // Nettoyer les classes actives avant de vérifier
+        link.classList.remove('active', 'bg-maihlili-50', 'text-maihlili-700', 'font-semibold', 'bg-red-50', 'text-red-700');
+
         if (link.getAttribute('href') === currentPath) {
-          link.classList.add('bg-maihlili-100', 'text-maihlili-800', 'shadow-sm');
+          link.classList.add('active');
+          if (body.getAttribute('data-theme') === 'dark') {
+             link.classList.remove('text-maihlili-700');
+             link.classList.add('text-white'); // Texte blanc sur fond sombre actif
+          }
         }
       });
-      
-      // Correction du texte actif en mode sombre
-      const activeLink = document.querySelector('.nav-link.bg-maihlili-100');
-      if (activeLink) {
-        if (body.getAttribute('data-theme') === 'dark') {
-          activeLink.classList.remove('text-maihlili-800');
-          activeLink.classList.add('text-white'); // Forcer le texte en blanc
-        } else {
-          activeLink.classList.remove('text-white');
-          activeLink.classList.add('text-maihlili-800');
-        }
-      }
     });
   </script>
 </body>
