@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Maihlili Paie</title>
+  <title>Maihlili SPV</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -31,7 +31,7 @@
                 500: '#3055ff', // Le nouveau bleu
                 600: '#2A4CE5',
                 700: '#2343CC',
-                800: '#1D3AAA',
+                800: '#1D3AA8',
                 900: '#163188'
             }
           }
@@ -39,9 +39,10 @@
       }
     }
   </script>
+  
   <style>
     /* -------------------------------------------------------------------------------------------------- */
-    /* Couleurs & Thème Maihlili Paie AMÉLIORÉ                                                              */
+    /* Couleurs & Thème Maihlili SPV - VERSION PROPRE ET LISIBLE                                          */
     /* -------------------------------------------------------------------------------------------------- */
     :root {
       /* Couleurs Claires */
@@ -50,334 +51,156 @@
       --color-text-subtle-light: #6b7280;
       --color-border-light: #e5e7eb;
       --color-card-bg-light: #ffffff;
+      --color-sidebar-bg-light: #ffffff;
+      --color-shadow-light: rgba(0, 0, 0, 0.05);
     }
 
+    /* Variables pour le Mode Sombre */
     [data-theme="dark"] {
-      /* NOUVEAU GRADIENT INSPIRÉ DE force_password_change */
-      --gradient-hero: linear-gradient(135deg, #4F46E5 0%, #EC4899 100%);
-      --gradient-primary: linear-gradient(135deg, #4F46E5 0%, #6366F1 100%);
-      
-      /* Couleurs Sombres pour le tableau de bord */
-      --color-bg-dark-dashboard: #1f2937;
-      --color-text-dark-dashboard: #f9fafb;
-      --color-text-subtle-dark-dashboard: #9ca3af;
-      --color-border-dark-dashboard: #374151;
-      --color-card-bg-dark-dashboard: #2d3748;
-      
-      /* Couleurs pour la sidebar en mode sombre (GRADIENT) */
-      --color-bg-dark-sidebar: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
-      --color-text-dark-sidebar: #f9fafb;
-      --color-text-subtle-dark-sidebar: #E0E7FF;
-      --color-border-dark-sidebar: rgba(255, 255, 255, 0.1);
-      --color-card-bg-dark-sidebar: rgba(255, 255, 255, 0.1);
+      --color-bg-dark: #1f2937; /* Fond principal sombre */
+      --color-text-dark: #f9fafb;
+      --color-text-subtle-dark: #9ca3af;
+      --color-border-dark: #374151; /* Bordures */
+      --color-card-bg-dark: #2d3748; /* Fond des cartes */
+      --color-sidebar-bg-dark: #111827; /* Fond de la sidebar plus sombre */
+      --color-shadow-dark: rgba(0, 0, 0, 0.4);
+      --color-input-bg-dark: #374151; /* Fond des inputs */
+      --color-input-border-dark: #4b5563;
     }
 
+    /* Styles de base pour le body */
     body {
       background-color: var(--color-bg-light);
       color: var(--color-text-light);
-      transition: background-color 0.5s ease, color 0.5s ease;
+      transition: background-color 0.4s ease, color 0.4s ease;
     }
 
-    /* Mode sombre avec GRADIENT de fond */
+    /* Mode sombre : body */
     [data-theme="dark"] body {
-      background: linear-gradient(135deg, #1f2937 0%, #111827 50%, #0f172a 100%);
-      background-attachment: fixed;
+      background-color: var(--color-bg-dark);
+      color: var(--color-text-dark);
     }
 
+    /* Cartes (Elements .card ou .bg-white) */
     .card {
       background-color: var(--color-card-bg-light);
       border: 1px solid var(--color-border-light);
-      transition: background-color 0.5s ease, border-color 0.5s ease;
+      box-shadow: 0 1px 3px 0 var(--color-shadow-light);
+      transition: background-color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
     }
 
-    /* Styles pour la zone de contenu principale en mode sombre */
-    [data-theme="dark"] main {
-      background: transparent;
-      color: var(--color-text-dark-dashboard);
+    /* Mode sombre : Cartes (pour les éléments qui utilisent .bg-white ou .card) */
+    [data-theme="dark"] .bg-white,
+    [data-theme="dark"] .card {
+      background-color: var(--color-card-bg-dark) !important;
+      border-color: var(--color-border-dark) !important;
+      box-shadow: 0 4px 12px var(--color-shadow-dark) !important;
     }
-
-    /* Correction pour les cartes et éléments 'bg-white' dans le dashboard */
+    
+    /* Correction spécifique pour le .bg-white dans la zone principale */
     [data-theme="dark"] main .bg-white {
-      background: linear-gradient(135deg, rgba(45, 55, 72, 0.95) 0%, rgba(31, 41, 55, 0.95) 100%);
-      border-color: var(--color-border-dark-dashboard);
-      backdrop-filter: blur(10px);
-      box-shadow: 0 8px 32px rgba(79, 70, 229, 0.2);
+        /* Garder une légère variation si nécessaire */
+        background-color: #2c3546 !important; 
     }
 
-    /* Styles pour la sidebar en mode sombre avec GRADIENT */
+    /* Styles pour la Sidebar */
+    aside {
+        background-color: var(--color-sidebar-bg-light);
+        border-color: var(--color-border-light);
+        transition: background-color 0.4s ease, border-color 0.4s ease;
+    }
+
+    /* Mode sombre : Sidebar */
     [data-theme="dark"] aside {
-      background: var(--color-bg-dark-sidebar);
-      color: var(--color-text-dark-sidebar);
-      border-color: var(--color-border-dark-sidebar);
-      box-shadow: 4px 0 24px rgba(79, 70, 229, 0.3);
+        background-color: var(--color-sidebar-bg-dark);
+        border-color: var(--color-border-dark);
+        box-shadow: 4px 0 12px rgba(0, 0, 0, 0.2);
     }
-
-    [data-theme="dark"] aside .card {
-      background: var(--color-card-bg-dark-sidebar);
-      border: 1px solid var(--color-border-dark-sidebar);
-      backdrop-filter: blur(10px);
-    }
-
-    /* Couleurs du texte dans le contenu principal */
-    [data-theme="dark"] main .text-gray-800 { color: #F3F4F6 !important; }
-    [data-theme="dark"] main .text-gray-500 { color: var(--color-text-subtle-dark-dashboard); }
-    [data-theme="dark"] main .border-gray-200 { border-color: rgba(255, 255, 255, 0.1); }
-
-    /* Couleurs du texte dans la sidebar */
-    [data-theme="dark"] aside .text-gray-800 { color: var(--color-text-dark-sidebar); }
-    [data-theme="dark"] aside .text-gray-500 { color: var(--color-text-subtle-dark-sidebar); }
-
-    /* -------------------------------------------------------------------------------------------------- */
-    /* AMÉLIORATIONS MODE SOMBRE - LISIBILITÉ ACCRUE                                                       */
-    /* -------------------------------------------------------------------------------------------------- */
-
-    /* Couleurs pour les textes en mode sombre */
-    [data-theme="dark"] main .text-gray-700 { color: #E5E7EB !important; }
-    [data-theme="dark"] main .text-gray-600 { color: #D1D5DB !important; }
-    [data-theme="dark"] main .text-gray-400 { color: #9CA3AF !important; }
-
-    /* Améliorations des bordures */
-    [data-theme="dark"] main .border-gray-300 { border-color: rgba(255, 255, 255, 0.15) !important; }
-
-    /* Dividers plus visibles */
-    [data-theme="dark"] main .divide-gray-200 > * + * { border-color: rgba(255, 255, 255, 0.1) !important; }
-
-    /* Tables plus lisibles */
-    [data-theme="dark"] main .bg-gray-50 { 
-      background: linear-gradient(135deg, rgba(75, 85, 99, 0.5) 0%, rgba(55, 65, 81, 0.5) 100%) !important;
-      color: #F3F4F6 !important;
-      backdrop-filter: blur(10px);
-    }
-
-    [data-theme="dark"] main .hover\:bg-gray-50:hover { 
-      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(124, 58, 237, 0.2) 100%) !important;
-    }
-
-    /* Cartes et conteneurs avec effet glassmorphism */
-    [data-theme="dark"] main .shadow-sm { 
-      box-shadow: 0 1px 3px 0 rgba(79, 70, 229, 0.3), 0 0 20px rgba(124, 58, 237, 0.1) !important; 
-    }
-
-    [data-theme="dark"] main .shadow-lg { 
-      box-shadow: 0 10px 25px rgba(79, 70, 229, 0.4), 0 0 40px rgba(124, 58, 237, 0.2) !important; 
-    }
-
-    /* Inputs et selects plus lisibles */
-    [data-theme="dark"] main input, 
-    [data-theme="dark"] main select, 
-    [data-theme="dark"] main textarea {
-      background: linear-gradient(135deg, rgba(55, 65, 81, 0.8) 0%, rgba(31, 41, 55, 0.8) 100%) !important;
-      border-color: rgba(99, 102, 241, 0.3) !important;
-      color: #F3F4F6 !important;
-      backdrop-filter: blur(10px);
-    }
-
-    [data-theme="dark"] main input::placeholder,
-    [data-theme="dark"] main textarea::placeholder {
-      color: #9CA3AF !important;
-    }
-
-    [data-theme="dark"] main input:focus,
-    [data-theme="dark"] main select:focus,
-    [data-theme="dark"] main textarea:focus {
-      border-color: #6366F1 !important;
-      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3) !important;
-      background: linear-gradient(135deg, rgba(75, 85, 99, 0.9) 0%, rgba(55, 65, 81, 0.9) 100%) !important;
-    }
-
-    /* Modals en mode sombre */
-    [data-theme="dark"] .fixed.bg-black.bg-opacity-50 {
-      background: linear-gradient(135deg, rgba(79, 70, 229, 0.3) 0%, rgba(0, 0, 0, 0.8) 100%) !important;
-      backdrop-filter: blur(5px);
-    }
-
-    [data-theme="dark"] .fixed .bg-white {
-      background: linear-gradient(135deg, rgba(31, 41, 55, 0.98) 0%, rgba(17, 24, 39, 0.98) 100%) !important;
-      border: 1px solid rgba(99, 102, 241, 0.3) !important;
-      box-shadow: 0 20px 60px rgba(79, 70, 229, 0.4) !important;
-      backdrop-filter: blur(20px);
-    }
-
-    /* Badges et statuts plus contrastés avec effet glow */
-    [data-theme="dark"] main .bg-green-100 {
-      background: linear-gradient(135deg, rgba(6, 95, 70, 0.8) 0%, rgba(4, 120, 87, 0.8) 100%) !important;
-      color: #A7F3D0 !important;
-      box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
-    }
-
-    [data-theme="dark"] main .bg-blue-100 {
-      background: linear-gradient(135deg, rgba(30, 58, 138, 0.8) 0%, rgba(37, 99, 235, 0.8) 100%) !important;
-      color: #BFDBFE !important;
-      box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
-    }
-
-    [data-theme="dark"] main .bg-purple-100 {
-      background: linear-gradient(135deg, rgba(88, 28, 135, 0.8) 0%, rgba(124, 58, 237, 0.8) 100%) !important;
-      color: #DDD6FE !important;
-      box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
-    }
-
-    [data-theme="dark"] main .bg-yellow-100 {
-      background: linear-gradient(135deg, rgba(146, 64, 14, 0.8) 0%, rgba(217, 119, 6, 0.8) 100%) !important;
-      color: #FED7AA !important;
-      box-shadow: 0 0 20px rgba(251, 146, 60, 0.3);
-    }
-
-    [data-theme="dark"] main .bg-red-100 {
-      background: linear-gradient(135deg, rgba(127, 29, 29, 0.8) 0%, rgba(220, 38, 38, 0.8) 100%) !important;
-      color: #FECACA !important;
-      box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
-    }
-
-    /* Stats cards plus lisibles avec effet glow */
-    [data-theme="dark"] main .text-blue-600 { 
-      color: #60A5FA !important; 
-      text-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
-    }
-    [data-theme="dark"] main .text-green-600 { 
-      color: #34D399 !important; 
-      text-shadow: 0 0 10px rgba(52, 211, 153, 0.5);
-    }
-    [data-theme="dark"] main .text-purple-600 { 
-      color: #A78BFA !important; 
-      text-shadow: 0 0 10px rgba(167, 139, 250, 0.5);
-    }
-    [data-theme="dark"] main .text-orange-600 { 
-      color: #FB923C !important; 
-      text-shadow: 0 0 10px rgba(251, 146, 60, 0.5);
-    }
-    [data-theme="dark"] main .text-red-600 { 
-      color: #F87171 !important; 
-      text-shadow: 0 0 10px rgba(248, 113, 113, 0.5);
-    }
-
-    /* Toggle theme button avec effet PREMIUM */
-    [data-theme="dark"] .theme-toggle {
-      background: linear-gradient(135deg, #6366F1, #EC4899) !important;
-      border: 2px solid rgba(255, 255, 255, 0.2) !important;
-      box-shadow: 0 8px 32px rgba(236, 72, 153, 0.5), 0 0 60px rgba(99, 102, 241, 0.3) !important;
-      color: #FFFFFF;
-    }
-
-    [data-theme="dark"] .theme-toggle:hover {
-      transform: translateY(-4px) scale(1.05) !important;
-      box-shadow: 0 12px 48px rgba(236, 72, 153, 0.6), 0 0 80px rgba(99, 102, 241, 0.5) !important;
-    }
-
-    /* Sidebar amélioration des liens */
+    
+    /* Liens de la Sidebar en mode sombre */
     [data-theme="dark"] aside .nav-link {
-      color: #E0E7FF !important;
-      transition: all 0.3s ease !important;
-      position: relative;
-      overflow: hidden;
+        color: #E0E7FF !important; /* Texte légèrement plus clair que le fond */
     }
-
-    [data-theme="dark"] aside .nav-link::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-      transition: left 0.5s;
-    }
-
-    [data-theme="dark"] aside .nav-link:hover::before {
-      left: 100%;
-    }
-
+    
     [data-theme="dark"] aside .nav-link:hover {
-      background: rgba(255, 255, 255, 0.15) !important;
-      color: #FFFFFF !important;
-      transform: translateX(8px) !important;
-      box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+        background-color: rgba(255, 255, 255, 0.08) !important; /* Un hover discret */
+        color: #FFFFFF !important;
+    }
+    
+    /* Lien actif en mode sombre */
+    [data-theme="dark"] aside .bg-maihlili-100 {
+        background-color: #4338CA !important; /* Maiblili 600 pour le fond */
+        color: #FFFFFF !important;
+    }
+    
+    /* Texte subtil (text-gray-500) en mode sombre */
+    [data-theme="dark"] .text-gray-500 {
+        color: var(--color-text-subtle-dark) !important;
+    }
+    
+    /* Texte principal (text-gray-800) en mode sombre */
+    [data-theme="dark"] .text-gray-800,
+    [data-theme="dark"] h1,
+    [data-theme="dark"] h2,
+    [data-theme="dark"] h3 {
+        color: var(--color-text-dark) !important;
+    }
+    
+    /* Formulaires et Inputs */
+    [data-theme="dark"] input, 
+    [data-theme="dark"] select, 
+    [data-theme="dark"] textarea {
+      background-color: var(--color-input-bg-dark) !important;
+      border-color: var(--color-input-border-dark) !important;
+      color: var(--color-text-dark) !important;
+    }
+    
+    [data-theme="dark"] input::placeholder,
+    [data-theme="dark"] textarea::placeholder {
+      color: var(--color-text-subtle-dark) !important;
+    }
+    
+    [data-theme="dark"] input:focus,
+    [data-theme="dark"] select:focus,
+    [data-theme="dark"] textarea:focus {
+      border-color: #6366F1 !important; /* Bleu d'accentuation */
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3) !important;
     }
 
-    /* User profile dans la sidebar avec glassmorphism */
-    [data-theme="dark"] aside .user-profile {
-      background: rgba(255, 255, 255, 0.1) !important;
-      border: 1px solid rgba(255, 255, 255, 0.2) !important;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-    }
-
-    /* Flash messages améliorés */
+    /* Flash Messages */
     [data-theme="dark"] .bg-gradient-to-r.from-maihlili-100.to-maihlili-50 {
-      background: linear-gradient(to right, rgba(99, 102, 241, 0.3), rgba(168, 85, 247, 0.2)) !important;
-      border: 1px solid rgba(99, 102, 241, 0.4) !important;
-      color: #E0E7FF !important;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+        background: #374151 !important; /* Un fond sombre uniforme */
+        border-color: #4F46E5 !important;
+        color: #E0E7FF !important;
     }
 
-    /* Scrollbars pour le mode sombre avec gradient */
-    [data-theme="dark"] ::-webkit-scrollbar-track { 
-      background: rgba(31, 41, 55, 0.5) !important; 
+    /* Thème Toggle Button (juste pour être lisible) */
+    [data-theme="dark"] .theme-toggle {
+        background-color: #4F46E5 !important;
+        color: #FFFFFF;
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+    }
+    
+    /* Styles pour la table du planning Gantt - Rendre l'en-tête Employé sticky et visible */
+    [data-theme="dark"] .gantt-table thead th:first-child,
+    [data-theme="dark"] .gantt-table tbody td:first-child {
+      background-color: var(--color-sidebar-bg-dark) !important; /* Fond sombre de la sidebar */
+    }
+    [data-theme="dark"] .gantt-table thead th:first-child {
+        background-color: #2d3748 !important; /* Un peu plus clair pour l'en-tête */
     }
 
-    [data-theme="dark"] ::-webkit-scrollbar-thumb { 
-      background: linear-gradient(180deg, #6366F1 0%, #EC4899 100%) !important;
-      border-radius: 10px;
-    }
-
-    [data-theme="dark"] ::-webkit-scrollbar-thumb:hover { 
-      background: linear-gradient(180deg, #7C3AED 0%, #F472B6 100%) !important;
-      box-shadow: 0 0 10px rgba(236, 72, 153, 0.5);
-    }
-
-    /* Animation de particules (optionnel - effet premium) */
-    [data-theme="dark"] body::before {
-      content: '';
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: 
-        radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(236, 72, 153, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 40% 20%, rgba(124, 58, 237, 0.1) 0%, transparent 50%);
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    [data-theme="dark"] aside,
-    [data-theme="dark"] main {
-      position: relative;
-      z-index: 1;
-    }
-
-    /* Boutons hover améliorés avec effet glow */
-    [data-theme="dark"] main .hover\:bg-blue-50:hover { 
-      background: linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(79, 70, 229, 0.25) 100%) !important;
-      box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
-    }
-
-    [data-theme="dark"] main .hover\:bg-green-50:hover { 
-      background: linear-gradient(135deg, rgba(52, 211, 153, 0.25) 0%, rgba(16, 185, 129, 0.25) 100%) !important;
-      box-shadow: 0 0 15px rgba(52, 211, 153, 0.4);
-    }
-
-    [data-theme="dark"] main .hover\:bg-red-50:hover { 
-      background: linear-gradient(135deg, rgba(248, 113, 113, 0.25) 0%, rgba(239, 68, 68, 0.25) 100%) !important;
-      box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
-    }
-
-    [data-theme="dark"] main .hover\:bg-gray-200:hover { 
-      background: linear-gradient(135deg, rgba(156, 163, 175, 0.3) 0%, rgba(107, 114, 128, 0.3) 100%) !important;
-    }
   </style>
   <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css' rel='stylesheet' />
 </head>
 <body class="min-h-screen">
   
   <div class="flex h-full">
-    <aside class="w-64 min-h-screen p-4 border-r border-gray-200 flex-shrink-0 transition-all duration-500 ease-in-out">
+    <aside class="w-64 min-h-screen p-4 border-r border-gray-200 flex-shrink-0 transition-all duration-400 ease-in-out">
       
       <div class="flex items-center mb-6 px-1">
         <span class="text-2xl font-extrabold text-maihlili-500">
-            Maihlili Paie
+            Maihlili SPV
         </span>
       </div>
       
@@ -428,7 +251,7 @@
       </nav>
       
       {% if current_user.is_authenticated and current_user.employee %}
-      <div class="user-profile card mt-6 p-4 rounded-xl">
+      <div class="card user-profile mt-6 p-4 rounded-xl">
         <div class="flex items-center">
           <div class="flex-shrink-0 h-10 w-10 bg-maihlili-500 rounded-full flex items-center justify-center text-white font-semibold mr-3">
             {{ current_user.employee.full_name[0]|upper }}
@@ -447,7 +270,7 @@
       
     </aside>
 
-    <main class="flex-1 p-8 transition-all duration-500 ease-in-out overflow-y-auto">
+    <main class="flex-1 p-8 transition-all duration-400 ease-in-out overflow-y-auto">
       
       <div class="mb-6 space-y-3">
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -465,7 +288,7 @@
       {% endblock %}
     </main>
     
-    <button class="theme-toggle fixed bottom-6 right-6 p-4 rounded-full text-2xl cursor-pointer shadow-lg z-50 transition-all duration-300 ease-in-out" id="themeToggle">
+    <button class="theme-toggle fixed bottom-6 right-6 p-4 rounded-full text-2xl cursor-pointer shadow-lg z-50 transition-all duration-300 ease-in-out bg-gray-200 text-gray-800 hover:bg-gray-300" id="themeToggle">
       🌙
     </button>
   </div>
@@ -492,9 +315,13 @@
       if (theme === 'light') {
         themeToggle.textContent = '🌙';
         themeToggle.title = 'Passer en mode sombre';
+        themeToggle.classList.remove('bg-maihlili-500', 'text-white');
+        themeToggle.classList.add('bg-gray-200', 'text-gray-800', 'hover:bg-gray-300');
       } else {
         themeToggle.textContent = '☀️';
         themeToggle.title = 'Passer en mode clair';
+        themeToggle.classList.remove('bg-gray-200', 'text-gray-800', 'hover:bg-gray-300');
+        themeToggle.classList.add('bg-maihlili-500', 'text-white');
       }
     }
 
@@ -505,11 +332,17 @@
       const navLinks = document.querySelectorAll('.nav-link');
       
       navLinks.forEach(link => {
+        // Supprimer la classe active de base pour la recréer proprement
+        link.classList.remove('bg-maihlili-100', 'text-maihlili-700', 'font-semibold');
+        link.classList.add('text-gray-800', 'hover:bg-maihlili-50');
+
         if (link.getAttribute('href') === currentPath) {
           link.classList.add('bg-maihlili-100', 'text-maihlili-700', 'font-semibold');
           link.classList.remove('text-gray-800', 'hover:bg-maihlili-50');
         }
       });
+      // S'assurer que le bouton actif est bien stylé même en mode sombre
+      updateThemeToggle(body.getAttribute('data-theme'));
     });
   </script>
 </body>
