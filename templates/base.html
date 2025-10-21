@@ -285,7 +285,10 @@
     
     /* Assurez-vous que le main content est ajusté pour la nouvelle largeur */
     main {
-        padding-left: 2rem;
+        /* Utilisez margin-left au lieu de padding-left pour éviter les chevauchements */
+        margin-left: 320px; /* Largeur de la sidebar */
+        width: calc(100% - 320px); /* Ajuste la largeur restante */
+        padding: 1.5rem; /* Réapplique le padding normal */
     }
     
     /* -------------------------------------------------------------------------------------------------- */
@@ -393,18 +396,18 @@
         color: var(--color-text-dark-sidebar);
     }
   </style>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/main.min.css" rel="stylesheet">
 </head>
 <body class="bg-[#fff0f8] flex min-h-screen" data-theme="light"> 
 
   <aside class="w-[320px] p-3 flex flex-col bg-[#fff0f8] dark:bg-gray-800" style="min-height: 100vh;">
     <div class="h-[140px] rounded-[30px] bg-maihlili-figma-blue flex items-center p-4 shadow-xl">
-      <div class="w-[110px] h-[110px] rounded-[30px] bg-white flex items-center justify-center -translate-y-1 shadow-xl">
-        <img src="{{ url_for('static', filename='images/maihlili-logo-light.png') }}" alt="Logo Maihlili clair" class="h-24 w-24">
+      <div class="w-[110px] h-[110px] rounded-full bg-white flex items-center justify-center -translate-y-1 shadow-xl">
+        <img src="{{ url_for('static', filename='images/maihlili-logo-light.png') }}" alt="Logo Maihlili clair" class="h-24 w-24 rounded-full">
       </div>
       <div class="ml-3 flex flex-col leading-none text-white font-['Bebas_Neue'] uppercase">
-        <span class="text-3xl tracking-widest">Maihlili.</span>
-        <span class="text-3xl -translate-x-3 tracking-widest">Paie</span>
+        <span class="text-3xl tracking-widest -mb-1">Maihlili.</span>
+        <span class="text-3xl tracking-widest">Paie</span>
       </div>
     </div>
 
