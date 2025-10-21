@@ -40,7 +40,7 @@
   </script>
   <style>
     /* -------------------------------------------------------------------------------------------------- */
-    /* Couleurs & Thème Maihlili Paie - AMÉLIORATION DU MODE SOMBRE POUR LA LISIBILITÉ                    */
+    /* Couleurs & Thème Maihlili Paie - BASE                                                              */
     /* -------------------------------------------------------------------------------------------------- */
     :root {
       /* Couleurs Claires */
@@ -48,32 +48,24 @@
       --color-text-light: #1f2937;
       --color-text-subtle-light: #6b7280;
       --color-border-light: #e5e7eb;
-      --color-card-bg-light: #fff0f8; /* Garde la couleur de carte originale de l'ancien design */
-      --color-sidebar-bg-light: #ffffff;
+      --color-card-bg-light: #fff0f8; /* Garde la couleur de carte rose très clair */
     }
 
-    /* Variables pour le Mode Sombre - Nettoyé */
+    /* Variables du mode sombre (Conservées de votre ancien fichier) */
     [data-theme="dark"] {
-      --color-bg-dark: #111827; /* Fond principal très sombre */
-      --color-text-dark: #f9fafb;
-      --color-text-subtle-dark: #9ca3af;
-      --color-border-dark: #374151; /* Bordures sombres */
-      --color-card-bg-dark: #1f2937; /* Fond des cartes/panneaux */
-      --color-sidebar-bg-dark: #1f2937; /* Fond de la sidebar (uniforme avec les cartes) */
-      --color-input-bg-dark: #374151; /* Fond des inputs */
-      --color-input-border-dark: #4b5563;
-      
-      /* Les anciennes variables sont mises à jour pour la cohérence */
-      --color-bg-dark-dashboard: #111827;
+      /* Couleurs Sombres pour le tableau de bord uniquement */
+      --color-bg-dark-dashboard: #1f2937;
       --color-text-dark-dashboard: #f9fafb;
       --color-text-subtle-dark-dashboard: #9ca3af;
       --color-border-dark-dashboard: #374151;
-      --color-card-bg-dark-dashboard: #1f2937;
-      --color-bg-dark-sidebar: #1f2937;
+      --color-card-bg-dark-dashboard: #2d3748;
+      
+      /* Couleurs pour la sidebar en mode sombre (bleu vif dans votre ancien code, corrigé ci-dessous) */
+      --color-bg-dark-sidebar: #3055ff; /* Variable gardée pour la structure */
       --color-text-dark-sidebar: #f9fafb;
       --color-text-subtle-dark-sidebar: #c7d2fe;
-      --color-border-dark-sidebar: #374151;
-      --color-card-bg-dark-sidebar: #2d3748;
+      --color-border-dark-sidebar: rgba(255, 255, 255, 0.1);
+      --color-card-bg-dark-sidebar: #2a4ce5; /* Variable gardée pour la structure */
     }
 
     body {
@@ -82,74 +74,58 @@
       transition: background-color 0.4s ease, color 0.4s ease;
     }
     
-    /* Mode sombre : body */
-    [data-theme="dark"] body {
-      background-color: var(--color-bg-dark);
-      color: var(--color-text-dark);
-    }
-    
     .card {
       background-color: var(--color-card-bg-light);
       border: 1px solid var(--color-border-light);
-      transition: background-color 0.4s ease, border-color 0.4s ease, box-shadow 0.2s ease;
+      transition: background-color 0.4s ease, border-color 0.4s ease;
     }
 
-    /* Styles pour la zone de contenu principale en mode sombre */
+    /* -------------------------------------------------------------------------------------------------- */
+    /* CORRECTIONS MODE SOMBRE POUR LA LISIBILITÉ (Seulement des overrides)                               */
+    /* -------------------------------------------------------------------------------------------------- */
+
+    /* CORRECTION 1: Fond du body en mode sombre - plus uniforme */
+    [data-theme="dark"] body {
+        background-color: #111827 !important; /* Très sombre pour meilleur contraste */
+        color: var(--color-text-dark-dashboard);
+    }
+
+    /* CORRECTION 2: Fond de la zone principale (main) */
     [data-theme="dark"] main {
-        background-color: transparent; 
-        color: var(--color-text-dark);
+        background-color: transparent; /* Permet au body de dominer */
+        color: var(--color-text-dark-dashboard);
     }
     
-    /* Correction pour les cartes et éléments 'bg-white' dans le dashboard */
+    /* CORRECTION 3: Sidebar en mode sombre - NE DOIT PAS ÊTRE BLEU VIF */
+    [data-theme="dark"] aside {
+        /* Utilise un fond sombre pour la cohérence et la lisibilité */
+        background-color: #1f2937 !important; 
+        color: var(--color-text-dark-sidebar);
+        border-color: var(--color-border-dark-dashboard) !important;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.4) !important;
+    }
+
+    [data-theme="dark"] aside .card {
+        /* La carte de profil utilise une couleur de fond plus sombre que la sidebar */
+        background-color: var(--color-card-bg-dark-dashboard) !important; 
+        border: 1px solid var(--color-border-dark-dashboard) !important;
+    }
+    
+    /* CORRECTION 4: Cartes et éléments 'bg-white' dans le dashboard */
     [data-theme="dark"] main .bg-white,
     [data-theme="dark"] .card {
-        background-color: var(--color-card-bg-dark) !important;
-        border-color: var(--color-border-dark) !important;
-        box-shadow: none !important; /* Retrait des ombres trop flashy */
-    }
-    
-    /* Styles pour la sidebar en mode sombre - FOND SOMBRE ET UNIFORME */
-    [data-theme="dark"] aside {
-        background: var(--color-sidebar-bg-dark) !important;
-        color: var(--color-text-dark-sidebar);
-        border-color: var(--color-border-dark) !important;
-        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.4) !important; /* Ombre discrète */
-    }
-    
-    /* Le 'user-profile' dans la sidebar est une carte plus foncée pour le contraste */
-    [data-theme="dark"] aside .user-profile.card {
-        background-color: var(--color-input-bg-dark) !important; 
-        border: 1px solid var(--color-border-dark) !important;
+        background-color: var(--color-card-bg-dark-dashboard) !important;
+        border-color: var(--color-border-dark-dashboard) !important;
+        box-shadow: none !important; /* Assurez-vous que les ombres ne cassent pas le style */
     }
 
-    /* Couleurs du texte, bordures et dividers en mode sombre pour la lisibilité */
-    [data-theme="dark"] main .text-gray-800,
-    [data-theme="dark"] main h1,
-    [data-theme="dark"] main h2,
-    [data-theme="dark"] main h3 { color: var(--color-text-dark) !important; }
-
-    [data-theme="dark"] main .text-gray-500 { color: var(--color-text-subtle-dark) !important; }
-    [data-theme="dark"] main .border-gray-200,
-    [data-theme="dark"] main .border-gray-300 { border-color: #4B5563 !important; }
-    [data-theme="dark"] main .divide-gray-200 > * + * { border-color: #4B5563 !important; }
-    
-    /* Tables plus lisibles */
-    [data-theme="dark"] main .bg-gray-50 { 
-        background-color: #2d3748 !important; /* Header de table */
-        color: #F3F4F6 !important;
-    }
-    
-    [data-theme="dark"] main .hover\:bg-gray-50:hover { 
-        background-color: #374151 !important; /* Hover plus foncé */
-    }
-    
-    /* Inputs et selects plus lisibles */
+    /* CORRECTION 5: Inputs et selects plus lisibles */
     [data-theme="dark"] main input, 
     [data-theme="dark"] main select, 
     [data-theme="dark"] main textarea {
-        background-color: var(--color-input-bg-dark) !important;
-        border-color: var(--color-input-border-dark) !important;
-        color: var(--color-text-dark) !important;
+        background-color: #374151 !important;
+        border-color: #4B5563 !important;
+        color: #F3F4F6 !important;
     }
     
     [data-theme="dark"] main input:focus,
@@ -159,39 +135,161 @@
         box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.4) !important;
         background-color: #374151 !important;
     }
-    
-    /* Flash messages plus lisibles */
-    [data-theme="dark"] .bg-gradient-to-r.from-maihlili-100.to-maihlili-50 {
-        background: #374151 !important; 
-        border-color: #4F46E5 !important; 
-        color: #E0E7FF !important; 
+
+    /* CORRECTION 6: Liens de navigation hover/actif */
+    [data-theme="dark"] aside .nav-link {
+        color: var(--color-text-subtle-dark-sidebar) !important; /* Texte de lien par défaut */
     }
     
-    /* Liens de navigation plus visibles */
-    [data-theme="dark"] .nav-link {
-        color: #E0E7FF !important;
-        transition: all 0.2s ease !important;
-    }
-    
-    /* Hover de lien plus visible */
     [data-theme="dark"] aside .nav-link:hover {
-        background-color: rgba(79, 70, 229, 0.1) !important;
-        color: #FFFFFF !important;
-        transform: none !important; /* Retrait de l'animation de translation */
+        background-color: rgba(255, 255, 255, 0.1) !important; /* Un hover discret */
+        color: var(--color-text-dark-sidebar) !important;
     }
     
     /* Lien actif */
     [data-theme="dark"] .nav-link.bg-maihlili-100 {
-        background-color: #4338CA !important; 
+        background-color: #4338CA !important; /* Maiblili 600 pour le fond actif */
         color: #FFFFFF !important;
+        box-shadow: none !important;
     }
 
-    /* Retrait de l'animation de transformation sur tous les éléments */
-    * { 
-      transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease !important; 
-    } 
+    /* CORRECTION 7: Couleurs du texte, bordures et tables */
+    [data-theme="dark"] main .text-gray-800,
+    [data-theme="dark"] main .text-gray-700,
+    [data-theme="dark"] main .text-gray-600 { color: #F3F4F6 !important; }
 
-    /* Scrollbar simplifiée pour le mode sombre */
+    [data-theme="dark"] main .text-gray-500,
+    [data-theme="dark"] main .text-gray-400 { color: #9CA3AF !important; }
+    
+    [data-theme="dark"] main .border-gray-200,
+    [data-theme="dark"] main .border-gray-300 { border-color: #4B5563 !important; }
+    
+    [data-theme="dark"] main .bg-gray-50 { 
+        background-color: #2d3748 !important; /* Header de table lisible */
+        color: #F3F4F6 !important;
+    }
+
+    /* Le reste de votre CSS personnalisé est conservé ci-dessous */
+
+    /* Styles pour la zone de contenu principale en mode sombre */
+    /* Ces styles sont redondants après les corrections ci-dessus mais je les laisse pour garder votre structure */
+    [data-theme="dark"] main {
+        /* background-color: var(--color-bg-dark-dashboard); */
+        color: var(--color-text-dark-dashboard);
+    }
+    
+    [data-theme="dark"] main .bg-white {
+        background-color: var(--color-card-bg-dark-dashboard);
+        border-color: var(--color-border-dark-dashboard);
+    }
+    
+    [data-theme="dark"] aside {
+        /* background: var(--color-bg-dark-sidebar); */
+        color: var(--color-text-dark-sidebar);
+        /* border-color: var(--color-border-dark-sidebar); */
+    }
+    
+    [data-theme="dark"] aside .card {
+        /* background: var(--color-card-bg-dark-sidebar); */
+        /* border: 1px solid var(--color-border-dark-sidebar); */
+    }
+
+    [data-theme="dark"] main .text-gray-800 { color: var(--color-text-dark-dashboard); }
+    [data-theme="dark"] main .text-gray-500 { color: var(--color-text-subtle-dark-dashboard); }
+    [data-theme="dark"] main .border-gray-200 { border-color: var(--color-border-dark-dashboard); }
+    
+    [data-theme="dark"] aside .text-gray-800 { color: var(--color-text-dark-sidebar); }
+    [data-theme="dark"] aside .text-gray-500 { color: var(--color-text-subtle-dark-sidebar); }
+    [data-theme="dark"] aside .border-gray-200 { border-color: var(--color-border-dark-sidebar); }
+
+    
+    /* Améliorations des bordures */
+    [data-theme="dark"] main .border-gray-300 { border-color: #6B7280 !important; }
+    
+    /* Dividers plus visibles */
+    [data-theme="dark"] main .divide-gray-200 > * + * { border-color: #4B5563 !important; }
+    
+    /* Tables plus lisibles */
+    /* [data-theme="dark"] main .bg-gray-50 { 
+        background-color: #374151 !important;
+        color: #F3F4F6 !important;
+    } */
+    
+    [data-theme="dark"] main .hover\:bg-gray-50:hover { 
+        background-color: #4B5563 !important; 
+    }
+    
+    /* Cartes et conteneurs */
+    [data-theme="dark"] main .shadow-sm { 
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3) !important; 
+    }
+    
+    [data-theme="dark"] main .shadow-lg { 
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2) !important; 
+    }
+    
+    /* Inputs et selects plus lisibles */
+    [data-theme="dark"] main input::placeholder,
+    [data-theme="dark"] main textarea::placeholder {
+        color: #9CA3AF !important;
+    }
+    
+    /* Modals en mode sombre */
+    [data-theme="dark"] .fixed.bg-black.bg-opacity-50 {
+        background-color: rgba(0, 0, 0, 0.8) !important;
+    }
+    
+    [data-theme="dark"] .fixed .bg-white {
+        background-color: #1F2937 !important;
+        border: 1px solid #374151 !important;
+    }
+    
+    /* Badges et statuts plus contrastés */
+    [data-theme="dark"] main .bg-green-100 { background-color: #065F46 !important; color: #A7F3D0 !important; }
+    [data-theme="dark"] main .bg-blue-100 { background-color: #1E3A8A !important; color: #BFDBFE !important; }
+    [data-theme="dark"] main .bg-purple-100 { background-color: #581C87 !important; color: #DDD6FE !important; }
+    [data-theme="dark"] main .bg-yellow-100 { background-color: #92400E !important; color: #FED7AA !important; }
+    [data-theme="dark"] main .bg-red-100 { background-color: #7F1D1D !important; color: #FECACA !important; }
+    
+    /* Amélioration du contraste des couleurs de texte pour les badges */
+    [data-theme="dark"] main .text-green-800 { color: #A7F3D0 !important; }
+    [data-theme="dark"] main .text-blue-800 { color: #BFDBFE !important; }
+    [data-theme="dark"] main .text-purple-800 { color: #DDD6FE !important; }
+    [data-theme="dark"] main .text-yellow-800 { color: #FED7AA !important; }
+    [data-theme="dark"] main .text-red-800 { color: #FECACA !important; }
+    
+    /* Boutons hover améliorés */
+    [data-theme="dark"] main .hover\:bg-blue-50:hover { background-color: rgba(79, 70, 229, 0.2) !important; }
+    [data-theme="dark"] main .hover\:bg-green-50:hover { background-color: rgba(34, 197, 94, 0.2) !important; }
+    [data-theme="dark"] main .hover\:bg-red-50:hover { background-color: rgba(239, 68, 68, 0.2) !important; }
+    [data-theme="dark"] main .hover\:bg-gray-200:hover { background-color: #6B7280 !important; }
+    
+    /* Stats cards plus lisibles */
+    [data-theme="dark"] main .text-blue-600 { color: #60A5FA !important; }
+    [data-theme="dark"] main .text-green-600 { color: #34D399 !important; }
+    [data-theme="dark"] main .text-purple-600 { color: #A78BFA !important; }
+    [data-theme="dark"] main .text-orange-600 { color: #FB923C !important; }
+    [data-theme="dark"] main .text-red-600 { color: #F87171 !important; }
+
+    /* Logos */
+    .logo-dark { display: none; }
+    .logo-light { display: inline-block; }
+    [data-theme="dark"] .logo-light { display: none; }
+    [data-theme="dark"] .logo-dark { display: inline-block; }
+
+    /* Animations & Scrollbar */
+    * { transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease !important; }
+    
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: rgba(79, 70, 229, 0.1); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #4F46E5 0%, #4338CA 100%); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #4338CA 0%, #3730A3 100%); }
+    
+    /* Scrollbars pour le mode sombre */
+    [data-theme="dark"] ::-webkit-scrollbar-track { 
+        background: #111827 !important; 
+    }
+    
     [data-theme="dark"] ::-webkit-scrollbar-thumb { 
         background: #4F46E5 !important; 
     }
@@ -199,13 +297,29 @@
     [data-theme="dark"] ::-webkit-scrollbar-thumb:hover { 
         background: #6366F1 !important; 
     }
-    [data-theme="dark"] ::-webkit-scrollbar-track { 
-        background: #111827 !important; 
+    
+    /* Style du bouton de thème */
+    .theme-toggle {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 8px 32px rgba(79, 70, 229, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 1000;
+      font-size: 1.5rem;
     }
 
     /* Toggle theme button amélioré */
     [data-theme="dark"] .theme-toggle {
-        background: #4F46E5 !important; /* Fond bleu uni */
+        background: #4F46E5 !important;
         border: none !important;
         box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4) !important;
         color: #E0E7FF;
@@ -214,6 +328,40 @@
     [data-theme="dark"] .theme-toggle:hover {
         transform: translateY(-1px) !important;
         box-shadow: 0 8px 24px rgba(79, 70, 229, 0.5) !important;
+    }
+
+    /* Sidebar améliorée */
+    [data-theme="dark"] aside {
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3) !important;
+    }
+    
+    [data-theme="dark"] aside .nav-link {
+        color: #E0E7FF !important;
+        transition: all 0.2s ease !important;
+    }
+    
+    [data-theme="dark"] aside .nav-link:hover {
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        color: #FFFFFF !important;
+        transform: none !important;
+    }
+    
+    /* User profile dans la sidebar */
+    [data-theme="dark"] aside .user-profile {
+        background-color: #374151 !important; /* Couleur plus foncée pour le contraste */
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    }
+    
+    /* Flash messages améliorés */
+    [data-theme="dark"] .bg-gradient-to-r.from-maihlili-100.to-maihlili-50 {
+        background: #374151 !important;
+        border-color: #4F46E5 !important;
+        color: #E0E7FF !important;
+    }
+    
+    [data-theme="dark"] .nav-link:hover {
+        background-color: var(--color-card-bg-dark-dashboard) !important;
+        color: var(--color-text-dark-sidebar) !important;
     }
   </style>
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/main.min.css" rel="stylesheet">
@@ -352,19 +500,20 @@
       const navLinks = document.querySelectorAll('.nav-link');
       
       navLinks.forEach(link => {
-        // Nettoyer les classes actives avant de vérifier
+        // Nettoyer les classes actives de base
         link.classList.remove('bg-maihlili-100', 'text-maihlili-800', 'shadow-sm');
         
         if (link.getAttribute('href') === currentPath) {
           link.classList.add('bg-maihlili-100', 'text-maihlili-800', 'shadow-sm');
         }
       });
-      // Correction: La couleur du texte doit être adaptée au thème
+      
+      // Correction du texte actif en mode sombre
       const activeLink = document.querySelector('.nav-link.bg-maihlili-100');
       if (activeLink) {
         if (body.getAttribute('data-theme') === 'dark') {
           activeLink.classList.remove('text-maihlili-800');
-          activeLink.classList.add('text-white');
+          activeLink.classList.add('text-white'); // Forcer le texte en blanc
         } else {
           activeLink.classList.remove('text-white');
           activeLink.classList.add('text-maihlili-800');
