@@ -11,15 +11,17 @@
         extend: {
           colors: {
             'maihlili': {
-              // Palette principale du branding (Bleu Vif)
-              500: '#3055ff', 
+              500: '#3055ff', // Le Bleu Vif d'accentuation
+              600: '#2A4CE5',
+              700: '#2343CC',
+              300: '#8C8FFF',
             },
-            // Couleurs spécifiques FIGMA utilisées dans le code Tailwind standard
-            'fond-clair': '#FFF0F8', // Body clair (Page 2)
-            'sidebar-clair': '#3055FF', // Sidebar claire (Page 2)
-            'fond-sombre': '#1B1B1B', // Body sombre (Page 4)
-            'sidebar-sombre': '#282828', // Sidebar sombre (Page 4)
-            'carte-sombre': '#363636', // Carte/Panneau sombre (Page 4)
+            // Couleurs spécifiques FIGMA
+            'fond-clair': '#FFF0F8', // Body clair (Rose)
+            'sidebar-clair': '#3055FF', // Sidebar claire (Bleu Vif)
+            'fond-sombre': '#1B1B1B', // Body sombre (Gris très foncé)
+            'sidebar-sombre': '#282828', // Sidebar sombre (Gris foncé)
+            'carte-sombre': '#363636', // Carte/Panneau sombre
           }
         }
       }
@@ -40,9 +42,9 @@
 
       /* Sidebar Claires */
       --color-sidebar-text-light: #FFFFFF; 
-      --color-sidebar-link-hover-light: #456BFF; 
-      --color-sidebar-link-active-bg-light: #FFFFFF; 
-      --color-sidebar-link-active-text-light: #3055FF;
+      --color-sidebar-link-hover-light: #456BFF; /* Bleu plus clair */
+      --color-sidebar-link-active-bg-light: #FFFFFF; /* Fond Blanc pour l'actif */
+      --color-sidebar-link-active-text-light: #3055FF; /* Texte Bleu Vif pour l'actif */
     }
 
     [data-theme="dark"] {
@@ -57,8 +59,8 @@
 
       /* Sidebar Sombres */
       --color-sidebar-text-dark: #F5F5F5; 
-      --color-sidebar-link-hover-dark: #363636; /* Utilise la couleur de carte pour le hover */
-      --color-sidebar-link-active-bg-dark: #363636; /* Utilise la couleur de carte pour l'actif */
+      --color-sidebar-link-hover-dark: #363636; /* Gris de carte pour le hover/actif */
+      --color-sidebar-link-active-bg-dark: #363636; 
       --color-sidebar-link-active-text-dark: #F5F5F5; 
     }
 
@@ -78,6 +80,7 @@
         background-color: var(--color-sidebar-bg-light);
         color: var(--color-sidebar-text-light); 
         box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        transition: background-color 0.3s, color 0.3s;
     }
 
     [data-theme="dark"] aside {
@@ -86,35 +89,38 @@
         box-shadow: 2px 0 10px rgba(0, 0, 0, 0.4);
     }
     
-    /* 2. Cartes/Panneaux (Cards) - Couleurs Claires et Sombres */
-    .card, .bg-white {
+    /* 2. Cartes/Panneaux (Cards) */
+    .card {
         background-color: var(--color-card-bg-light) !important;
         border: 1px solid var(--color-border-light) !important;
+        border-radius: 1rem; 
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+        transition: background-color 0.3s, border-color 0.3s;
     }
-    [data-theme="dark"] .card,
-    [data-theme="dark"] .bg-white {
+    [data-theme="dark"] .card {
         background-color: var(--color-card-bg-dark) !important;
         border-color: var(--color-border-dark) !important;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
     }
     
-    /* 3. Navigation Links DANS LA SIDEBAR */
+    /* 3. Navigation Links DANS LA SIDEBAR (AJUSTEMENT CRUCIAL) */
     aside .nav-link {
         padding: 0.75rem; 
         border-radius: 0.75rem; 
         transition: all 0.2s;
         font-weight: 500;
-        /* Clair par défaut: Texte Blanc */
-        color: var(--color-sidebar-text-light) !important;
+        gap: 0.75rem;
     }
     
-    /* Clair: Hover */
-    aside .nav-link:hover {
+    /* LIENS CLAIRS (TEXTE BLANC PAR DEFAUT) */
+    aside .nav-link:not(.active) {
+        color: var(--color-sidebar-text-light) !important;
+    }
+    aside .nav-link:not(.active):hover {
         background-color: var(--color-sidebar-link-hover-light) !important;
     }
 
-    /* Clair: Actif */
+    /* CLAIR: ACTIF */
     aside .nav-link.active {
         background-color: var(--color-sidebar-link-active-bg-light) !important; /* Blanc */
         color: var(--color-sidebar-link-active-text-light) !important; /* Bleu Vif */
@@ -122,33 +128,46 @@
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
     
-    /* Sombre: Liens */
-    [data-theme="dark"] aside .nav-link {
+    /* LIENS SOMBRE (TEXTE BLANC PAR DEFAUT) */
+    [data-theme="dark"] aside .nav-link:not(.active) {
         color: var(--color-sidebar-text-dark) !important; 
     }
-    /* Sombre: Hover */
-    [data-theme="dark"] aside .nav-link:hover {
-        background-color: var(--color-sidebar-link-hover-dark) !important; 
+    [data-theme="dark"] aside .nav-link:not(.active):hover {
+        background-color: rgba(255, 255, 255, 0.1) !important; /* Léger hover semi-transparent */
     }
-    /* Sombre: Actif */
+    
+    /* SOMBRE: ACTIF */
     [data-theme="dark"] aside .nav-link.active {
         background-color: var(--color-sidebar-link-active-bg-dark) !important; /* Gris carte */
         color: var(--color-sidebar-link-active-text-dark) !important; /* Blanc */
+        font-weight: 600;
         box-shadow: none;
     }
 
-    /* 4. Gestion des couleurs de texte génériques pour le mode sombre */
+    /* 4. Gestion des couleurs de texte et bordures pour le mode sombre */
     [data-theme="dark"] .text-gray-800 { color: var(--color-text-dark) !important; }
     [data-theme="dark"] .text-gray-500 { color: var(--color-text-subtle-dark) !important; }
     [data-theme="dark"] .border-gray-200,
     [data-theme="dark"] .border-t { border-color: var(--color-border-dark) !important; }
     
-    /* Assure la visibilité du texte dans la carte blanche/grise du profil */
-    .user-profile .text-gray-800 { color: var(--color-text-light); }
-    .user-profile .text-gray-500 { color: var(--color-text-subtle-light); }
+    /* Assure la visibilité du texte dans la carte du profil */
     [data-theme="dark"] .user-profile .text-gray-800 { color: var(--color-text-dark) !important; }
     [data-theme="dark"] .user-profile .text-gray-500 { color: var(--color-text-subtle-dark) !important; }
-    
+
+    /* Input styles (pour login.html et autres formulaires) */
+    input, select, textarea {
+      background-color: var(--color-card-bg-light);
+      border-color: var(--color-border-light);
+      color: var(--color-text-light);
+      transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+    }
+    [data-theme="dark"] input, 
+    [data-theme="dark"] select, 
+    [data-theme="dark"] textarea {
+      background-color: var(--color-input-bg-dark) !important;
+      border-color: var(--color-border-dark) !important;
+      color: var(--color-text-dark) !important;
+    }
   </style>
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/main.min.css" rel="stylesheet">
 </head>
@@ -211,7 +230,7 @@
 
     {% if current_user.is_authenticated %}
     <div class="p-2 border-t border-gray-200 mt-auto">
-      <div class="user-profile flex items-center gap-3 p-3 rounded-xl card bg-white">
+      <div class="user-profile flex items-center gap-3 p-3 rounded-xl card">
         <div class="w-10 h-10 bg-maihlili-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
           {{ current_user.username[0].upper() }}
         </div>
@@ -237,7 +256,7 @@
       {% if messages %}
         <div class="mb-6 space-y-3">
             {% for category, message in messages %}
-                <div class="flash-message border-l-4 border-maihlili-500 p-4 rounded-xl shadow-sm bg-white" role="alert">
+                <div class="flash-message border-l-4 border-maihlili-500 p-4 rounded-xl shadow-sm card" role="alert">
                     <p class="font-medium text-maihlili-700">{{ message }}</p>
                 </div>
             {% endfor %}
@@ -300,4 +319,3 @@
   </script>
 </body>
 </html>
-```eof
