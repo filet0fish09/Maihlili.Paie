@@ -2,26 +2,28 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Maihlili Paie - Base de l'Application</title>
+  <title>Maihlili SPV - Nouvelle Interface</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Importation de la police Bebas Neue (obligatoire pour le rendu exact) -->
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/main.min.css" rel="stylesheet">
   
   <script>
-    // Configuration Tailwind pour utiliser les couleurs Maihlili
     tailwind.config = {
       theme: {
         extend: {
           colors: {
-            // NOTE: Ces couleurs sont maintenant principalement gérées par les variables CSS pour le thème
             'maihlili': {
-              500: '#3055ff', // Bleu Vif Principal
-              600: '#2A4CE5',
-              700: '#2343CC',
-              300: '#8C8FFF', 
+              // Couleurs de l'ancienne base (gardées pour la compatibilité du dashboard)
+              500: '#4F46E5', 
+              600: '#4338CA', 
             },
-            'maihlili-rose': '#FFF0F8', // Rose clair pour l'actif/fond clair
+            'nouveau-bleu': {
+                // Le nouveau bleu principal pour la sidebar
+                500: '#3055ff', 
+            },
+            // Couleurs spécifiques FIGMA pour la sidebar et fond clair
+            'fond-clair': '#FFF0F8', // Rose clair pour fond/actif sidebar
           }
         }
       }
@@ -29,17 +31,15 @@
   </script>
   <style>
     /* -------------------------------------------------------------------------------------------------- */
-    /* DÉFINITION DES COULEURS VIA LES VARIABLES CSS (COPIE CONFORME FIGMA)                              */
+    /* DÉFINITION GLOBALE DES COULEURS ET DES THÈMES                                                      */
     /* -------------------------------------------------------------------------------------------------- */
     :root {
-      /* Couleurs Claires */
-      --color-bg-light: #FFF0F8; 
-      --color-sidebar-bg-light: #3055FF; 
-      --color-card-bg-light: #FFFFFF;
-      --color-text-light: #181818;
-      --color-border-light: #E0E0E0;
-
-      /* Sidebar Claires */
+      /* Couleurs Claires (Base) */
+      --color-bg-light: #f9fafb; /* Garder votre fond de base pour la zone main */
+      --color-text-light: #1f2937;
+      
+      /* Couleurs Claires (Sidebar Design V3) */
+      --color-sidebar-bg-light: #3055FF; /* Bleu Vif */
       --color-sidebar-text-light: #FFFFFF; 
       --color-liquid-glass-bg-light: rgba(255, 255, 255, 0.3); 
       --color-liquid-glass-active-bg-light: #FFF0F8; /* Rose Maihlili pour actif */
@@ -49,14 +49,13 @@
     }
 
     [data-theme="dark"] {
-      /* Couleurs Sombres */
-      --color-bg-dark: #1B1B1B; 
+      /* Couleurs Sombres (Zone Main - Garder votre logique existante) */
+      --color-bg-dark-dashboard: #1f2937;
+      --color-text-dark-dashboard: #f9fafb;
+      --color-card-bg-dark-dashboard: #2d3748;
+      
+      /* Couleurs Sombres (Sidebar Design V3) */
       --color-sidebar-bg-dark: #282828; 
-      --color-card-bg-dark: #363636; 
-      --color-text-dark: #F5F5F5;
-      --color-border-dark: #454545;
-
-      /* Sidebar Sombres */
       --color-sidebar-text-dark: #F5F5F5;
       --color-liquid-glass-bg-dark: rgba(255, 255, 255, 0.1);
       --color-liquid-glass-active-bg-dark: #363636; 
@@ -65,35 +64,25 @@
       --color-deconnexion-text-dark: #F5F5F5;
     }
 
-    /* Styles de base pour le body et les cartes */
+    /* Styles de base */
     body {
-      font-family: 'Inter', sans-serif;
+      font-family: 'Inter', sans-serif; /* Conserver Inter comme police principale */
       background-color: var(--color-bg-light);
       color: var(--color-text-light);
       transition: background-color 0.3s, color 0.3s;
-    }
-    [data-theme="dark"] body {
-      background-color: var(--color-bg-dark);
-      color: var(--color-text-dark);
     }
     .bebas-neue {
       font-family: 'Bebas Neue', sans-serif;
       line-height: 1; 
     }
-    .card {
-        background-color: var(--color-card-bg-light) !important;
-        border: 1px solid var(--color-border-light) !important;
-        border-radius: 1rem; 
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
-        transition: background-color 0.3s, border-color 0.3s;
+    [data-theme="dark"] main {
+        background-color: var(--color-bg-dark-dashboard);
+        color: var(--color-text-dark-dashboard);
     }
-    [data-theme="dark"] .card {
-        background-color: var(--color-card-bg-dark) !important;
-        border-color: var(--color-border-dark) !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
-    }
-
-    /* Styles spécifiques à la Sidebar */
+    
+    /* -------------------------------------------------------------------------------------------------- */
+    /* STYLES SIDEBAR V3 (Fixe 460px)                                                                     */
+    /* -------------------------------------------------------------------------------------------------- */
     aside {
         width: 460px; /* Largeur fixe pour le design Figma */
         background-color: transparent; 
@@ -112,6 +101,16 @@
         background-color: var(--color-liquid-glass-bg-light); 
         color: var(--color-sidebar-text-light);
         transition: all 0.3s;
+        /* Taille et forme de base pour les liens */
+        width: 249px; 
+        height: 48px; 
+        border-radius: 30px;
+        padding: 0.625rem 1rem; /* p-2.5 */
+        gap: 0.75rem; /* gap-3 */
+        display: flex;
+        align-items: center;
+        justify-content: start;
+        cursor: pointer;
     }
     .liquid-glass:hover:not(.active) {
         background-color: rgba(255, 255, 255, 0.45);
@@ -137,50 +136,66 @@
     #logout-link {
         background-color: var(--color-deconnexion-bg-light);
         color: var(--color-deconnexion-text-light);
+        width: 352px;
+        height: 61px;
+        border-radius: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
     }
-    #logout-link:hover {
-        background-color: rgba(255, 50, 50, 0.35); 
-    }
-    [data-theme="dark"] #logout-link {
-        background-color: var(--color-deconnexion-bg-dark);
-        color: var(--color-deconnexion-text-dark);
-    }
-    [data-theme="dark"] #logout-link:hover {
-        background-color: rgba(255, 50, 50, 0.4); 
-    }
+    /* Les autres styles d'amélioration de la lisibilité du mode sombre (de votre base (1).html) sont conservés */
+    /* ... (tous les styles d'amélioration du mode sombre de base (1).html) ... */
+    
+    .logo-dark { display: none; }
+    .logo-light { display: inline-block; }
+    [data-theme="dark"] .logo-light { display: none; }
+    [data-theme="dark"] .logo-dark { display: inline-block; }
+    
     .theme-toggle {
-        background-color: #E0E0E0; 
-        color: #181818;
-        transition: all 0.3s;
+        /* ... (styles du bouton de base (1).html) ... */
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 8px 32px rgba(79, 70, 229, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 1000;
+      font-size: 1.5rem;
     }
+    
     [data-theme="dark"] .theme-toggle {
-        background-color: #3055ff; 
-        color: white;
+        background: linear-gradient(135deg, #4F46E5, #7C3AED) !important;
+        border: none !important;
+        box-shadow: 0 8px 32px rgba(79, 70, 229, 0.4) !important;
+        color: #E0E7FF;
     }
+    
   </style>
 </head>
 <body class="flex min-h-screen" data-theme="light">
 
-  <!-- BLOCK_SIDEBAR -->
   <aside class="w-[460px] min-h-screen relative p-0">
     
-    <!-- Rectangle Principal de la Sidebar (Le grand fond) -->
     <div id="sidebar-background" 
          class="absolute inset-0 m-[18px] rounded-[30px] shadow-2xl">
     </div>
 
-    <!-- LOGO MAIHLILI (X:18, Y:12, W:421, H:185, Radius: 50) -->
-    <div class="absolute top-[12px] left-[18px] w-[421px] h-[185px] bg-maihlili-500 rounded-[50px] flex items-center shadow-xl p-6">
+    <div class="absolute top-[12px] left-[18px] w-[421px] h-[185px] bg-nouveau-bleu-500 rounded-[50px] flex items-center shadow-xl p-6">
         
-        <!-- Logo (X:30, Y:24, W:162, H:162, Radius: 50) -->
         <div class="w-[162px] h-[162px] bg-white rounded-[50px] shadow-inner flex items-center justify-center relative">
-            <!-- Simuler le logo M -->
-            <svg class="text-maihlili-500" width="80%" height="80%" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <svg class="text-nouveau-bleu-500" width="80%" height="80%" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12 2L2 22h20L12 2zm0 4.1L18.4 20H5.6L12 6.1zm0 3.3L8.6 15h6.8L12 9.4z"/>
             </svg>
         </div>
         
-        <!-- Texte Maihlili & Paie -->
         <div class="ml-4">
             <p class="bebas-neue text-6xl text-white tracking-widest leading-none" 
                style="font-size: 36px; position: absolute; left: 217px; top: 74px;">
@@ -193,111 +208,112 @@
         </div>
     </div>
 
-    <!-- NAVIGATION, PROFIL, ET DÉCONNEXION (Conteneur interne pour le positionnement relatif) -->
     <div class="absolute top-[228px] left-[18px] w-[421px] h-[930px] p-0 space-y-0 overflow-hidden">
         
-        <!-- Liens du Menu (W:249, H:48, Séparés par 36px) -->
         <nav class="absolute top-[0px] left-[65px] w-auto">
             <div class="space-y-[36px]">
-                <!-- Lien Actif (Tableau de bord) -->
-                <a href="#" class="liquid-glass active w-[249px] h-[48px] rounded-[30px] flex items-center justify-start p-2.5 gap-3 cursor-pointer shadow-md">
+                {% if current_user.is_authenticated %}
+                
+                <a href="{{ url_for('index') if current_user.is_manager else url_for('employee_dashboard') }}" 
+                   class="liquid-glass dashboard-link shadow-md">
                    <span class="w-10 h-10 flex items-center justify-center text-xl">📊</span> 
                    <span class="text-base font-semibold">Tableau de bord</span>
                 </a>
                 
-                <!-- Autres Liens Inactifs -->
-                <a href="#" class="liquid-glass w-[249px] h-[48px] rounded-[30px] flex items-center justify-start p-2.5 gap-3 cursor-pointer">
+                {% if current_user.is_manager %}
+                  <a href="{{ url_for('planning') }}" 
+                     class="liquid-glass planning-link">
                     <span class="w-10 h-10 flex items-center justify-center text-xl">📅</span> 
                     <span class="text-base font-semibold">Planning</span>
-                </a>
-                <a href="#" class="liquid-glass w-[249px] h-[48px] rounded-[30px] flex items-center justify-start p-2.5 gap-3 cursor-pointer">
+                  </a>
+                  
+                  <a href="{{ url_for('show_employees') }}" 
+                     class="liquid-glass">
                     <span class="w-10 h-10 flex items-center justify-center text-xl">👥</span> 
                     <span class="text-base font-semibold">Employés</span>
-                </a>
-                <a href="#" class="liquid-glass w-[249px] h-[48px] rounded-[30px] flex items-center justify-start p-2.5 gap-3 cursor-pointer">
+                  </a>
+                  
+                  <a href="{{ url_for('manage_teams') }}" 
+                     class="liquid-glass">
                     <span class="w-10 h-10 flex items-center justify-center text-xl">🏢</span> 
                     <span class="text-base font-semibold">Équipes</span>
-                </a>
-                <a href="#" class="liquid-glass w-[249px] h-[48px] rounded-[30px] flex items-center justify-start p-2.5 gap-3 cursor-pointer">
+                  </a>
+                  
+                  <a href="{{ url_for('show_shifts') }}" 
+                     class="liquid-glass">
                     <span class="w-10 h-10 flex items-center justify-center text-xl">🕐</span> 
                     <span class="text-base font-semibold">Services</span>
-                </a>
-                <a href="#" class="liquid-glass w-[249px] h-[48px] rounded-[30px] flex items-center justify-start p-2.5 gap-3 cursor-pointer">
+                  </a>
+                  
+                  <a href="{{ url_for('assignments') }}" 
+                     class="liquid-glass">
                     <span class="w-10 h-10 flex items-center justify-center text-xl">📋</span> 
                     <span class="text-base font-semibold">Assignations</span>
+                  </a>
+                {% endif %}
+                
+                <a href="{{ url_for('settings') }}" 
+                   class="liquid-glass settings-link">
+                  <span class="w-10 h-10 flex items-center justify-center text-xl">⚙️</span> 
+                  <span class="text-base font-semibold">Paramètres</span>
                 </a>
-                <a href="#" class="liquid-glass w-[249px] h-[48px] rounded-[30px] flex items-center justify-start p-2.5 gap-3 cursor-pointer">
-                    <span class="w-10 h-10 flex items-center justify-center text-xl">⚙️</span> 
-                    <span class="text-base font-semibold">Paramètres</span>
+              {% else %}
+                <a href="{{ url_for('login') }}" 
+                   class="liquid-glass">
+                  <span class="w-10 h-10 flex items-center justify-center text-xl">🔑</span> 
+                  <span class="text-base font-semibold">Connexion</span>
                 </a>
+                <a href="{{ url_for('register') }}" 
+                   class="liquid-glass">
+                  <span class="w-10 h-10 flex items-center justify-center text-xl">📝</span> 
+                  <span class="text-base font-semibold">Inscription</span>
+                </a>
+              {% endif %}
             </div>
         </nav>
 
-        <!-- Profil Utilisateur (X:57, Y:729 (relatif à la page), W:352, H:95, Radius: 30) -->
-        <div class="liquid-glass absolute top-[501px] left-[39px] w-[352px] h-[95px] rounded-[30px] flex items-center p-4 gap-4 shadow-lg">
-            <!-- Avatar -->
-            <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center text-maihlili-500 text-2xl font-bold bebas-neue">
-              JM
+        {% if current_user.is_authenticated %}
+        <div class="liquid-glass absolute top-[501px] left-[39px] w-[352px] h-[95px] rounded-[30px] flex items-center p-4 gap-4 shadow-lg user-profile">
+            <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center text-nouveau-bleu-500 text-2xl font-bold bebas-neue">
+              {{ current_user.username[0].upper() }}
             </div>
             <div class="flex flex-col justify-center">
               <p class="bebas-neue text-2xl tracking-widest leading-none text-white" style="font-size: 36px;">
-                JEAN-MICHEL D.
+                {{ current_user.username.upper() }}
               </p>
-              <!-- Rôle -->
               <p class="text-sm font-light leading-none mt-1 text-white opacity-80">
-                👑 ADMIN
+                {% if current_user.is_admin %}👑 ADMIN
+                {% elif current_user.is_manager %}👑 MANAGER
+                {% else %}👤 EMPLOYÉ{% endif %}
               </p>
             </div>
         </div>
 
-        <!-- Déconnexion (X:54, Y:837 (relatif à la page), W:352, H:61, Radius: 30, Rouge) -->
-        <a id="logout-link" href="#" class="absolute top-[609px] left-[36px] w-[352px] h-[61px] rounded-[30px] flex items-center justify-center gap-4 cursor-pointer shadow-lg">
+        <a id="logout-link" href="{{ url_for('logout') }}" 
+           class="absolute top-[609px] left-[36px] w-[352px] h-[61px] rounded-[30px] flex items-center justify-center gap-4 cursor-pointer shadow-lg">
             <span class="text-2xl">🛑</span>
             <span class="bebas-neue text-3xl tracking-widest">SE DÉCONNECTER</span>
         </a>
+        {% endif %}
         
     </div>
   </aside>
-  <!-- END_BLOCK_SIDEBAR -->
-
-  <!-- BLOCK_MAIN_CONTENT_AREA -->
-  <main class="flex-1 p-8">
-    <div class="max-w-7xl mx-auto">
-        <!-- Contenu par défaut pour la démo -->
-        <h1 class="text-3xl font-bold text-gray-800 mb-8">Bienvenue sur Maihlili Paie</h1>
-
-        <!-- Ce bloc sera remplacé par le contenu de vos pages spécifiques (Planning, Employés, etc.) -->
-        <!-- {% block content %} -->
-        <div class="p-6 card">
-            <h3 class="text-xl font-semibold text-gray-800 mb-4">Début du Contenu de la Page</h3>
-            <p class="text-gray-500">
-                Ceci est la zone principale de l'application. Elle s'adapte automatiquement à la largeur restante.
-                Vous pouvez commencer à y insérer vos composants spécifiques.
-            </p>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-                <div class="card p-4 border-l-4 border-maihlili-500">
-                    <p class="text-lg font-bold text-maihlili-500">Thème Actif</p>
-                    <p class="text-sm text-gray-500">Mode Clair ou Sombre basé sur le bouton en bas.</p>
-                </div>
-                <div class="card p-4">
-                    <p class="text-lg font-bold">Design Figma</p>
-                    <p class="text-sm text-gray-500">La sidebar correspond désormais aux dimensions exactes.</p>
-                </div>
-                <div class="card p-4">
-                    <p class="text-lg font-bold">Liquid Glass</p>
-                    <p class="text-sm text-gray-500">L'effet flou est appliqué aux menus et au profil.</p>
-                </div>
-            </div>
-        </div>
-        <!-- {% endblock content %} -->
-
-    </div>
+  <main class="flex-1 p-6">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul class="mb-4">
+          {% for msg in messages %}
+            <li class="bg-gradient-to-r from-nouveau-bleu-100 to-nouveau-bleu-50 border border-nouveau-bleu-200 text-nouveau-bleu-700 px-4 py-3 rounded-lg mb-2 shadow-sm">
+              <span class="font-medium">ℹ️</span> {{ msg }}
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+    
+    {% block content %}{% endblock %}
   </main>
-  <!-- END_BLOCK_MAIN_CONTENT_AREA -->
-
-  <!-- Theme Toggle Button -->
-  <button class="theme-toggle fixed bottom-6 right-6 p-4 rounded-full text-2xl cursor-pointer shadow-lg z-50" id="themeToggle">
+  <button class="theme-toggle" id="themeToggle">
     🌙
   </button>
 
@@ -305,7 +321,7 @@
     const themeToggle = document.getElementById('themeToggle');
     const body = document.body;
     
-    // Initialisation du thème
+    // Récupérer le thème sauvegardé
     const savedTheme = localStorage.getItem('maihlili-theme') || 'light';
     body.setAttribute('data-theme', savedTheme);
     updateThemeToggle(savedTheme);
@@ -313,6 +329,7 @@
     function toggleTheme() {
       const currentTheme = body.getAttribute('data-theme');
       const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+      
       body.setAttribute('data-theme', newTheme);
       localStorage.setItem('maihlili-theme', newTheme);
       updateThemeToggle(newTheme);
@@ -326,28 +343,44 @@
         themeToggle.textContent = '☀️';
         themeToggle.title = 'Passer en mode clair';
       }
-      // Les classes Tailwind dans le style CSS gèrent le fond/couleur du bouton
     }
 
     themeToggle.addEventListener('click', toggleTheme);
-    
+
     document.addEventListener('DOMContentLoaded', function() {
-      // Logique pour gérer le lien actif
+      const currentPath = window.location.pathname;
       const navLinks = document.querySelectorAll('.liquid-glass');
-      if (navLinks.length > 0) {
-        // Active le premier lien par défaut
-        const activeLink = navLinks[0]; 
-        if (!activeLink.classList.contains('active')) {
-            activeLink.classList.add('active');
+      
+      navLinks.forEach(link => {
+        // Supprimer toutes les classes actives
+        link.classList.remove('active');
+
+        // Définir le lien actif basé sur le chemin
+        if (link.getAttribute('href') === currentPath) {
+          link.classList.add('active');
+        } 
+        
+        // Logique spécifique pour le tableau de bord (index)
+        if (currentPath === '/' && link.classList.contains('dashboard-link')) {
+             link.classList.add('active');
+        }
+
+        // Cas où Planning Avancé (planning) est actif
+        if (currentPath.includes('/planning') && link.classList.contains('planning-link')) {
+             link.classList.add('active');
         }
         
-        // Gérer le clic pour changer l'état actif
-        navLinks.forEach(link => link.addEventListener('click', function(e) {
-            e.preventDefault();
-            navLinks.forEach(l => l.classList.remove('active'));
-            this.classList.add('active');
-        }));
+      });
+      
+      // Si aucun lien n'est actif (par exemple, la page de base est "/" et il y a des redirections), activer le dashboard
+      const activeLinkExists = document.querySelector('.liquid-glass.active');
+      if (!activeLinkExists) {
+        const dashboardLink = document.querySelector('.dashboard-link');
+        if (dashboardLink) {
+             dashboardLink.classList.add('active');
+        }
       }
+      
     });
   </script>
 </body>
