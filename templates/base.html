@@ -9,22 +9,25 @@
       theme: {
         extend: {
           colors: {
-            // Couleurs de marque Maihlili (vibrant blue from your config/Figma)
+            // Palette de couleurs personnalisée
             'maihlili': {
-              50: '#EEF2FF',
-              100: '#E0E7FF', 
-              200: '#C7D2FE',
-              300: '#A5B4FC',
-              400: '#818CF8',
-              500: '#3055ff', // Utilisation de votre 'nouveau-bleu-500' du config
+              // Nous définissons ici les couleurs principales selon vos dernières instructions
+              // La couleur d'accentuation principale (500) est #3055FF (Bleu Vif)
+              // La couleur de fond/accentuation secondaire est #FFF0F8 (Rose Clair)
+              50: '#E6E9FF',
+              100: '#C8CEFF', 
+              200: '#AAAEFF',
+              300: '#8C8FFF',
+              400: '#6E71FF',
+              500: '#3055ff', // Le bleu vif de la sidebar
               600: '#2A4CE5', 
               700: '#2343CC',
               800: '#1D3AAA',
               900: '#163188'
             },
-            // On conserve l'ancienne palette au cas où
-            'ancien-maihlili': {
-                500: '#4F46E5', 
+            'rose-maihlili': {
+                100: '#FFF0F8', // Le fond principal et l'accentuation
+                200: '#FFDCEF',
             }
           }
         }
@@ -33,27 +36,37 @@
   </script>
   <style>
     /* -------------------------------------------------------------------------------------------------- */
-    /* STYLES GLOBALES & FONTIONNELLES BASÉES SUR FIGMA                                                    */
+    /* STYLES GLOBALES & COULEURS STRICTEMENT BASÉES SUR VOS DERNIÈRES INSTRUCTIONS                        */
     /* -------------------------------------------------------------------------------------------------- */
     :root {
-      /* Couleurs Claires (FIGMA PAGE 2) */
-      --color-bg-light: #F8F8F8; /* Fond principal */
-      --color-sidebar-bg-light: #FFFFFF;
+      /* Couleurs Claires (Mode Clair Actuel) */
+      --color-bg-light: #FFF0F8; /* Body : FFF0F8 */
+      --color-sidebar-bg-light: #3055FF; /* Sidebar : 3055FF */
       --color-card-bg-light: #FFFFFF;
       --color-text-light: #181818;
+      --color-text-subtle-light: #6B7280;
       --color-border-light: #E0E0E0;
-      --color-shadow-light: 0 4px 12px rgba(0, 0, 0, 0.05);
+
+      /* Couleurs Sidebar */
+      --color-sidebar-text: #FFFFFF; /* Texte blanc sur fond bleu */
+      --color-sidebar-link-hover: #456BFF; /* Bleu légèrement plus clair */
+      --color-sidebar-link-active: #FFFFFF; /* Fond de l'actif (Rose Clair) */
     }
 
+    /* -------------------------------------------------------------------------------------------------- */
+    /* MODE SOMBRE (Réinitialisé, car non demandé pour l'instant)                                         */
+    /* -------------------------------------------------------------------------------------------------- */
     [data-theme="dark"] {
-      /* Couleurs Sombres (FIGMA PAGE 4) */
-      --color-bg-dark: #282828; /* Fond principal (Main Content) */
-      --color-sidebar-bg-dark: #1B1B1B; /* Sidebar plus foncée */
-      --color-card-bg-dark: #363636; /* Fonds des cartes/panneaux */
+      --color-bg-dark: #282828; 
+      --color-sidebar-bg-dark: #1B1B1B; 
+      --color-card-bg-dark: #363636; 
       --color-text-dark: #F5F5F5;
+      --color-text-subtle-dark: #A0A0A0;
       --color-border-dark: #454545;
-      --color-input-bg-dark: #454545; /* Fond des inputs */
-      --color-shadow-dark: 0 4px 12px rgba(0, 0, 0, 0.4);
+      --color-input-bg-dark: #454545; 
+      --color-sidebar-text: #F5F5F5; 
+      --color-sidebar-link-hover: #363636;
+      --color-sidebar-link-active: #454545; 
     }
 
     body {
@@ -67,11 +80,12 @@
       color: var(--color-text-dark);
     }
 
-    /* Sidebar Styles */
+    /* 1. Sidebar (Bleu Vif) */
     aside {
         background-color: var(--color-sidebar-bg-light);
-        border-right: 1px solid var(--color-border-light);
-        transition: background-color 0.3s, border-color 0.3s;
+        border-right: none; 
+        transition: background-color 0.3s;
+        color: var(--color-sidebar-text); /* Texte blanc par défaut */
     }
 
     [data-theme="dark"] aside {
@@ -80,92 +94,74 @@
         box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
     }
     
-    /* Card Styles (including user profile) */
+    /* 2. Cartes & Conteneurs (Pas de changement de couleur pour le mode clair ici) */
     .card, .bg-white {
         background-color: var(--color-card-bg-light) !important;
         border: 1px solid var(--color-border-light) !important;
-        box-shadow: var(--color-shadow-light) !important;
-        transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
+        border-radius: 1rem; 
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+        transition: background-color 0.3s, border-color 0.3s;
     }
 
     [data-theme="dark"] .card,
     [data-theme="dark"] .bg-white {
         background-color: var(--color-card-bg-dark) !important;
         border-color: var(--color-border-dark) !important;
-        box-shadow: var(--color-shadow-dark) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
     }
-
-    /* Text Colors */
-    [data-theme="dark"] .text-gray-800 { color: var(--color-text-dark) !important; }
-    [data-theme="dark"] .text-gray-500 { color: #A0A0A0 !important; }
     
-    /* Navigation Links */
-    .nav-link {
-        color: #4B5563;
+    /* 3. Navigation Links DANS LA SIDEBAR (Texte blanc par défaut) */
+    aside .nav-link {
+        color: var(--color-sidebar-text) !important;
+        padding: 0.75rem; 
+        border-radius: 0.75rem; 
         transition: all 0.2s;
     }
-    .nav-link:hover {
-        background-color: #F0F0F0;
-        color: var(--tw-colors-maihlili-700);
+    
+    aside .nav-link:hover {
+        background-color: var(--color-sidebar-link-hover) !important; /* Bleu légèrement plus clair */
     }
-    .nav-link.active {
-        background-color: var(--tw-colors-maihlili-50);
-        color: var(--tw-colors-maihlili-700);
+    
+    /* L'élément actif a un fond Rose Clair (#FFF0F8) et le texte doit être le Bleu Maihlili Vif */
+    aside .nav-link.active {
+        background-color: var(--color-sidebar-link-active) !important; /* Fond Blanc */
+        color: var(--tw-colors-maihlili-500) !important; /* Texte Bleu Vif */
         font-weight: 600;
-        border-left: 3px solid var(--tw-colors-maihlili-500); /* Accent du Figma */
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
     
-    /* Navigation Links Dark Mode */
-    [data-theme="dark"] .nav-link {
-        color: var(--color-text-dark) !important;
-    }
-    [data-theme="dark"] .nav-link:hover {
-        background-color: rgba(255, 255, 255, 0.08) !important;
-    }
-    [data-theme="dark"] .nav-link.active {
-        background-color: var(--color-card-bg-dark) !important;
-        border-left-color: var(--tw-colors-maihlili-500) !important;
-        color: #FFFFFF !important;
-    }
-    
-    /* Input Fields */
-    [data-theme="dark"] input, 
-    [data-theme="dark"] select, 
-    [data-theme="dark"] textarea {
-      background-color: var(--color-input-bg-dark) !important;
-      border-color: var(--color-border-dark) !important;
-      color: var(--color-text-dark) !important;
-    }
-    
-    [data-theme="dark"] input:focus,
-    [data-theme="dark"] select:focus,
-    [data-theme="dark"] textarea:focus {
-        border-color: var(--tw-colors-maihlili-500) !important;
-        box-shadow: 0 0 0 3px rgba(48, 85, 255, 0.4) !important;
+    /* 4. Texte et Bordures du Main Content (hors Sidebar) */
+    [data-theme="dark"] .text-gray-800 { color: var(--color-text-dark) !important; }
+    [data-theme="dark"] .text-gray-500 { color: var(--color-text-subtle-dark) !important; }
+    [data-theme="dark"] .border-gray-200,
+    [data-theme="dark"] .border-t { border-color: var(--color-border-dark) !important; }
+
+    /* 5. Logo et Titre (Couleur blanche sur fond bleu de la sidebar) */
+    aside .text-maihlili-500 {
+        color: white !important; /* Pour le titre "Maihlili Paie" si on n'utilise pas l'image du logo pour le texte */
     }
 
-    /* Flash Messages */
-    [data-theme="dark"] .flash-message {
-        background-color: var(--color-card-bg-dark) !important;
-        border-left-color: var(--tw-colors-maihlili-500) !important;
-        color: var(--color-text-dark) !important;
+    aside .border-b {
+        border-color: rgba(255, 255, 255, 0.2) !important; /* Séparateur léger dans la sidebar */
     }
-
-    /* Sticky Header fix for dark mode */
-    [data-theme="dark"] .gantt-table thead th:first-child,
-    [data-theme="dark"] .gantt-table tbody td:first-child {
-        background-color: var(--color-sidebar-bg-dark) !important;
-    }
+    
+    /* Logo: on utilise uniquement le logo clair sur fond sombre */
+    .logo-light { display: block; }
+    .logo-dark { display: none; }
+    [data-theme="dark"] .logo-light { display: none; }
+    [data-theme="dark"] .logo-dark { display: block; }
   </style>
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/main.min.css" rel="stylesheet">
 </head>
 <body class="flex min-h-screen" data-theme="light">
 
   <aside class="w-64 min-h-screen flex flex-col p-4 shadow-xl">
-    <div class="p-2 border-b border-gray-200 mb-4">
+    
+    <div class="p-2 border-b border-gray-200 mb-6">
       <div class="flex items-center justify-center">
         <a href="{{ url_for('index') }}" class="flex items-center space-x-2">
-          <span class="text-3xl font-bold text-maihlili-500 tracking-wider">Maihlili Paie</span>
+          <img src="{{ url_for('static', filename='images/maihlili-logo-light.png') }}" alt="Logo Maihlili clair" class="h-10 logo-light">
+          <span class="text-2xl font-bold tracking-wider logo-dark">Maihlili Paie</span>
         </a>
       </div>
     </div>
@@ -173,52 +169,52 @@
     <nav class="flex-1 p-2 space-y-1">
       {% if current_user.is_authenticated %}
         <a href="{{ url_for('index') if current_user.is_manager else url_for('employee_dashboard') }}" 
-           class="nav-link flex items-center gap-3 p-3 rounded-lg text-maihlili-600 font-medium">
+           class="nav-link flex items-center gap-3 font-medium">
            <span class="text-lg">📊</span> Tableau de bord
         </a>
          {% if current_user.is_manager %}
           <a href="{{ url_for('planning') }}" 
-             class="nav-link flex items-center gap-3 p-3 rounded-lg text-indigo-600 font-medium">
+             class="nav-link flex items-center gap-3 font-medium">
             <span class="text-lg">📅</span> Planning
           </a>
           
           <a href="{{ url_for('show_employees') }}" 
-             class="nav-link flex items-center gap-3 p-3 rounded-lg text-green-600 font-medium">
+             class="nav-link flex items-center gap-3 font-medium">
             <span class="text-lg">👥</span> Employés
           </a>
           <a href="{{ url_for('manage_teams') }}" 
-             class="nav-link flex items-center gap-3 p-3 rounded-lg text-blue-600 font-medium">
+             class="nav-link flex items-center gap-3 font-medium">
             <span class="text-lg">🏢</span> Équipes
           </a>
           <a href="{{ url_for('show_shifts') }}" 
-             class="nav-link flex items-center gap-3 p-3 rounded-lg text-purple-600 font-medium">
+             class="nav-link flex items-center gap-3 font-medium">
             <span class="text-lg">🕐</span> Services
           </a>
           <a href="{{ url_for('assignments') }}" 
-             class="nav-link flex items-center gap-3 p-3 rounded-lg text-orange-600 font-medium">
+             class="nav-link flex items-center gap-3 font-medium">
             <span class="text-lg">📋</span> Assignations
           </a>
         {% endif %}
         <a href="{{ url_for('settings') }}" 
-           class="nav-link flex items-center gap-3 p-3 rounded-lg text-gray-600 font-medium">
+           class="nav-link flex items-center gap-3 font-medium">
           <span class="text-lg">⚙️</span> Paramètres
         </a>
       {% else %}
         <a href="{{ url_for('login') }}" 
-           class="nav-link flex items-center gap-3 p-3 rounded-lg text-maihlili-600 font-medium">
+           class="nav-link flex items-center gap-3 font-medium">
           <span class="text-lg">🔑</span> Connexion
         </a>
         <a href="{{ url_for('register') }}" 
-           class="nav-link flex items-center gap-3 p-3 rounded-lg text-green-600 font-medium">
+           class="nav-link flex items-center gap-3 font-medium">
           <span class="text-lg">📝</span> Inscription
         </a>
       {% endif %}
     </nav>
 
     {% if current_user.is_authenticated %}
-    <div class="p-2 border-t border-gray-200">
-      <div class="user-profile flex items-center gap-3 p-3 rounded-xl card">
-        <div class="w-10 h-10 bg-maihlili-500 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-md">
+    <div class="p-2 border-t border-gray-200 mt-auto">
+      <div class="user-profile flex items-center gap-3 p-3 rounded-xl card bg-white !border-none">
+        <div class="w-10 h-10 bg-maihlili-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
           {{ current_user.username[0].upper() }}
         </div>
         <div class="flex-1">
@@ -231,7 +227,7 @@
         </div>
       </div>
       <a href="{{ url_for('logout') }}" 
-         class="nav-link flex items-center gap-3 p-2 rounded-lg hover:bg-red-50 hover:text-red-700 text-red-600 text-sm mt-3 font-medium">
+         class="nav-link flex items-center gap-3 p-2 rounded-lg text-sm mt-3 font-medium">
         <span class="text-base">🚪</span> Déconnexion
       </a>
     </div>
@@ -243,7 +239,7 @@
       {% if messages %}
         <div class="mb-6 space-y-3">
             {% for category, message in messages %}
-                <div class="flash-message border-l-4 border-maihlili-500 p-4 rounded-lg shadow-sm text-sm bg-white" role="alert">
+                <div class="flash-message border-l-4 border-maihlili-500 p-4 rounded-xl shadow-sm bg-white" role="alert">
                     <p class="font-medium text-maihlili-700">{{ message }}</p>
                 </div>
             {% endfor %}
@@ -276,15 +272,15 @@
     }
     
     function updateThemeToggle(theme) {
-      const activeColor = body.getAttribute('data-theme') === 'dark' ? 'text-white' : 'text-gray-800';
-      
       if (theme === 'light') {
         themeToggle.textContent = '🌙';
         themeToggle.title = 'Passer en mode sombre';
+        // Règle Tailwind pour mode clair (couleurs neutres)
         themeToggle.className = 'theme-toggle fixed bottom-6 right-6 p-4 rounded-full text-2xl cursor-pointer shadow-lg z-50 transition-all duration-300 ease-in-out bg-gray-200 text-gray-800 hover:bg-gray-300';
       } else {
         themeToggle.textContent = '☀️';
         themeToggle.title = 'Passer en mode clair';
+        // Règle Tailwind pour mode sombre (couleur Maihlili)
         themeToggle.className = 'theme-toggle fixed bottom-6 right-6 p-4 rounded-full text-2xl cursor-pointer shadow-lg z-50 transition-all duration-300 ease-in-out bg-maihlili-500 text-white hover:bg-maihlili-600';
       }
     }
@@ -296,15 +292,11 @@
       const navLinks = document.querySelectorAll('.nav-link');
       
       navLinks.forEach(link => {
-        // Nettoyer les classes actives avant de vérifier
-        link.classList.remove('active', 'bg-maihlili-50', 'text-maihlili-700', 'font-semibold', 'bg-red-50', 'text-red-700');
+        // Nettoyage des classes actives (le CSS gère l'ajout de 'active')
+        link.classList.remove('active');
 
         if (link.getAttribute('href') === currentPath) {
           link.classList.add('active');
-          if (body.getAttribute('data-theme') === 'dark') {
-             link.classList.remove('text-maihlili-700');
-             link.classList.add('text-white'); // Texte blanc sur fond sombre actif
-          }
         }
       });
     });
