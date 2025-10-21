@@ -2,8 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Maihlili SPV</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Maihlili Paie</title> <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -31,7 +30,7 @@
                 500: '#3055ff', // Le nouveau bleu
                 600: '#2A4CE5',
                 700: '#2343CC',
-                800: '#1D3AA8',
+                800: '#1D3AAA',
                 900: '#163188'
             }
           }
@@ -39,10 +38,9 @@
       }
     }
   </script>
-  
   <style>
     /* -------------------------------------------------------------------------------------------------- */
-    /* Couleurs & Thème Maihlili SPV - VERSION PROPRE ET LISIBLE                                          */
+    /* Couleurs & Thème Maihlili Paie - AMÉLIORATION DU MODE SOMBRE POUR LA LISIBILITÉ                    */
     /* -------------------------------------------------------------------------------------------------- */
     :root {
       /* Couleurs Claires */
@@ -50,248 +48,274 @@
       --color-text-light: #1f2937;
       --color-text-subtle-light: #6b7280;
       --color-border-light: #e5e7eb;
-      --color-card-bg-light: #ffffff;
+      --color-card-bg-light: #fff0f8; /* Garde la couleur de carte originale de l'ancien design */
       --color-sidebar-bg-light: #ffffff;
-      --color-shadow-light: rgba(0, 0, 0, 0.05);
     }
 
-    /* Variables pour le Mode Sombre */
+    /* Variables pour le Mode Sombre - Nettoyé */
     [data-theme="dark"] {
-      --color-bg-dark: #1f2937; /* Fond principal sombre */
+      --color-bg-dark: #111827; /* Fond principal très sombre */
       --color-text-dark: #f9fafb;
       --color-text-subtle-dark: #9ca3af;
-      --color-border-dark: #374151; /* Bordures */
-      --color-card-bg-dark: #2d3748; /* Fond des cartes */
-      --color-sidebar-bg-dark: #111827; /* Fond de la sidebar plus sombre */
-      --color-shadow-dark: rgba(0, 0, 0, 0.4);
+      --color-border-dark: #374151; /* Bordures sombres */
+      --color-card-bg-dark: #1f2937; /* Fond des cartes/panneaux */
+      --color-sidebar-bg-dark: #1f2937; /* Fond de la sidebar (uniforme avec les cartes) */
       --color-input-bg-dark: #374151; /* Fond des inputs */
       --color-input-border-dark: #4b5563;
+      
+      /* Les anciennes variables sont mises à jour pour la cohérence */
+      --color-bg-dark-dashboard: #111827;
+      --color-text-dark-dashboard: #f9fafb;
+      --color-text-subtle-dark-dashboard: #9ca3af;
+      --color-border-dark-dashboard: #374151;
+      --color-card-bg-dark-dashboard: #1f2937;
+      --color-bg-dark-sidebar: #1f2937;
+      --color-text-dark-sidebar: #f9fafb;
+      --color-text-subtle-dark-sidebar: #c7d2fe;
+      --color-border-dark-sidebar: #374151;
+      --color-card-bg-dark-sidebar: #2d3748;
     }
 
-    /* Styles de base pour le body */
     body {
       background-color: var(--color-bg-light);
       color: var(--color-text-light);
       transition: background-color 0.4s ease, color 0.4s ease;
     }
-
+    
     /* Mode sombre : body */
     [data-theme="dark"] body {
       background-color: var(--color-bg-dark);
       color: var(--color-text-dark);
     }
-
-    /* Cartes (Elements .card ou .bg-white) */
+    
     .card {
       background-color: var(--color-card-bg-light);
       border: 1px solid var(--color-border-light);
-      box-shadow: 0 1px 3px 0 var(--color-shadow-light);
-      transition: background-color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+      transition: background-color 0.4s ease, border-color 0.4s ease, box-shadow 0.2s ease;
     }
 
-    /* Mode sombre : Cartes (pour les éléments qui utilisent .bg-white ou .card) */
-    [data-theme="dark"] .bg-white,
+    /* Styles pour la zone de contenu principale en mode sombre */
+    [data-theme="dark"] main {
+        background-color: transparent; 
+        color: var(--color-text-dark);
+    }
+    
+    /* Correction pour les cartes et éléments 'bg-white' dans le dashboard */
+    [data-theme="dark"] main .bg-white,
     [data-theme="dark"] .card {
-      background-color: var(--color-card-bg-dark) !important;
-      border-color: var(--color-border-dark) !important;
-      box-shadow: 0 4px 12px var(--color-shadow-dark) !important;
+        background-color: var(--color-card-bg-dark) !important;
+        border-color: var(--color-border-dark) !important;
+        box-shadow: none !important; /* Retrait des ombres trop flashy */
     }
     
-    /* Correction spécifique pour le .bg-white dans la zone principale */
-    [data-theme="dark"] main .bg-white {
-        /* Garder une légère variation si nécessaire */
-        background-color: #2c3546 !important; 
-    }
-
-    /* Styles pour la Sidebar */
-    aside {
-        background-color: var(--color-sidebar-bg-light);
-        border-color: var(--color-border-light);
-        transition: background-color 0.4s ease, border-color 0.4s ease;
-    }
-
-    /* Mode sombre : Sidebar */
+    /* Styles pour la sidebar en mode sombre - FOND SOMBRE ET UNIFORME */
     [data-theme="dark"] aside {
-        background-color: var(--color-sidebar-bg-dark);
-        border-color: var(--color-border-dark);
-        box-shadow: 4px 0 12px rgba(0, 0, 0, 0.2);
+        background: var(--color-sidebar-bg-dark) !important;
+        color: var(--color-text-dark-sidebar);
+        border-color: var(--color-border-dark) !important;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.4) !important; /* Ombre discrète */
     }
     
-    /* Liens de la Sidebar en mode sombre */
-    [data-theme="dark"] aside .nav-link {
-        color: #E0E7FF !important; /* Texte légèrement plus clair que le fond */
+    /* Le 'user-profile' dans la sidebar est une carte plus foncée pour le contraste */
+    [data-theme="dark"] aside .user-profile.card {
+        background-color: var(--color-input-bg-dark) !important; 
+        border: 1px solid var(--color-border-dark) !important;
+    }
+
+    /* Couleurs du texte, bordures et dividers en mode sombre pour la lisibilité */
+    [data-theme="dark"] main .text-gray-800,
+    [data-theme="dark"] main h1,
+    [data-theme="dark"] main h2,
+    [data-theme="dark"] main h3 { color: var(--color-text-dark) !important; }
+
+    [data-theme="dark"] main .text-gray-500 { color: var(--color-text-subtle-dark) !important; }
+    [data-theme="dark"] main .border-gray-200,
+    [data-theme="dark"] main .border-gray-300 { border-color: #4B5563 !important; }
+    [data-theme="dark"] main .divide-gray-200 > * + * { border-color: #4B5563 !important; }
+    
+    /* Tables plus lisibles */
+    [data-theme="dark"] main .bg-gray-50 { 
+        background-color: #2d3748 !important; /* Header de table */
+        color: #F3F4F6 !important;
     }
     
-    [data-theme="dark"] aside .nav-link:hover {
-        background-color: rgba(255, 255, 255, 0.08) !important; /* Un hover discret */
-        color: #FFFFFF !important;
+    [data-theme="dark"] main .hover\:bg-gray-50:hover { 
+        background-color: #374151 !important; /* Hover plus foncé */
     }
     
-    /* Lien actif en mode sombre */
-    [data-theme="dark"] aside .bg-maihlili-100 {
-        background-color: #4338CA !important; /* Maiblili 600 pour le fond */
-        color: #FFFFFF !important;
-    }
-    
-    /* Texte subtil (text-gray-500) en mode sombre */
-    [data-theme="dark"] .text-gray-500 {
-        color: var(--color-text-subtle-dark) !important;
-    }
-    
-    /* Texte principal (text-gray-800) en mode sombre */
-    [data-theme="dark"] .text-gray-800,
-    [data-theme="dark"] h1,
-    [data-theme="dark"] h2,
-    [data-theme="dark"] h3 {
+    /* Inputs et selects plus lisibles */
+    [data-theme="dark"] main input, 
+    [data-theme="dark"] main select, 
+    [data-theme="dark"] main textarea {
+        background-color: var(--color-input-bg-dark) !important;
+        border-color: var(--color-input-border-dark) !important;
         color: var(--color-text-dark) !important;
     }
     
-    /* Formulaires et Inputs */
-    [data-theme="dark"] input, 
-    [data-theme="dark"] select, 
-    [data-theme="dark"] textarea {
-      background-color: var(--color-input-bg-dark) !important;
-      border-color: var(--color-input-border-dark) !important;
-      color: var(--color-text-dark) !important;
-    }
-    
-    [data-theme="dark"] input::placeholder,
-    [data-theme="dark"] textarea::placeholder {
-      color: var(--color-text-subtle-dark) !important;
-    }
-    
-    [data-theme="dark"] input:focus,
-    [data-theme="dark"] select:focus,
-    [data-theme="dark"] textarea:focus {
-      border-color: #6366F1 !important; /* Bleu d'accentuation */
-      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3) !important;
-    }
-
-    /* Flash Messages */
-    [data-theme="dark"] .bg-gradient-to-r.from-maihlili-100.to-maihlili-50 {
-        background: #374151 !important; /* Un fond sombre uniforme */
+    [data-theme="dark"] main input:focus,
+    [data-theme="dark"] main select:focus,
+    [data-theme="dark"] main textarea:focus {
         border-color: #4F46E5 !important;
-        color: #E0E7FF !important;
-    }
-
-    /* Thème Toggle Button (juste pour être lisible) */
-    [data-theme="dark"] .theme-toggle {
-        background-color: #4F46E5 !important;
-        color: #FFFFFF;
-        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.4) !important;
+        background-color: #374151 !important;
     }
     
-    /* Styles pour la table du planning Gantt - Rendre l'en-tête Employé sticky et visible */
-    [data-theme="dark"] .gantt-table thead th:first-child,
-    [data-theme="dark"] .gantt-table tbody td:first-child {
-      background-color: var(--color-sidebar-bg-dark) !important; /* Fond sombre de la sidebar */
+    /* Flash messages plus lisibles */
+    [data-theme="dark"] .bg-gradient-to-r.from-maihlili-100.to-maihlili-50 {
+        background: #374151 !important; 
+        border-color: #4F46E5 !important; 
+        color: #E0E7FF !important; 
     }
-    [data-theme="dark"] .gantt-table thead th:first-child {
-        background-color: #2d3748 !important; /* Un peu plus clair pour l'en-tête */
+    
+    /* Liens de navigation plus visibles */
+    [data-theme="dark"] .nav-link {
+        color: #E0E7FF !important;
+        transition: all 0.2s ease !important;
+    }
+    
+    /* Hover de lien plus visible */
+    [data-theme="dark"] aside .nav-link:hover {
+        background-color: rgba(79, 70, 229, 0.1) !important;
+        color: #FFFFFF !important;
+        transform: none !important; /* Retrait de l'animation de translation */
+    }
+    
+    /* Lien actif */
+    [data-theme="dark"] .nav-link.bg-maihlili-100 {
+        background-color: #4338CA !important; 
+        color: #FFFFFF !important;
     }
 
+    /* Retrait de l'animation de transformation sur tous les éléments */
+    * { 
+      transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease !important; 
+    } 
+
+    /* Scrollbar simplifiée pour le mode sombre */
+    [data-theme="dark"] ::-webkit-scrollbar-thumb { 
+        background: #4F46E5 !important; 
+    }
+    
+    [data-theme="dark"] ::-webkit-scrollbar-thumb:hover { 
+        background: #6366F1 !important; 
+    }
+    [data-theme="dark"] ::-webkit-scrollbar-track { 
+        background: #111827 !important; 
+    }
+
+    /* Toggle theme button amélioré */
+    [data-theme="dark"] .theme-toggle {
+        background: #4F46E5 !important; /* Fond bleu uni */
+        border: none !important;
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4) !important;
+        color: #E0E7FF;
+    }
+    
+    [data-theme="dark"] .theme-toggle:hover {
+        transform: translateY(-1px) !important;
+        box-shadow: 0 8px 24px rgba(79, 70, 229, 0.5) !important;
+    }
   </style>
-  <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css' rel='stylesheet' />
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/main.min.css" rel="stylesheet">
 </head>
-<body class="min-h-screen">
-  
-  <div class="flex h-full">
-    <aside class="w-64 min-h-screen p-4 border-r border-gray-200 flex-shrink-0 transition-all duration-400 ease-in-out">
-      
-      <div class="flex items-center mb-6 px-1">
-        <span class="text-2xl font-extrabold text-maihlili-500">
-            Maihlili SPV
-        </span>
+<body class="bg-gray-50 flex min-h-screen" data-theme="light">
+
+  <aside class="w-64 card shadow-lg flex flex-col">
+    <div class="p-6 border-b border-gray-200">
+      <div class="flex items-center justify-center">
+        <a href="{{ url_for('index') }}" class="flex items-center space-x-2">
+          <img src="{{ url_for('static', filename='images/maihlili-logo-light.png') }}" alt="Logo Maihlili clair" class="h-32 logo-light">
+          <img src="{{ url_for('static', filename='images/maihlili-logo-dark.png') }}" alt="Logo Maihlili sombre" class="h-32 logo-dark">
+        </a>
       </div>
-      
-      <nav class="space-y-2">
-        {% if current_user.is_authenticated %}
-          {% if current_user.is_manager %}
-            <a href="{{ url_for('index') }}" class="nav-link flex items-center p-3 rounded-lg text-gray-800 hover:bg-maihlili-50">
-              <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-              <span>Tableau de bord</span>
-            </a>
-            <a href="{{ url_for('planning') }}" class="nav-link flex items-center p-3 rounded-lg text-gray-800 hover:bg-maihlili-50">
-              <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-              <span>Planning</span>
-            </a>
-            <a href="{{ url_for('show_employees') }}" class="nav-link flex items-center p-3 rounded-lg text-gray-800 hover:bg-maihlili-50">
-              <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-              <span>Employés</span>
-            </a>
-            <a href="{{ url_for('manage_teams') }}" class="nav-link flex items-center p-3 rounded-lg text-gray-800 hover:bg-maihlili-50">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 19h2a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2h2m0 0h10m-10 0l-4-4m4 4l4-4m7 0l4-4m-4 4l-4-4m-5-4h10a2 2 0 012 2v10a2 2 0 01-2 2H7a2 2 0 01-2-2V9a2 2 0 012-2z"></path></svg>
-                <span>Équipes</span>
-            </a>
-            <a href="{{ url_for('show_shifts') }}" class="nav-link flex items-center p-3 rounded-lg text-gray-800 hover:bg-maihlili-50">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                <span>Services</span>
-            </a>
-          {% else %}
-            <a href="{{ url_for('employee_dashboard') }}" class="nav-link flex items-center p-3 rounded-lg text-gray-800 hover:bg-maihlili-50">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                <span>Mon Tableau de bord</span>
-            </a>
-            <a href="{{ url_for('planning') }}" class="nav-link flex items-center p-3 rounded-lg text-gray-800 hover:bg-maihlili-50">
-              <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-              <span>Mon Planning</span>
-            </a>
-          {% endif %}
-          
-          <a href="{{ url_for('logout') }}" class="nav-link flex items-center p-3 rounded-lg text-gray-800 hover:bg-red-100 hover:text-red-700">
-            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3v-3m11-1V5a3 3 0 00-3-3H6a3 3 0 00-3 3v4"></path></svg>
-            <span>Déconnexion</span>
+    </div>
+    
+    <nav class="flex-1 p-4 space-y-1">
+      {% if current_user.is_authenticated %}
+        <a href="{{ url_for('index') if current_user.is_manager else url_for('employee_dashboard') }}" 
+           class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-maihlili-50 hover:text-maihlili-700 text-maihlili-600 font-medium">
+           <span class="text-lg">📊</span> Tableau de bord
+        </a>
+         {% if current_user.is_manager %}
+          <a href="{{ url_for('planning') }}" 
+             class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-indigo-50 hover:text-indigo-700 text-indigo-600 font-medium">
+            <span class="text-lg">📅</span> Planning Avancé
           </a>
-        {% else %}
-          <a href="{{ url_for('login') }}" class="nav-link flex items-center p-3 rounded-lg text-gray-800 hover:bg-maihlili-50">
-            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3v-3"></path></svg>
-            <span>Connexion</span>
+          
+          <a href="{{ url_for('show_employees') }}" 
+             class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-green-50 hover:text-green-700 text-green-600 font-medium">
+            <span class="text-lg">👥</span> Employés
+          </a>
+          <a href="{{ url_for('manage_teams') }}" 
+             class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 hover:text-blue-700 text-blue-600 font-medium">
+            <span class="text-lg">🏢</span> Équipes
+          </a>
+          <a href="{{ url_for('show_shifts') }}" 
+             class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-purple-50 hover:text-purple-700 text-purple-600 font-medium">
+            <span class="text-lg">🕐</span> Services
+          </a>
+          <a href="{{ url_for('assignments') }}" 
+             class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-orange-50 hover:text-orange-700 text-orange-600 font-medium">
+            <span class="text-lg">📋</span> Assignations
           </a>
         {% endif %}
-      </nav>
-      
-      {% if current_user.is_authenticated and current_user.employee %}
-      <div class="card user-profile mt-6 p-4 rounded-xl">
-        <div class="flex items-center">
-          <div class="flex-shrink-0 h-10 w-10 bg-maihlili-500 rounded-full flex items-center justify-center text-white font-semibold mr-3">
-            {{ current_user.employee.full_name[0]|upper }}
-          </div>
-          <div class="text-sm">
-            <p class="font-medium text-gray-800 leading-none">
-                {{ current_user.employee.full_name }}
-            </p>
-            <p class="text-gray-500 leading-tight">
-                {{ current_user.employee.position or ('Manager' if current_user.is_manager else 'Employé') }}
-            </p>
-          </div>
+        <a href="{{ url_for('settings') }}" 
+           class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 hover:text-gray-700 text-gray-600 font-medium">
+          <span class="text-lg">⚙️</span> Paramètres
+        </a>
+      {% else %}
+        <a href="{{ url_for('login') }}" 
+           class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-maihlili-50 hover:text-maihlili-700 text-maihlili-600 font-medium">
+          <span class="text-lg">🔑</span> Connexion
+        </a>
+        <a href="{{ url_for('register') }}" 
+           class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-green-50 hover:text-green-700 text-green-600 font-medium">
+          <span class="text-lg">📝</span> Inscription
+        </a>
+      {% endif %}
+    </nav>
+
+    {% if current_user.is_authenticated %}
+    <div class="p-4 border-t border-gray-200">
+      <div class="user-profile flex items-center gap-3 p-3 rounded-lg card">
+        <div class="w-10 h-10 bg-gradient-to-br from-maihlili-500 to-maihlili-600 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-md">
+          {{ current_user.username[0].upper() }}
+        </div>
+        <div class="flex-1">
+          <p class="text-sm font-semibold text-gray-800">{{ current_user.username }}</p>
+          <p class="text-xs text-gray-500">
+            {% if current_user.is_admin %}⚡ Administrateur
+            {% elif current_user.is_manager %}👑 Manager
+            {% else %}👤 Employé{% endif %}
+          </p>
         </div>
       </div>
-      {% endif %}
-      
-    </aside>
+      <a href="{{ url_for('logout') }}" 
+         class="nav-link flex items-center gap-3 p-2 rounded-lg hover:bg-red-50 hover:text-red-700 text-red-600 text-sm mt-3 font-medium">
+        <span class="text-base">🚪</span> Déconnexion
+      </a>
+    </div>
+    {% endif %}
+  </aside>
 
-    <main class="flex-1 p-8 transition-all duration-400 ease-in-out overflow-y-auto">
-      
-      <div class="mb-6 space-y-3">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            {% for category, message in messages %}
-              <div class="bg-gradient-to-r from-maihlili-100 to-maihlili-50 border-l-4 border-maihlili-500 p-4 rounded-lg shadow-sm text-sm" role="alert">
-                <p class="font-medium text-maihlili-800">{{ message }}</p>
-              </div>
-            {% endfor %}
-          {% endif %}
-        {% endwith %}
-      </div>
-      
-      {% block content %}
-      {% endblock %}
-    </main>
-    
-    <button class="theme-toggle fixed bottom-6 right-6 p-4 rounded-full text-2xl cursor-pointer shadow-lg z-50 transition-all duration-300 ease-in-out bg-gray-200 text-gray-800 hover:bg-gray-300" id="themeToggle">
-      🌙
-    </button>
-  </div>
+  <main class="flex-1 p-6">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul class="mb-4">
+          {% for msg in messages %}
+            <li class="bg-gradient-to-r from-maihlili-100 to-maihlili-50 border border-maihlili-200 text-maihlili-700 px-4 py-3 rounded-lg mb-2 shadow-sm">
+              <span class="font-medium">ℹ️</span> {{ msg }}
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <button class="theme-toggle" id="themeToggle">
+    🌙
+  </button>
 
   <script>
     const themeToggle = document.getElementById('themeToggle');
@@ -315,13 +339,9 @@
       if (theme === 'light') {
         themeToggle.textContent = '🌙';
         themeToggle.title = 'Passer en mode sombre';
-        themeToggle.classList.remove('bg-maihlili-500', 'text-white');
-        themeToggle.classList.add('bg-gray-200', 'text-gray-800', 'hover:bg-gray-300');
       } else {
         themeToggle.textContent = '☀️';
         themeToggle.title = 'Passer en mode clair';
-        themeToggle.classList.remove('bg-gray-200', 'text-gray-800', 'hover:bg-gray-300');
-        themeToggle.classList.add('bg-maihlili-500', 'text-white');
       }
     }
 
@@ -332,17 +352,24 @@
       const navLinks = document.querySelectorAll('.nav-link');
       
       navLinks.forEach(link => {
-        // Supprimer la classe active de base pour la recréer proprement
-        link.classList.remove('bg-maihlili-100', 'text-maihlili-700', 'font-semibold');
-        link.classList.add('text-gray-800', 'hover:bg-maihlili-50');
-
+        // Nettoyer les classes actives avant de vérifier
+        link.classList.remove('bg-maihlili-100', 'text-maihlili-800', 'shadow-sm');
+        
         if (link.getAttribute('href') === currentPath) {
-          link.classList.add('bg-maihlili-100', 'text-maihlili-700', 'font-semibold');
-          link.classList.remove('text-gray-800', 'hover:bg-maihlili-50');
+          link.classList.add('bg-maihlili-100', 'text-maihlili-800', 'shadow-sm');
         }
       });
-      // S'assurer que le bouton actif est bien stylé même en mode sombre
-      updateThemeToggle(body.getAttribute('data-theme'));
+      // Correction: La couleur du texte doit être adaptée au thème
+      const activeLink = document.querySelector('.nav-link.bg-maihlili-100');
+      if (activeLink) {
+        if (body.getAttribute('data-theme') === 'dark') {
+          activeLink.classList.remove('text-maihlili-800');
+          activeLink.classList.add('text-white');
+        } else {
+          activeLink.classList.remove('text-white');
+          activeLink.classList.add('text-maihlili-800');
+        }
+      }
     });
   </script>
 </body>
