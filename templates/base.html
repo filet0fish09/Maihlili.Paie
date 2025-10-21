@@ -2,26 +2,26 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Maihlili Paie</title>
+  <title>Maihlili Paie - Base de l'Application</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Importation de la police Bebas Neue (obligatoire pour le rendu exact) -->
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+  
   <script>
+    // Configuration Tailwind pour utiliser les couleurs Maihlili
     tailwind.config = {
       theme: {
         extend: {
           colors: {
+            // NOTE: Ces couleurs sont maintenant principalement gérées par les variables CSS pour le thème
             'maihlili': {
-              500: '#3055ff', // Le Bleu Vif d'accentuation
+              500: '#3055ff', // Bleu Vif Principal
               600: '#2A4CE5',
               700: '#2343CC',
-              300: '#8C8FFF',
+              300: '#8C8FFF', 
             },
-            // Couleurs spécifiques FIGMA
-            'fond-clair': '#FFF0F8', // Body clair (Rose)
-            'sidebar-clair': '#3055FF', // Sidebar claire (Bleu Vif)
-            'fond-sombre': '#1B1B1B', // Body sombre (Gris très foncé)
-            'sidebar-sombre': '#282828', // Sidebar sombre (Gris foncé)
-            'carte-sombre': '#363636', // Carte/Panneau sombre
+            'maihlili-rose': '#FFF0F8', // Rose clair pour l'actif/fond clair
           }
         }
       }
@@ -32,40 +32,42 @@
     /* DÉFINITION DES COULEURS VIA LES VARIABLES CSS (COPIE CONFORME FIGMA)                              */
     /* -------------------------------------------------------------------------------------------------- */
     :root {
-      /* Couleurs Claires (PAGE 2) */
+      /* Couleurs Claires */
       --color-bg-light: #FFF0F8; 
       --color-sidebar-bg-light: #3055FF; 
       --color-card-bg-light: #FFFFFF;
       --color-text-light: #181818;
-      --color-text-subtle-light: #6B7280;
       --color-border-light: #E0E0E0;
 
       /* Sidebar Claires */
       --color-sidebar-text-light: #FFFFFF; 
-      --color-sidebar-link-hover-light: #456BFF; /* Bleu plus clair */
-      --color-sidebar-link-active-bg-light: #FFFFFF; /* Fond Blanc pour l'actif */
-      --color-sidebar-link-active-text-light: #3055FF; /* Texte Bleu Vif pour l'actif */
+      --color-liquid-glass-bg-light: rgba(255, 255, 255, 0.3); 
+      --color-liquid-glass-active-bg-light: #FFF0F8; /* Rose Maihlili pour actif */
+      --color-liquid-glass-active-text-light: #3055FF; /* Bleu Maihlili pour texte actif */
+      --color-deconnexion-bg-light: rgba(255, 50, 50, 0.2); 
+      --color-deconnexion-text-light: #FFFFFF; 
     }
 
     [data-theme="dark"] {
-      /* Couleurs Sombres (PAGE 4) */
+      /* Couleurs Sombres */
       --color-bg-dark: #1B1B1B; 
       --color-sidebar-bg-dark: #282828; 
       --color-card-bg-dark: #363636; 
       --color-text-dark: #F5F5F5;
-      --color-text-subtle-dark: #A0A0A0;
       --color-border-dark: #454545;
-      --color-input-bg-dark: #454545; 
 
       /* Sidebar Sombres */
-      --color-sidebar-text-dark: #F5F5F5; 
-      --color-sidebar-link-hover-dark: #363636; /* Gris de carte pour le hover/actif */
-      --color-sidebar-link-active-bg-dark: #363636; 
-      --color-sidebar-link-active-text-dark: #F5F5F5; 
+      --color-sidebar-text-dark: #F5F5F5;
+      --color-liquid-glass-bg-dark: rgba(255, 255, 255, 0.1);
+      --color-liquid-glass-active-bg-dark: #363636; 
+      --color-liquid-glass-active-text-dark: #F5F5F5; 
+      --color-deconnexion-bg-dark: rgba(255, 50, 50, 0.3); 
+      --color-deconnexion-text-dark: #F5F5F5;
     }
 
-    /* Styles de base pour le body */
+    /* Styles de base pour le body et les cartes */
     body {
+      font-family: 'Inter', sans-serif;
       background-color: var(--color-bg-light);
       color: var(--color-text-light);
       transition: background-color 0.3s, color 0.3s;
@@ -74,22 +76,10 @@
       background-color: var(--color-bg-dark);
       color: var(--color-text-dark);
     }
-
-    /* 1. Sidebar Background & Default Text Color */
-    aside {
-        background-color: var(--color-sidebar-bg-light);
-        color: var(--color-sidebar-text-light); 
-        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-        transition: background-color 0.3s, color 0.3s;
+    .bebas-neue {
+      font-family: 'Bebas Neue', sans-serif;
+      line-height: 1; 
     }
-
-    [data-theme="dark"] aside {
-        background-color: var(--color-sidebar-bg-dark);
-        color: var(--color-sidebar-text-dark);
-        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.4);
-    }
-    
-    /* 2. Cartes/Panneaux (Cards) */
     .card {
         background-color: var(--color-card-bg-light) !important;
         border: 1px solid var(--color-border-light) !important;
@@ -102,171 +92,212 @@
         border-color: var(--color-border-dark) !important;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
     }
-    
-    /* 3. Navigation Links DANS LA SIDEBAR (AJUSTEMENT CRUCIAL) */
-    aside .nav-link {
-        padding: 0.75rem; 
-        border-radius: 0.75rem; 
-        transition: all 0.2s;
-        font-weight: 500;
-        gap: 0.75rem;
-    }
-    
-    /* LIENS CLAIRS (TEXTE BLANC PAR DEFAUT) */
-    aside .nav-link:not(.active) {
-        color: var(--color-sidebar-text-light) !important;
-    }
-    aside .nav-link:not(.active):hover {
-        background-color: var(--color-sidebar-link-hover-light) !important;
-    }
 
-    /* CLAIR: ACTIF */
-    aside .nav-link.active {
-        background-color: var(--color-sidebar-link-active-bg-light) !important; /* Blanc */
-        color: var(--color-sidebar-link-active-text-light) !important; /* Bleu Vif */
-        font-weight: 600;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    /* Styles spécifiques à la Sidebar */
+    aside {
+        width: 460px; /* Largeur fixe pour le design Figma */
+        background-color: transparent; 
+        transition: all 0.3s;
     }
-    
-    /* LIENS SOMBRE (TEXTE BLANC PAR DEFAUT) */
-    [data-theme="dark"] aside .nav-link:not(.active) {
-        color: var(--color-sidebar-text-dark) !important; 
+    #sidebar-background {
+        background-color: var(--color-sidebar-bg-light);
+        transition: background-color 0.3s;
     }
-    [data-theme="dark"] aside .nav-link:not(.active):hover {
-        background-color: rgba(255, 255, 255, 0.1) !important; /* Léger hover semi-transparent */
+    [data-theme="dark"] #sidebar-background {
+        background-color: var(--color-sidebar-bg-dark);
     }
-    
-    /* SOMBRE: ACTIF */
-    [data-theme="dark"] aside .nav-link.active {
-        background-color: var(--color-sidebar-link-active-bg-dark) !important; /* Gris carte */
-        color: var(--color-sidebar-link-active-text-dark) !important; /* Blanc */
-        font-weight: 600;
+    .liquid-glass {
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        background-color: var(--color-liquid-glass-bg-light); 
+        color: var(--color-sidebar-text-light);
+        transition: all 0.3s;
+    }
+    .liquid-glass:hover:not(.active) {
+        background-color: rgba(255, 255, 255, 0.45);
+    }
+    [data-theme="dark"] .liquid-glass {
+        background-color: var(--color-liquid-glass-bg-dark);
+        color: var(--color-sidebar-text-dark);
+    }
+    [data-theme="dark"] .liquid-glass:hover:not(.active) {
+        background-color: rgba(255, 255, 255, 0.15);
+    }
+    .liquid-glass.active {
+        background-color: var(--color-liquid-glass-active-bg-light) !important;
+        color: var(--color-liquid-glass-active-text-light) !important;
+        font-weight: 700;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+    [data-theme="dark"] .liquid-glass.active {
+        background-color: var(--color-liquid-glass-active-bg-dark) !important;
+        color: var(--color-liquid-glass-active-text-dark) !important;
         box-shadow: none;
     }
-
-    /* 4. Gestion des couleurs de texte et bordures pour le mode sombre */
-    [data-theme="dark"] .text-gray-800 { color: var(--color-text-dark) !important; }
-    [data-theme="dark"] .text-gray-500 { color: var(--color-text-subtle-dark) !important; }
-    [data-theme="dark"] .border-gray-200,
-    [data-theme="dark"] .border-t { border-color: var(--color-border-dark) !important; }
-    
-    /* Assure la visibilité du texte dans la carte du profil */
-    [data-theme="dark"] .user-profile .text-gray-800 { color: var(--color-text-dark) !important; }
-    [data-theme="dark"] .user-profile .text-gray-500 { color: var(--color-text-subtle-dark) !important; }
-
-    /* Input styles (pour login.html et autres formulaires) */
-    input, select, textarea {
-      background-color: var(--color-card-bg-light);
-      border-color: var(--color-border-light);
-      color: var(--color-text-light);
-      transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+    #logout-link {
+        background-color: var(--color-deconnexion-bg-light);
+        color: var(--color-deconnexion-text-light);
     }
-    [data-theme="dark"] input, 
-    [data-theme="dark"] select, 
-    [data-theme="dark"] textarea {
-      background-color: var(--color-input-bg-dark) !important;
-      border-color: var(--color-border-dark) !important;
-      color: var(--color-text-dark) !important;
+    #logout-link:hover {
+        background-color: rgba(255, 50, 50, 0.35); 
+    }
+    [data-theme="dark"] #logout-link {
+        background-color: var(--color-deconnexion-bg-dark);
+        color: var(--color-deconnexion-text-dark);
+    }
+    [data-theme="dark"] #logout-link:hover {
+        background-color: rgba(255, 50, 50, 0.4); 
+    }
+    .theme-toggle {
+        background-color: #E0E0E0; 
+        color: #181818;
+        transition: all 0.3s;
+    }
+    [data-theme="dark"] .theme-toggle {
+        background-color: #3055ff; 
+        color: white;
     }
   </style>
-  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/main.min.css" rel="stylesheet">
 </head>
 <body class="flex min-h-screen" data-theme="light">
 
-  <aside class="w-64 min-h-screen flex flex-col p-4">
+  <!-- BLOCK_SIDEBAR -->
+  <aside class="w-[460px] min-h-screen relative p-0">
     
-    <div class="p-2 border-b border-gray-200 mb-6">
-      <div class="flex items-center justify-center">
-        <a href="{{ url_for('index') }}" class="flex items-center space-x-2">
-          <img src="{{ url_for('static', filename='images/maihlili-logo-light.png') }}" alt="Logo Maihlili" class="h-10">
-        </a>
-      </div>
+    <!-- Rectangle Principal de la Sidebar (Le grand fond) -->
+    <div id="sidebar-background" 
+         class="absolute inset-0 m-[18px] rounded-[30px] shadow-2xl">
     </div>
-    
-    <nav class="flex-1 p-2 space-y-1">
-      {% if current_user.is_authenticated %}
-        <a href="{{ url_for('index') if current_user.is_manager else url_for('employee_dashboard') }}" 
-           class="nav-link flex items-center font-medium">
-           <span class="text-lg">📊</span> Tableau de bord
-        </a>
-         {% if current_user.is_manager %}
-          <a href="{{ url_for('planning') }}" 
-             class="nav-link flex items-center font-medium">
-            <span class="text-lg">📅</span> Planning
-          </a>
-          
-          <a href="{{ url_for('show_employees') }}" 
-             class="nav-link flex items-center font-medium">
-            <span class="text-lg">👥</span> Employés
-          </a>
-          <a href="{{ url_for('manage_teams') }}" 
-             class="nav-link flex items-center font-medium">
-            <span class="text-lg">🏢</span> Équipes
-          </a>
-          <a href="{{ url_for('show_shifts') }}" 
-             class="nav-link flex items-center font-medium">
-            <span class="text-lg">🕐</span> Services
-          </a>
-          <a href="{{ url_for('assignments') }}" 
-             class="nav-link flex items-center font-medium">
-            <span class="text-lg">📋</span> Assignations
-          </a>
-        {% endif %}
-        <a href="{{ url_for('settings') }}" 
-           class="nav-link flex items-center font-medium">
-          <span class="text-lg">⚙️</span> Paramètres
-        </a>
-      {% else %}
-        <a href="{{ url_for('login') }}" 
-           class="nav-link flex items-center font-medium">
-          <span class="text-lg">🔑</span> Connexion
-        </a>
-        <a href="{{ url_for('register') }}" 
-           class="nav-link flex items-center font-medium">
-          <span class="text-lg">📝</span> Inscription
-        </a>
-      {% endif %}
-    </nav>
 
-    {% if current_user.is_authenticated %}
-    <div class="p-2 border-t border-gray-200 mt-auto">
-      <div class="user-profile flex items-center gap-3 p-3 rounded-xl card">
-        <div class="w-10 h-10 bg-maihlili-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
-          {{ current_user.username[0].upper() }}
+    <!-- LOGO MAIHLILI (X:18, Y:12, W:421, H:185, Radius: 50) -->
+    <div class="absolute top-[12px] left-[18px] w-[421px] h-[185px] bg-maihlili-500 rounded-[50px] flex items-center shadow-xl p-6">
+        
+        <!-- Logo (X:30, Y:24, W:162, H:162, Radius: 50) -->
+        <div class="w-[162px] h-[162px] bg-white rounded-[50px] shadow-inner flex items-center justify-center relative">
+            <!-- Simuler le logo M -->
+            <svg class="text-maihlili-500" width="80%" height="80%" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L2 22h20L12 2zm0 4.1L18.4 20H5.6L12 6.1zm0 3.3L8.6 15h6.8L12 9.4z"/>
+            </svg>
         </div>
-        <div class="flex-1">
-          <p class="text-sm font-semibold text-gray-800">{{ current_user.username }}</p>
-          <p class="text-xs text-gray-500">
-            {% if current_user.is_admin %}⚡ Administrateur
-            {% elif current_user.is_manager %}👑 Manager
-            {% else %}👤 Employé{% endif %}
-          </p>
+        
+        <!-- Texte Maihlili & Paie -->
+        <div class="ml-4">
+            <p class="bebas-neue text-6xl text-white tracking-widest leading-none" 
+               style="font-size: 36px; position: absolute; left: 217px; top: 74px;">
+               Maihlili
+            </p>
+            <p class="bebas-neue text-6xl text-white tracking-widest leading-none" 
+               style="font-size: 36px; position: absolute; left: 299px; top: 105px;">
+               Paie
+            </p>
         </div>
-      </div>
-      <a href="{{ url_for('logout') }}" 
-         class="nav-link flex items-center p-2 rounded-lg text-sm mt-3 font-medium">
-        <span class="text-base">🚪</span> Déconnexion
-      </a>
     </div>
-    {% endif %}
+
+    <!-- NAVIGATION, PROFIL, ET DÉCONNEXION (Conteneur interne pour le positionnement relatif) -->
+    <div class="absolute top-[228px] left-[18px] w-[421px] h-[930px] p-0 space-y-0 overflow-hidden">
+        
+        <!-- Liens du Menu (W:249, H:48, Séparés par 36px) -->
+        <nav class="absolute top-[0px] left-[65px] w-auto">
+            <div class="space-y-[36px]">
+                <!-- Lien Actif (Tableau de bord) -->
+                <a href="#" class="liquid-glass active w-[249px] h-[48px] rounded-[30px] flex items-center justify-start p-2.5 gap-3 cursor-pointer shadow-md">
+                   <span class="w-10 h-10 flex items-center justify-center text-xl">📊</span> 
+                   <span class="text-base font-semibold">Tableau de bord</span>
+                </a>
+                
+                <!-- Autres Liens Inactifs -->
+                <a href="#" class="liquid-glass w-[249px] h-[48px] rounded-[30px] flex items-center justify-start p-2.5 gap-3 cursor-pointer">
+                    <span class="w-10 h-10 flex items-center justify-center text-xl">📅</span> 
+                    <span class="text-base font-semibold">Planning</span>
+                </a>
+                <a href="#" class="liquid-glass w-[249px] h-[48px] rounded-[30px] flex items-center justify-start p-2.5 gap-3 cursor-pointer">
+                    <span class="w-10 h-10 flex items-center justify-center text-xl">👥</span> 
+                    <span class="text-base font-semibold">Employés</span>
+                </a>
+                <a href="#" class="liquid-glass w-[249px] h-[48px] rounded-[30px] flex items-center justify-start p-2.5 gap-3 cursor-pointer">
+                    <span class="w-10 h-10 flex items-center justify-center text-xl">🏢</span> 
+                    <span class="text-base font-semibold">Équipes</span>
+                </a>
+                <a href="#" class="liquid-glass w-[249px] h-[48px] rounded-[30px] flex items-center justify-start p-2.5 gap-3 cursor-pointer">
+                    <span class="w-10 h-10 flex items-center justify-center text-xl">🕐</span> 
+                    <span class="text-base font-semibold">Services</span>
+                </a>
+                <a href="#" class="liquid-glass w-[249px] h-[48px] rounded-[30px] flex items-center justify-start p-2.5 gap-3 cursor-pointer">
+                    <span class="w-10 h-10 flex items-center justify-center text-xl">📋</span> 
+                    <span class="text-base font-semibold">Assignations</span>
+                </a>
+                <a href="#" class="liquid-glass w-[249px] h-[48px] rounded-[30px] flex items-center justify-start p-2.5 gap-3 cursor-pointer">
+                    <span class="w-10 h-10 flex items-center justify-center text-xl">⚙️</span> 
+                    <span class="text-base font-semibold">Paramètres</span>
+                </a>
+            </div>
+        </nav>
+
+        <!-- Profil Utilisateur (X:57, Y:729 (relatif à la page), W:352, H:95, Radius: 30) -->
+        <div class="liquid-glass absolute top-[501px] left-[39px] w-[352px] h-[95px] rounded-[30px] flex items-center p-4 gap-4 shadow-lg">
+            <!-- Avatar -->
+            <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center text-maihlili-500 text-2xl font-bold bebas-neue">
+              JM
+            </div>
+            <div class="flex flex-col justify-center">
+              <p class="bebas-neue text-2xl tracking-widest leading-none text-white" style="font-size: 36px;">
+                JEAN-MICHEL D.
+              </p>
+              <!-- Rôle -->
+              <p class="text-sm font-light leading-none mt-1 text-white opacity-80">
+                👑 ADMIN
+              </p>
+            </div>
+        </div>
+
+        <!-- Déconnexion (X:54, Y:837 (relatif à la page), W:352, H:61, Radius: 30, Rouge) -->
+        <a id="logout-link" href="#" class="absolute top-[609px] left-[36px] w-[352px] h-[61px] rounded-[30px] flex items-center justify-center gap-4 cursor-pointer shadow-lg">
+            <span class="text-2xl">🛑</span>
+            <span class="bebas-neue text-3xl tracking-widest">SE DÉCONNECTER</span>
+        </a>
+        
+    </div>
   </aside>
+  <!-- END_BLOCK_SIDEBAR -->
 
+  <!-- BLOCK_MAIN_CONTENT_AREA -->
   <main class="flex-1 p-8">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <div class="mb-6 space-y-3">
-            {% for category, message in messages %}
-                <div class="flash-message border-l-4 border-maihlili-500 p-4 rounded-xl shadow-sm card" role="alert">
-                    <p class="font-medium text-maihlili-700">{{ message }}</p>
-                </div>
-            {% endfor %}
-        </div>
-      {% endif %}
-    {% endwith %}
-    {% block content %}{% endblock %}
-  </main>
+    <div class="max-w-7xl mx-auto">
+        <!-- Contenu par défaut pour la démo -->
+        <h1 class="text-3xl font-bold text-gray-800 mb-8">Bienvenue sur Maihlili Paie</h1>
 
-  <button class="theme-toggle fixed bottom-6 right-6 p-4 rounded-full text-2xl cursor-pointer shadow-lg z-50 transition-all duration-300 ease-in-out" id="themeToggle">
+        <!-- Ce bloc sera remplacé par le contenu de vos pages spécifiques (Planning, Employés, etc.) -->
+        <!-- {% block content %} -->
+        <div class="p-6 card">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Début du Contenu de la Page</h3>
+            <p class="text-gray-500">
+                Ceci est la zone principale de l'application. Elle s'adapte automatiquement à la largeur restante.
+                Vous pouvez commencer à y insérer vos composants spécifiques.
+            </p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+                <div class="card p-4 border-l-4 border-maihlili-500">
+                    <p class="text-lg font-bold text-maihlili-500">Thème Actif</p>
+                    <p class="text-sm text-gray-500">Mode Clair ou Sombre basé sur le bouton en bas.</p>
+                </div>
+                <div class="card p-4">
+                    <p class="text-lg font-bold">Design Figma</p>
+                    <p class="text-sm text-gray-500">La sidebar correspond désormais aux dimensions exactes.</p>
+                </div>
+                <div class="card p-4">
+                    <p class="text-lg font-bold">Liquid Glass</p>
+                    <p class="text-sm text-gray-500">L'effet flou est appliqué aux menus et au profil.</p>
+                </div>
+            </div>
+        </div>
+        <!-- {% endblock content %} -->
+
+    </div>
+  </main>
+  <!-- END_BLOCK_MAIN_CONTENT_AREA -->
+
+  <!-- Theme Toggle Button -->
+  <button class="theme-toggle fixed bottom-6 right-6 p-4 rounded-full text-2xl cursor-pointer shadow-lg z-50" id="themeToggle">
     🌙
   </button>
 
@@ -274,7 +305,7 @@
     const themeToggle = document.getElementById('themeToggle');
     const body = document.body;
     
-    // Récupérer le thème sauvegardé, par défaut 'light'
+    // Initialisation du thème
     const savedTheme = localStorage.getItem('maihlili-theme') || 'light';
     body.setAttribute('data-theme', savedTheme);
     updateThemeToggle(savedTheme);
@@ -282,7 +313,6 @@
     function toggleTheme() {
       const currentTheme = body.getAttribute('data-theme');
       const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-      
       body.setAttribute('data-theme', newTheme);
       localStorage.setItem('maihlili-theme', newTheme);
       updateThemeToggle(newTheme);
@@ -292,29 +322,32 @@
       if (theme === 'light') {
         themeToggle.textContent = '🌙';
         themeToggle.title = 'Passer en mode sombre';
-        // Style du bouton en mode clair
-        themeToggle.className = 'theme-toggle fixed bottom-6 right-6 p-4 rounded-full text-2xl cursor-pointer shadow-lg z-50 transition-all duration-300 ease-in-out bg-gray-200 text-gray-800 hover:bg-gray-300';
       } else {
         themeToggle.textContent = '☀️';
         themeToggle.title = 'Passer en mode clair';
-        // Style du bouton en mode sombre (couleur Maihlili)
-        themeToggle.className = 'theme-toggle fixed bottom-6 right-6 p-4 rounded-full text-2xl cursor-pointer shadow-lg z-50 transition-all duration-300 ease-in-out bg-maihlili-500 text-white hover:bg-maihlili-600';
       }
+      // Les classes Tailwind dans le style CSS gèrent le fond/couleur du bouton
     }
 
     themeToggle.addEventListener('click', toggleTheme);
-
+    
     document.addEventListener('DOMContentLoaded', function() {
-      const currentPath = window.location.pathname;
-      const navLinks = document.querySelectorAll('.nav-link');
-      
-      navLinks.forEach(link => {
-        link.classList.remove('active');
-
-        if (link.getAttribute('href') === currentPath) {
-          link.classList.add('active');
+      // Logique pour gérer le lien actif
+      const navLinks = document.querySelectorAll('.liquid-glass');
+      if (navLinks.length > 0) {
+        // Active le premier lien par défaut
+        const activeLink = navLinks[0]; 
+        if (!activeLink.classList.contains('active')) {
+            activeLink.classList.add('active');
         }
-      });
+        
+        // Gérer le clic pour changer l'état actif
+        navLinks.forEach(link => link.addEventListener('click', function(e) {
+            e.preventDefault();
+            navLinks.forEach(l => l.classList.remove('active'));
+            this.classList.add('active');
+        }));
+      }
     });
   </script>
 </body>
