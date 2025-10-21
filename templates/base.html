@@ -397,10 +397,10 @@
 </head>
 <body class="bg-[#fff0f8] flex min-h-screen" data-theme="light"> 
 
-  <aside class="w-[320px] p-3 flex flex-col bg-gray-50 dark:bg-gray-800" style="min-height: 100vh;">
+  <aside class="w-[320px] p-3 flex flex-col bg-[#fff0f8] dark:bg-gray-800" style="min-height: 100vh;">
     <div class="h-[140px] rounded-[30px] bg-maihlili-figma-blue flex items-center p-4 shadow-xl">
       <div class="w-[110px] h-[110px] rounded-[30px] bg-white flex items-center justify-center -translate-y-1 shadow-xl">
-        <img src="{{ url_for('static', filename='images/maihlili-logo-light.png') }}" alt="Logo Maihlili clair" class="h-16 w-16">
+        <img src="{{ url_for('static', filename='images/maihlili-logo-light.png') }}" alt="Logo Maihlili clair" class="h-24 w-24">
       </div>
       <div class="ml-3 flex flex-col leading-none text-white font-['Bebas_Neue'] uppercase">
         <span class="text-3xl tracking-widest">Maihlili.</span>
@@ -427,7 +427,11 @@
             <a href="{{ url }}" 
                class="nav-link flex items-center p-2 rounded-[15px] hover:bg-white/20 transition-all duration-200 shadow-md
                       {% if loop.index == 1 %} liquid-glass-selected {% else %} liquid-glass-default {% endif %}"
-               style="height: 50px; gap: 0.5rem;"> <span class="text-lg p-1 bg-white/20 rounded-full w-8 h-8 flex items-center justify-center">{{ icon }}</span> <span class="text-lg text-white font-medium ml-2">{{ label }}</span> </a>
+               style="height: 50px; gap: 0.5rem;"> 
+              
+              <span class="text-lg p-1 bg-white/20 rounded-full w-8 h-8 flex items-center justify-center">{{ icon }}</span> 
+              <span class="text-lg text-white font-medium ml-2">{{ label }}</span> 
+            </a>
             {% endif %}
           {% endfor %}
         
@@ -447,12 +451,16 @@
         {% endif %}
       </nav>
       
-      <div class="mt-4 space-y-2"> {% if current_user.is_authenticated %}
-        <div class="flex items-center p-3 rounded-[30px] bg-white/30 backdrop-blur-sm shadow-inner" style="height: 65px;"> <div class="w-10 h-10 bg-white/50 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-lg">
+      <div class="mt-4 space-y-2"> 
+        
+        {% if current_user.is_authenticated %}
+        <div class="flex items-center p-3 rounded-[30px] bg-white/30 backdrop-blur-sm shadow-inner" style="height: 65px;"> 
+          <div class="w-10 h-10 bg-white/50 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-lg">
             👤
           </div>
           <div class="flex-1 ml-3 text-white">
-            <p class="text-xl font-['Bebas_Neue'] uppercase tracking-wider">{{ current_user.username }}</p> <p class="text-xs font-light -mt-1">
+            <p class="text-xl font-['Bebas_Neue'] uppercase tracking-wider">{{ current_user.username }}</p> 
+            <p class="text-xs font-light -mt-1">
               {% if current_user.is_admin %}Administrateur
               {% elif current_user.is_manager %}Manager
               {% else %}Employé{% endif %}
@@ -462,7 +470,8 @@
         
         <a href="{{ url_for('logout') }}" 
            class="flex items-center justify-center p-3 rounded-[30px] bg-red-400/70 hover:bg-red-500/80 backdrop-blur-sm text-white font-['Bebas_Neue'] uppercase text-xl transition-all duration-200"
-           style="height: 45px;"> <span class="text-2xl mr-1 -translate-y-0.5">🚪</span>
+           style="height: 45px;"> 
+          <span class="text-2xl mr-1 -translate-y-0.5">🚪</span>
           Se Déconnecter
         </a>
         {% endif %}
