@@ -54,7 +54,7 @@
     /* -------------------------------------------------------------------------------------------------- */
     :root {
       /* Couleurs Claires */
-      --color-bg-light: #f9fafb;
+      --color-bg-light: #fff0f8; /* MODIFIÉ ICI */
       --color-text-light: #1f2937;
       --color-text-subtle-light: #6b7280;
       --color-border-light: #e5e7eb;
@@ -388,7 +388,7 @@
   </style>
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/main.min.css" rel="stylesheet">
 </head>
-<body class="bg-gray-50 flex min-h-screen" data-theme="light">
+<body class="bg-[#fff0f8] flex min-h-screen" data-theme="light"> 
 
   <aside class="w-[320px] p-3 flex flex-col bg-gray-50 dark:bg-gray-800" style="min-height: 100vh;">
     <div class="h-[140px] rounded-[50px] bg-maihlili-figma-blue flex items-center p-4 shadow-xl">
@@ -440,7 +440,8 @@
         {% endif %}
       </nav>
       
-      <div class="mt-4 space-y-2"> <div class="flex items-center p-3 rounded-[30px] bg-white/30 backdrop-blur-sm shadow-inner" style="height: 65px;"> <div class="w-10 h-10 bg-white/50 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-lg">
+      <div class="mt-4 space-y-2"> {% if current_user.is_authenticated %}
+        <div class="flex items-center p-3 rounded-[30px] bg-white/30 backdrop-blur-sm shadow-inner" style="height: 65px;"> <div class="w-10 h-10 bg-white/50 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-lg">
             👤
           </div>
           <div class="flex-1 ml-3 text-white">
@@ -457,6 +458,7 @@
            style="height: 45px;"> <span class="text-2xl mr-1 -translate-y-0.5">🚪</span>
           Se Déconnecter
         </a>
+        {% endif %}
       </div>
     </div>
   </aside>
@@ -515,12 +517,14 @@
       
       navLinks.forEach(link => {
         // Logique pour mettre en surbrillance le lien actif dans la nouvelle structure
+        // Réinitialise d'abord les classes par défaut
+        link.classList.remove('liquid-glass-selected');
+        link.classList.add('liquid-glass-default');
+        
+        // Applique la classe sélectionnée si le chemin correspond
         if (link.getAttribute('href') === currentPath) {
           link.classList.add('liquid-glass-selected');
           link.classList.remove('liquid-glass-default');
-        } else {
-          link.classList.add('liquid-glass-default');
-          link.classList.remove('liquid-glass-selected');
         }
       });
     });
