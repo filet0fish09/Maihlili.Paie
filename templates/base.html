@@ -9,26 +9,24 @@
       theme: {
         extend: {
           colors: {
-            // Palette de couleurs personnalisée
             'maihlili': {
-              // Nous définissons ici les couleurs principales selon vos dernières instructions
-              // La couleur d'accentuation principale (500) est #3055FF (Bleu Vif)
-              // La couleur de fond/accentuation secondaire est #FFF0F8 (Rose Clair)
               50: '#E6E9FF',
               100: '#C8CEFF', 
               200: '#AAAEFF',
               300: '#8C8FFF',
               400: '#6E71FF',
-              500: '#3055ff', // Le bleu vif de la sidebar
+              500: '#3055ff', // Bleu principal
               600: '#2A4CE5', 
               700: '#2343CC',
               800: '#1D3AAA',
               900: '#163188'
             },
-            'rose-maihlili': {
-                100: '#FFF0F8', // Le fond principal et l'accentuation
-                200: '#FFDCEF',
-            }
+            // Couleurs spécifiques demandées par le Figma
+            'fond-clair': '#FFF0F8', // Body clair
+            'sidebar-clair': '#3055FF', // Sidebar claire
+            'fond-sombre': '#1B1B1B', // Body sombre
+            'sidebar-sombre': '#282828', // Sidebar sombre
+            'carte-sombre': '#363636', // Carte/Panneau sombre
           }
         }
       }
@@ -36,37 +34,37 @@
   </script>
   <style>
     /* -------------------------------------------------------------------------------------------------- */
-    /* STYLES GLOBALES & COULEURS STRICTEMENT BASÉES SUR VOS DERNIÈRES INSTRUCTIONS                        */
+    /* STYLES GLOBALES & COULEURS STRICTEMENT BASÉES SUR VOTRE FIGMA                                       */
     /* -------------------------------------------------------------------------------------------------- */
     :root {
-      /* Couleurs Claires (Mode Clair Actuel) */
-      --color-bg-light: #FFF0F8; /* Body : FFF0F8 */
-      --color-sidebar-bg-light: #3055FF; /* Sidebar : 3055FF */
+      /* Couleurs Claires (PAGE 2) */
+      --color-bg-light: #FFF0F8; 
+      --color-sidebar-bg-light: #3055FF; 
       --color-card-bg-light: #FFFFFF;
       --color-text-light: #181818;
-      --color-text-subtle-light: #6B7280;
       --color-border-light: #E0E0E0;
 
-      /* Couleurs Sidebar */
-      --color-sidebar-text: #FFFFFF; /* Texte blanc sur fond bleu */
-      --color-sidebar-link-hover: #456BFF; /* Bleu légèrement plus clair */
-      --color-sidebar-link-active: #FFFFFF; /* Fond de l'actif (Rose Clair) */
+      /* Couleurs Sidebar Claires */
+      --color-sidebar-text-light: #FFFFFF; 
+      --color-sidebar-link-hover-light: #456BFF; 
+      --color-sidebar-link-active-bg-light: #FFFFFF; 
+      --color-sidebar-link-active-text-light: #3055FF;
     }
 
-    /* -------------------------------------------------------------------------------------------------- */
-    /* MODE SOMBRE (Réinitialisé, car non demandé pour l'instant)                                         */
-    /* -------------------------------------------------------------------------------------------------- */
     [data-theme="dark"] {
-      --color-bg-dark: #282828; 
-      --color-sidebar-bg-dark: #1B1B1B; 
+      /* Couleurs Sombres (PAGE 4) */
+      --color-bg-dark: #1B1B1B; 
+      --color-sidebar-bg-dark: #282828; 
       --color-card-bg-dark: #363636; 
       --color-text-dark: #F5F5F5;
-      --color-text-subtle-dark: #A0A0A0;
       --color-border-dark: #454545;
       --color-input-bg-dark: #454545; 
-      --color-sidebar-text: #F5F5F5; 
-      --color-sidebar-link-hover: #363636;
-      --color-sidebar-link-active: #454545; 
+
+      /* Couleurs Sidebar Sombres */
+      --color-sidebar-text-dark: #F5F5F5; 
+      --color-sidebar-link-hover-dark: #363636; 
+      --color-sidebar-link-active-bg-dark: #363636; 
+      --color-sidebar-link-active-text-dark: #FFFFFF;
     }
 
     body {
@@ -80,21 +78,21 @@
       color: var(--color-text-dark);
     }
 
-    /* 1. Sidebar (Bleu Vif) */
+    /* 1. Sidebar */
     aside {
         background-color: var(--color-sidebar-bg-light);
         border-right: none; 
         transition: background-color 0.3s;
-        color: var(--color-sidebar-text); /* Texte blanc par défaut */
+        color: var(--color-sidebar-text-light); 
     }
 
     [data-theme="dark"] aside {
         background-color: var(--color-sidebar-bg-dark);
+        color: var(--color-sidebar-text-dark);
         border-right-color: var(--color-border-dark);
-        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
     }
     
-    /* 2. Cartes & Conteneurs (Pas de changement de couleur pour le mode clair ici) */
+    /* 2. Cartes (Cards) & Conteneurs */
     .card, .bg-white {
         background-color: var(--color-card-bg-light) !important;
         border: 1px solid var(--color-border-light) !important;
@@ -110,46 +108,54 @@
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
     }
     
-    /* 3. Navigation Links DANS LA SIDEBAR (Texte blanc par défaut) */
+    /* 3. Navigation Links DANS LA SIDEBAR */
     aside .nav-link {
-        color: var(--color-sidebar-text) !important;
         padding: 0.75rem; 
         border-radius: 0.75rem; 
         transition: all 0.2s;
+        /* Défaut clair */
+        color: var(--color-sidebar-text-light) !important;
     }
     
     aside .nav-link:hover {
-        background-color: var(--color-sidebar-link-hover) !important; /* Bleu légèrement plus clair */
+        background-color: var(--color-sidebar-link-hover-light) !important;
     }
     
-    /* L'élément actif a un fond Rose Clair (#FFF0F8) et le texte doit être le Bleu Maihlili Vif */
+    /* Lien Actif Clair */
     aside .nav-link.active {
-        background-color: var(--color-sidebar-link-active) !important; /* Fond Blanc */
-        color: var(--tw-colors-maihlili-500) !important; /* Texte Bleu Vif */
+        background-color: var(--color-sidebar-link-active-bg-light) !important; /* Blanc */
+        color: var(--color-sidebar-link-active-text-light) !important; /* Bleu Vif */
         font-weight: 600;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
     
-    /* 4. Texte et Bordures du Main Content (hors Sidebar) */
-    [data-theme="dark"] .text-gray-800 { color: var(--color-text-dark) !important; }
-    [data-theme="dark"] .text-gray-500 { color: var(--color-text-subtle-dark) !important; }
-    [data-theme="dark"] .border-gray-200,
-    [data-theme="dark"] .border-t { border-color: var(--color-border-dark) !important; }
-
-    /* 5. Logo et Titre (Couleur blanche sur fond bleu de la sidebar) */
-    aside .text-maihlili-500 {
-        color: white !important; /* Pour le titre "Maihlili Paie" si on n'utilise pas l'image du logo pour le texte */
+    /* Lien Actif Sombre */
+    [data-theme="dark"] aside .nav-link {
+        color: var(--color-sidebar-text-dark) !important; 
     }
-
-    aside .border-b {
-        border-color: rgba(255, 255, 255, 0.2) !important; /* Séparateur léger dans la sidebar */
+    [data-theme="dark"] aside .nav-link:hover {
+        background-color: var(--color-sidebar-link-hover-dark) !important; 
+    }
+    [data-theme="dark"] aside .nav-link.active {
+        background-color: var(--color-sidebar-link-active-bg-dark) !important; /* Gris moyen */
+        color: var(--color-sidebar-link-active-text-dark) !important; /* Blanc */
+        box-shadow: none;
     }
     
-    /* Logo: on utilise uniquement le logo clair sur fond sombre */
-    .logo-light { display: block; }
-    .logo-dark { display: none; }
-    [data-theme="dark"] .logo-light { display: none; }
-    [data-theme="dark"] .logo-dark { display: block; }
+    /* 4. Textes et Bordures du Main Content (hors Sidebar) */
+    [data-theme="dark"] .text-gray-800 { color: var(--color-text-dark) !important; }
+    [data-theme="dark"] .text-gray-500 { color: var(--color-border-dark) !important; }
+    [data-theme="dark"] .border-gray-200,
+    [data-theme="dark"] .border-t { border-color: var(--color-border-dark) !important; }
+    
+    /* 5. Input Fields pour le mode sombre */
+    [data-theme="dark"] input, 
+    [data-theme="dark"] select, 
+    [data-theme="dark"] textarea {
+      background-color: var(--color-input-bg-dark) !important;
+      border-color: var(--color-border-dark) !important;
+      color: var(--color-text-dark) !important;
+    }
   </style>
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/main.min.css" rel="stylesheet">
 </head>
@@ -160,8 +166,7 @@
     <div class="p-2 border-b border-gray-200 mb-6">
       <div class="flex items-center justify-center">
         <a href="{{ url_for('index') }}" class="flex items-center space-x-2">
-          <img src="{{ url_for('static', filename='images/maihlili-logo-light.png') }}" alt="Logo Maihlili clair" class="h-10 logo-light">
-          <span class="text-2xl font-bold tracking-wider logo-dark">Maihlili Paie</span>
+          <img src="{{ url_for('static', filename='images/maihlili-logo-light.png') }}" alt="Logo Maihlili" class="h-10">
         </a>
       </div>
     </div>
@@ -275,12 +280,12 @@
       if (theme === 'light') {
         themeToggle.textContent = '🌙';
         themeToggle.title = 'Passer en mode sombre';
-        // Règle Tailwind pour mode clair (couleurs neutres)
+        // Style pour le mode clair
         themeToggle.className = 'theme-toggle fixed bottom-6 right-6 p-4 rounded-full text-2xl cursor-pointer shadow-lg z-50 transition-all duration-300 ease-in-out bg-gray-200 text-gray-800 hover:bg-gray-300';
       } else {
         themeToggle.textContent = '☀️';
         themeToggle.title = 'Passer en mode clair';
-        // Règle Tailwind pour mode sombre (couleur Maihlili)
+        // Style pour le mode sombre (bouton accentué)
         themeToggle.className = 'theme-toggle fixed bottom-6 right-6 p-4 rounded-full text-2xl cursor-pointer shadow-lg z-50 transition-all duration-300 ease-in-out bg-maihlili-500 text-white hover:bg-maihlili-600';
       }
     }
@@ -292,7 +297,6 @@
       const navLinks = document.querySelectorAll('.nav-link');
       
       navLinks.forEach(link => {
-        // Nettoyage des classes actives (le CSS gère l'ajout de 'active')
         link.classList.remove('active');
 
         if (link.getAttribute('href') === currentPath) {
