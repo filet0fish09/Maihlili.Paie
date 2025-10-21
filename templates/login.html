@@ -1,45 +1,62 @@
 {% extends "base.html" %}
-{% block content %}
-<div class="max-w-md mx-auto mt-20 bg-white p-8 rounded-xl shadow-lg">
-  <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">🔐 Connexion</h2>
-  <form method="POST" action="{{ url_for('login') }}" class="space-y-4">
-    <div>
-      <input type="text" name="username" placeholder="Nom d'utilisateur ou Email" required
-             class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-    </div>
-    
-    <div class="relative">
-      <input type="password" name="password" id="password" placeholder="Mot de passe" required
-             class="w-full px-4 py-2 pr-12 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-      <button type="button" onclick="togglePassword()" 
-              class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none">
-        <span id="eye-icon">👁️</span>
-      </button>
-    </div>
-    
-    <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors">
-      Se connecter
-    </button>
-  </form>
-  
-  <p class="mt-4 text-sm text-center text-gray-500">
-    Pas de compte ? 
-    <a href="{{ url_for('register') }}" class="text-blue-600 hover:underline">S'inscrire</a>
-  </p>
-</div>
 
-<script>
-function togglePassword() {
-  const passwordInput = document.getElementById('password');
-  const eyeIcon = document.getElementById('eye-icon');
-  
-  if (passwordInput.type === 'password') {
-    passwordInput.type = 'text';
-    eyeIcon.textContent = '🙈';
-  } else {
-    passwordInput.type = 'password';
-    eyeIcon.textContent = '👁️';
-  }
-}
-</script>
+{% block content %}
+<div class="flex items-center justify-center min-h-screen -mt-20">
+    <div class="card p-8 w-full max-w-md rounded-2xl shadow-xl">
+        <h2 class="text-3xl font-extrabold text-gray-800 text-center mb-2">
+            Connexion
+        </h2>
+        <p class="text-center text-gray-500 mb-8">
+            Accédez à votre compte Maihlili Paie
+        </p>
+
+        <form method="POST" action="{{ url_for('login') }}" class="space-y-6">
+            {{ form.hidden_tag() }}
+
+            <div class="relative">
+                <label for="{{ form.username.id }}" class="sr-only">Nom d'utilisateur / Email</label>
+                <div class="flex items-center border border-gray-300 rounded-xl focus-within:border-maihlili-500 focus-within:ring-1 focus-within:ring-maihlili-500 transition-all duration-150">
+                    <span class="p-3 text-2xl text-maihlili-500">👤</span> <input 
+                        type="text" 
+                        name="{{ form.username.name }}" 
+                        id="{{ form.username.id }}"
+                        required
+                        placeholder="Nom d'utilisateur ou Email"
+                        class="flex-1 p-3 bg-transparent border-none focus:ring-0 focus:outline-none placeholder-gray-500 text-gray-800 rounded-r-xl"
+                    >
+                </div>
+                {% for error in form.username.errors %}
+                    <span class="text-red-500 text-sm mt-1 block">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <div class="relative">
+                <label for="{{ form.password.id }}" class="sr-only">Mot de passe</label>
+                <div class="flex items-center border border-gray-300 rounded-xl focus-within:border-maihlili-500 focus-within:ring-1 focus-within:ring-maihlili-500 transition-all duration-150">
+                    <span class="p-3 text-2xl text-maihlili-500">🔒</span> <input 
+                        type="password" 
+                        name="{{ form.password.name }}" 
+                        id="{{ form.password.id }}"
+                        required
+                        placeholder="Mot de passe"
+                        class="flex-1 p-3 bg-transparent border-none focus:ring-0 focus:outline-none placeholder-gray-500 text-gray-800 rounded-r-xl"
+                    >
+                </div>
+                {% for error in form.password.errors %}
+                    <span class="text-red-500 text-sm mt-1 block">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <button type="submit" class="w-full py-3 bg-maihlili-500 text-white font-semibold rounded-xl hover:bg-maihlili-600 transition-colors duration-200 shadow-md shadow-maihlili-300/50">
+                Se connecter
+            </button>
+        </form>
+
+        <div class="mt-6 text-center text-sm">
+            <a href="{{ url_for('register') }}" class="text-maihlili-500 hover:text-maihlili-700 font-medium">
+                Vous n'avez pas de compte ? S'inscrire
+            </a>
+        </div>
+    </div>
+</div>
 {% endblock %}
