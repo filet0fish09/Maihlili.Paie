@@ -54,7 +54,7 @@
     /* -------------------------------------------------------------------------------------------------- */
     :root {
       /* Couleurs Claires */
-      --color-bg-light: #fff0f8; /* MODIFIÉ ICI */
+      --color-bg-light: #fff0f8; /* FOND GENERAL EN #fff0f8 */
       --color-text-light: #1f2937;
       --color-text-subtle-light: #6b7280;
       --color-border-light: #e5e7eb;
@@ -353,6 +353,13 @@
 
     /* Sidebar améliorée */
     /* Les styles Figma ci-dessus prennent le dessus sur ces anciennes classes de sidebar */
+    [data-theme="dark"] aside {
+        background: #3055ff !important; /* Force le bleu même en mode sombre */
+        color: white !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3) !important;
+    }
+    
     [data-theme="dark"] aside .nav-link {
         color: #E0E7FF !important;
         transition: all 0.2s ease !important;
@@ -391,13 +398,13 @@
 <body class="bg-[#fff0f8] flex min-h-screen" data-theme="light"> 
 
   <aside class="w-[320px] p-3 flex flex-col bg-gray-50 dark:bg-gray-800" style="min-height: 100vh;">
-    <div class="h-[140px] rounded-[50px] bg-maihlili-figma-blue flex items-center p-4 shadow-xl">
-      <div class="w-[110px] h-[110px] rounded-[50px] bg-white flex items-center justify-center -translate-y-1 shadow-xl">
+    <div class="h-[140px] rounded-[30px] bg-maihlili-figma-blue flex items-center p-4 shadow-xl">
+      <div class="w-[110px] h-[110px] rounded-[30px] bg-white flex items-center justify-center -translate-y-1 shadow-xl">
         <img src="{{ url_for('static', filename='images/maihlili-logo-light.png') }}" alt="Logo Maihlili clair" class="h-8 w-8">
       </div>
       <div class="ml-3 flex flex-col leading-none text-white font-['Bebas_Neue'] uppercase">
-        <span class="text-4xl tracking-widest">Maihlili.</span>
-        <span class="text-4xl -translate-x-3 tracking-widest">Paie</span>
+        <span class="text-3xl tracking-widest">Maihlili.</span>
+        <span class="text-3xl -translate-x-3 tracking-widest">Paie</span>
       </div>
     </div>
 
