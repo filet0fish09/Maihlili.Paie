@@ -2,28 +2,47 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Maihlili SPV - Nouvelle Interface</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maihlili SPV</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/main.min.css" rel="stylesheet">
-  
   <script>
     tailwind.config = {
       theme: {
         extend: {
           colors: {
+            // Couleurs exactes du logo Maihlili (bleu pur)
             'maihlili': {
-              // Couleurs de l'ancienne base (gardées pour la compatibilité du dashboard)
-              500: '#4F46E5', 
+              50: '#EEF2FF',
+              100: '#E0E7FF', 
+              200: '#C7D2FE',
+              300: '#A5B4FC',
+              400: '#818CF8',
+              500: '#4F46E5', // Bleu exact de votre logo
               600: '#4338CA', 
+              700: '#3730A3',
+              800: '#312E81',
+              900: '#1E1B4B'
             },
             'nouveau-bleu': {
-                // Le nouveau bleu principal pour la sidebar
-                500: '#3055ff', 
+                50: '#E6E9FF',
+                100: '#C8CEFF',
+                200: '#AAAEFF',
+                300: '#8C8FFF',
+                400: '#6E71FF',
+                500: '#3055ff', // Le nouveau bleu
+                600: '#2A4CE5',
+                700: '#2343CC',
+                800: '#1D3AAA',
+                900: '#163188'
             },
-            // Couleurs spécifiques FIGMA pour la sidebar et fond clair
-            'fond-clair': '#FFF0F8', // Rose clair pour fond/actif sidebar
+            // NOUVELLES COULEURS POUR LE STYLE FIGMA
+            'maihlili-figma-blue': { // Couleur principale de la sidebar (bleu uni)
+                DEFAULT: '#3055ff', // Utilisation de votre 'nouveau-bleu-500'
+            },
+            'maihlili-figma-rose': { // Couleur pour l'élément sélectionné
+                DEFAULT: '#FFDCE4', // Simule le rose des maquettes
+                dark: '#E0E7FF', // Une couleur claire pour le dark mode si nécessaire
+            },
           }
         }
       }
@@ -31,129 +50,277 @@
   </script>
   <style>
     /* -------------------------------------------------------------------------------------------------- */
-    /* DÉFINITION GLOBALE DES COULEURS ET DES THÈMES                                                      */
+    /* Couleurs & Thème Maihlili SPV                                                                       */
     /* -------------------------------------------------------------------------------------------------- */
     :root {
-      /* Couleurs Claires (Base) */
-      --color-bg-light: #f9fafb; /* Garder votre fond de base pour la zone main */
+      /* Couleurs Claires */
+      --color-bg-light: #f9fafb;
       --color-text-light: #1f2937;
-      
-      /* Couleurs Claires (Sidebar Design V3) */
-      --color-sidebar-bg-light: #3055FF; /* Bleu Vif */
-      --color-sidebar-text-light: #FFFFFF; 
-      --color-liquid-glass-bg-light: rgba(255, 255, 255, 0.3); 
-      --color-liquid-glass-active-bg-light: #FFF0F8; /* Rose Maihlili pour actif */
-      --color-liquid-glass-active-text-light: #3055FF; /* Bleu Maihlili pour texte actif */
-      --color-deconnexion-bg-light: rgba(255, 50, 50, 0.2); 
-      --color-deconnexion-text-light: #FFFFFF; 
+      --color-text-subtle-light: #6b7280;
+      --color-border-light: #e5e7eb;
+      --color-card-bg-light: #fff0f8;
     }
 
     [data-theme="dark"] {
-      /* Couleurs Sombres (Zone Main - Garder votre logique existante) */
+      /* Couleurs Sombres pour le tableau de bord uniquement */
       --color-bg-dark-dashboard: #1f2937;
       --color-text-dark-dashboard: #f9fafb;
+      --color-text-subtle-dark-dashboard: #9ca3af;
+      --color-border-dark-dashboard: #374151;
       --color-card-bg-dark-dashboard: #2d3748;
       
-      /* Couleurs Sombres (Sidebar Design V3) */
-      --color-sidebar-bg-dark: #282828; 
-      --color-sidebar-text-dark: #F5F5F5;
-      --color-liquid-glass-bg-dark: rgba(255, 255, 255, 0.1);
-      --color-liquid-glass-active-bg-dark: #363636; 
-      --color-liquid-glass-active-text-dark: #F5F5F5; 
-      --color-deconnexion-bg-dark: rgba(255, 50, 50, 0.3); 
-      --color-deconnexion-text-dark: #F5F5F5;
+      /* Couleurs pour la sidebar en mode sombre (bleu) */
+      --color-bg-dark-sidebar: #3055ff;
+      --color-text-dark-sidebar: #f9fafb;
+      --color-text-subtle-dark-sidebar: #c7d2fe;
+      --color-border-dark-sidebar: rgba(255, 255, 255, 0.1);
+      --color-card-bg-dark-sidebar: #2a4ce5;
     }
 
-    /* Styles de base */
     body {
-      font-family: 'Inter', sans-serif; /* Conserver Inter comme police principale */
       background-color: var(--color-bg-light);
       color: var(--color-text-light);
-      transition: background-color 0.3s, color 0.3s;
+      transition: background-color 0.5s ease, color 0.5s ease;
     }
-    .bebas-neue {
-      font-family: 'Bebas Neue', sans-serif;
-      line-height: 1; 
+    
+    .card {
+      background-color: var(--color-card-bg-light);
+      border: 1px solid var(--color-border-light);
+      transition: background-color 0.5s ease, border-color 0.5s ease;
     }
+
+    /* Styles pour la zone de contenu principale en mode sombre */
     [data-theme="dark"] main {
         background-color: var(--color-bg-dark-dashboard);
         color: var(--color-text-dark-dashboard);
     }
     
-    /* -------------------------------------------------------------------------------------------------- */
-    /* STYLES SIDEBAR V3 (Fixe 460px)                                                                     */
-    /* -------------------------------------------------------------------------------------------------- */
-    aside {
-        width: 460px; /* Largeur fixe pour le design Figma */
-        background-color: transparent; 
-        transition: all 0.3s;
+    /* Correction pour les cartes et éléments 'bg-white' dans le dashboard */
+    [data-theme="dark"] main .bg-white {
+        background-color: var(--color-card-bg-dark-dashboard);
+        border-color: var(--color-border-dark-dashboard);
     }
-    #sidebar-background {
-        background-color: var(--color-sidebar-bg-light);
-        transition: background-color 0.3s;
-    }
-    [data-theme="dark"] #sidebar-background {
-        background-color: var(--color-sidebar-bg-dark);
-    }
-    .liquid-glass {
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-        background-color: var(--color-liquid-glass-bg-light); 
-        color: var(--color-sidebar-text-light);
-        transition: all 0.3s;
-        /* Taille et forme de base pour les liens */
-        width: 249px; 
-        height: 48px; 
-        border-radius: 30px;
-        padding: 0.625rem 1rem; /* p-2.5 */
-        gap: 0.75rem; /* gap-3 */
-        display: flex;
-        align-items: center;
-        justify-content: start;
-        cursor: pointer;
-    }
-    .liquid-glass:hover:not(.active) {
-        background-color: rgba(255, 255, 255, 0.45);
-    }
-    [data-theme="dark"] .liquid-glass {
-        background-color: var(--color-liquid-glass-bg-dark);
-        color: var(--color-sidebar-text-dark);
-    }
-    [data-theme="dark"] .liquid-glass:hover:not(.active) {
-        background-color: rgba(255, 255, 255, 0.15);
-    }
-    .liquid-glass.active {
-        background-color: var(--color-liquid-glass-active-bg-light) !important;
-        color: var(--color-liquid-glass-active-text-light) !important;
-        font-weight: 700;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    }
-    [data-theme="dark"] .liquid-glass.active {
-        background-color: var(--color-liquid-glass-active-bg-dark) !important;
-        color: var(--color-liquid-glass-active-text-dark) !important;
-        box-shadow: none;
-    }
-    #logout-link {
-        background-color: var(--color-deconnexion-bg-light);
-        color: var(--color-deconnexion-text-light);
-        width: 352px;
-        height: 61px;
-        border-radius: 30px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 1rem;
-    }
-    /* Les autres styles d'amélioration de la lisibilité du mode sombre (de votre base (1).html) sont conservés */
-    /* ... (tous les styles d'amélioration du mode sombre de base (1).html) ... */
     
+    /* Styles pour la sidebar en mode sombre (maintenue pour la neutralisation) */
+    [data-theme="dark"] aside {
+        background: var(--color-bg-dark-sidebar);
+        color: var(--color-text-dark-sidebar);
+        border-color: var(--color-border-dark-sidebar);
+    }
+    
+    [data-theme="dark"] aside .card {
+        background: var(--color-card-bg-dark-sidebar);
+        border: 1px solid var(--color-border-dark-sidebar);
+    }
+
+    /* Couleurs du texte dans le contenu principal */
+    [data-theme="dark"] main .text-gray-800 { color: var(--color-text-dark-dashboard); }
+    [data-theme="dark"] main .text-gray-500 { color: var(--color-text-subtle-dark-dashboard); }
+    [data-theme="dark"] main .border-gray-200 { border-color: var(--color-border-dark-dashboard); }
+    
+    /* Couleurs du texte dans la sidebar */
+    [data-theme="dark"] aside .text-gray-800 { color: var(--color-text-dark-sidebar); }
+    [data-theme="dark"] aside .text-gray-500 { color: var(--color-text-subtle-dark-sidebar); }
+    [data-theme="dark"] aside .border-gray-200 { border-color: var(--color-border-dark-sidebar); }
+
+    /* -------------------------------------------------------------------------------------------------- */
+    /* AMÉLIORATIONS MODE SOMBRE - LISIBILITÉ ACCRUE                                                      */
+    /* -------------------------------------------------------------------------------------------------- */
+    
+    /* Couleurs pour les textes en mode sombre */
+    [data-theme="dark"] main .text-gray-700 { color: #E5E7EB !important; }
+    [data-theme="dark"] main .text-gray-600 { color: #D1D5DB !important; }
+    [data-theme="dark"] main .text-gray-400 { color: #6B7280 !important; }
+    
+    /* Améliorations des bordures */
+    [data-theme="dark"] main .border-gray-300 { border-color: #6B7280 !important; }
+    
+    /* Dividers plus visibles */
+    [data-theme="dark"] main .divide-gray-200 > * + * { border-color: #4B5563 !important; }
+    
+    /* Tables plus lisibles */
+    [data-theme="dark"] main .bg-gray-50 { 
+        background-color: #374151 !important;
+        color: #F3F4F6 !important;
+    }
+    
+    [data-theme="dark"] main .hover\:bg-gray-50:hover { 
+        background-color: #4B5563 !important; 
+    }
+    
+    /* Cartes et conteneurs */
+    [data-theme="dark"] main .shadow-sm { 
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3) !important; 
+    }
+    
+    [data-theme="dark"] main .shadow-lg { 
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2) !important; 
+    }
+    
+    /* Inputs et selects plus lisibles */
+    [data-theme="dark"] main input, 
+    [data-theme="dark"] main select, 
+    [data-theme="dark"] main textarea {
+        background-color: #374151 !important;
+        border-color: #6B7280 !important;
+        color: #F3F4F6 !important;
+    }
+    
+    [data-theme="dark"] main input::placeholder,
+    [data-theme="dark"] main textarea::placeholder {
+        color: #9CA3AF !important;
+    }
+    
+    [data-theme="dark"] main input:focus,
+    [data-theme="dark"] main select:focus,
+    [data-theme="dark"] main textarea:focus {
+        border-color: #4F46E5 !important;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.3) !important;
+        background-color: #4B5563 !important;
+    }
+    
+    /* Modals en mode sombre */
+    [data-theme="dark"] .fixed.bg-black.bg-opacity-50 {
+        background-color: rgba(0, 0, 0, 0.8) !important;
+    }
+    
+    [data-theme="dark"] .fixed .bg-white {
+        background-color: #1F2937 !important;
+        border: 1px solid #374151 !important;
+    }
+    
+    /* Badges et statuts plus contrastés */
+    [data-theme="dark"] main .bg-green-100 {
+        background-color: #065F46 !important;
+        color: #A7F3D0 !important;
+    }
+    
+    [data-theme="dark"] main .bg-blue-100 {
+        background-color: #1E3A8A !important;
+        color: #BFDBFE !important;
+    }
+    
+    [data-theme="dark"] main .bg-purple-100 {
+        background-color: #581C87 !important;
+        color: #DDD6FE !important;
+    }
+    
+    [data-theme="dark"] main .bg-yellow-100 {
+        background-color: #92400E !important;
+        color: #FED7AA !important;
+    }
+    
+    [data-theme="dark"] main .bg-red-100 {
+        background-color: #7F1D1D !important;
+        color: #FECACA !important;
+    }
+    
+    /* Amélioration du contraste des couleurs de texte pour les badges */
+    [data-theme="dark"] main .text-green-800 { color: #A7F3D0 !important; }
+    [data-theme="dark"] main .text-blue-800 { color: #BFDBFE !important; }
+    [data-theme="dark"] main .text-purple-800 { color: #DDD6FE !important; }
+    [data-theme="dark"] main .text-yellow-800 { color: #FED7AA !important; }
+    [data-theme="dark"] main .text-red-800 { color: #FECACA !important; }
+    
+    /* Boutons hover améliorés */
+    [data-theme="dark"] main .hover\:bg-blue-50:hover { 
+        background-color: rgba(79, 70, 229, 0.2) !important; 
+    }
+    
+    [data-theme="dark"] main .hover\:bg-green-50:hover { 
+        background-color: rgba(34, 197, 94, 0.2) !important; 
+    }
+    
+    [data-theme="dark"] main .hover\:bg-red-50:hover { 
+        background-color: rgba(239, 68, 68, 0.2) !important; 
+    }
+    
+    [data-theme="dark"] main .hover\:bg-gray-200:hover { 
+        background-color: #6B7280 !important; 
+    }
+    
+    /* Stats cards plus lisibles */
+    [data-theme="dark"] main .text-blue-600 { color: #60A5FA !important; }
+    [data-theme="dark"] main .text-green-600 { color: #34D399 !important; }
+    [data-theme="dark"] main .text-purple-600 { color: #A78BFA !important; }
+    [data-theme="dark"] main .text-orange-600 { color: #FB923C !important; }
+    [data-theme="dark"] main .text-red-600 { color: #F87171 !important; }
+
+    /* -------------------------------------------------------------------------------------------------- */
+    /* NOUVEAUX STYLES FIGMA / LIQUID GLASS                                                               */
+    /* -------------------------------------------------------------------------------------------------- */
+    
+    /* Force la police pour les éléments de la nouvelle sidebar */
+    .font-['Bebas_Neue'] {
+        font-family: 'Bebas Neue', cursive;
+    }
+
+    /* Style par défaut des liens (Liquid Glass) */
+    .liquid-glass-default {
+        background-color: rgba(255, 255, 255, 0.3); /* Blanc transparent */
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(5px); /* Flou (support navigateur variable, nécessite un prefixe ou un plugin tailwind) */
+        -webkit-backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.5); /* Bordure légère */
+    }
+
+    /* Style de l'élément sélectionné (Liquid Glass Rose) */
+    .liquid-glass-selected {
+        /* Utilisation de la couleur rose définie dans tailwind.config */
+        background-color: #FFDCE4; /* maihlili-figma-rose */
+        color: #3055ff !important; /* Texte en bleu Maihlili */
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        border: 1px solid #FFDCE4;
+    }
+    
+    /* Le style par défaut de l'ancienne sidebar doit être neutralisé pour la nouvelle */
+    [data-theme="dark"] aside {
+        background: #3055ff !important; /* Force le bleu même en mode sombre */
+        color: white !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3) !important;
+    }
+    
+    /* Assurez-vous que le main content est ajusté pour la nouvelle largeur */
+    main {
+        padding-left: 2rem;
+    }
+    
+    /* -------------------------------------------------------------------------------------------------- */
+    /* Logos                                                                                              */
+    /* -------------------------------------------------------------------------------------------------- */
     .logo-dark { display: none; }
     .logo-light { display: inline-block; }
     [data-theme="dark"] .logo-light { display: none; }
     [data-theme="dark"] .logo-dark { display: inline-block; }
+
+    /* -------------------------------------------------------------------------------------------------- */
+    /* Animations & Scrollbar                                                                             */
+    /* -------------------------------------------------------------------------------------------------- */
+    * { transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, transform 0.2s ease !important; }
     
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: rgba(79, 70, 229, 0.1); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #4F46E5 0%, #4338CA 100%); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #4338CA 0%, #3730A3 100%); }
+    
+    /* Scrollbars pour le mode sombre */
+    [data-theme="dark"] ::-webkit-scrollbar-track { 
+        background: #1F2937 !important; 
+    }
+    
+    [data-theme="dark"] ::-webkit-scrollbar-thumb { 
+        background: linear-gradient(180deg, #4F46E5 0%, #7C3AED 100%) !important; 
+    }
+    
+    [data-theme="dark"] ::-webkit-scrollbar-thumb:hover { 
+        background: linear-gradient(180deg, #4338CA 0%, #6D28D9 100%) !important; 
+    }
+    
+    /* Style du bouton de thème */
     .theme-toggle {
-        /* ... (styles du bouton de base (1).html) ... */
       position: fixed;
       bottom: 2rem;
       right: 2rem;
@@ -170,7 +337,8 @@
       z-index: 1000;
       font-size: 1.5rem;
     }
-    
+
+    /* Toggle theme button amélioré */
     [data-theme="dark"] .theme-toggle {
         background: linear-gradient(135deg, #4F46E5, #7C3AED) !important;
         border: none !important;
@@ -178,124 +346,129 @@
         color: #E0E7FF;
     }
     
-  </style>
-</head>
-<body class="flex min-h-screen" data-theme="light">
+    [data-theme="dark"] .theme-toggle:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 12px 40px rgba(79, 70, 229, 0.5) !important;
+    }
 
-  <aside class="w-[460px] min-h-screen relative p-0">
+    /* Sidebar améliorée */
+    /* Les styles Figma ci-dessus prennent le dessus sur ces anciennes classes de sidebar */
+    [data-theme="dark"] aside .nav-link {
+        color: #E0E7FF !important;
+        transition: all 0.2s ease !important;
+    }
     
-    <div id="sidebar-background" 
-         class="absolute inset-0 m-[18px] rounded-[30px] shadow-2xl">
+    [data-theme="dark"] aside .nav-link:hover {
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        color: #FFFFFF !important;
+        transform: translateX(4px) !important;
+    }
+    
+    /* User profile dans la sidebar */
+    [data-theme="dark"] aside .user-profile {
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    }
+    
+    /* Flash messages améliorés */
+    [data-theme="dark"] .bg-gradient-to-r.from-maihlili-100.to-maihlili-50 {
+        background: linear-gradient(to right, rgba(79, 70, 229, 0.2), rgba(99, 102, 241, 0.1)) !important;
+        border-color: rgba(79, 70, 229, 0.3) !important;
+        color: #E0E7FF !important;
+    }
+
+    /* Couleurs du menu en mode sombre */
+    [data-theme="dark"] .nav-link {
+        color: var(--color-text-subtle-dark-sidebar);
+    }
+    [data-theme="dark"] .nav-link:hover {
+        background-color: var(--color-card-bg-dark-sidebar);
+        color: var(--color-text-dark-sidebar);
+    }
+  </style>
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/main.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 flex min-h-screen" data-theme="light">
+
+  <aside class="w-[450px] p-4 flex flex-col bg-gray-50 dark:bg-gray-800" style="min-height: 100vh;">
+    <div class="h-[185px] rounded-[50px] bg-maihlili-figma-blue flex items-center p-6 shadow-xl">
+      <div class="w-[162px] h-[162px] rounded-[50px] bg-white flex items-center justify-center -translate-y-2 shadow-2xl">
+        <img src="{{ url_for('static', filename='images/maihlili-logo-light.png') }}" alt="Logo Maihlili clair" class="h-10 w-10">
+      </div>
+      <div class="ml-4 flex flex-col leading-none text-white font-['Bebas_Neue'] uppercase">
+        <span class="text-5xl tracking-widest">Maihlili.</span>
+        <span class="text-5xl -translate-x-4 tracking-widest">Paie</span>
+      </div>
     </div>
 
-    <div class="absolute top-[12px] left-[18px] w-[421px] h-[185px] bg-nouveau-bleu-500 rounded-[50px] flex items-center shadow-xl p-6">
-        
-        <div class="w-[162px] h-[162px] bg-white rounded-[50px] shadow-inner flex items-center justify-center relative">
-            <svg class="text-nouveau-bleu-500" width="80%" height="80%" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L2 22h20L12 2zm0 4.1L18.4 20H5.6L12 6.1zm0 3.3L8.6 15h6.8L12 9.4z"/>
-            </svg>
-        </div>
-        
-        <div class="ml-4">
-            <p class="bebas-neue text-6xl text-white tracking-widest leading-none" 
-               style="font-size: 36px; position: absolute; left: 217px; top: 74px;">
-               Maihlili
-            </p>
-            <p class="bebas-neue text-6xl text-white tracking-widest leading-none" 
-               style="font-size: 36px; position: absolute; left: 299px; top: 105px;">
-               Paie
-            </p>
-        </div>
-    </div>
-
-    <div class="absolute top-[228px] left-[18px] w-[421px] h-[930px] p-0 space-y-0 overflow-hidden">
-        
-        <nav class="absolute top-[0px] left-[65px] w-auto">
-            <div class="space-y-[36px]">
-                {% if current_user.is_authenticated %}
-                
-                <a href="{{ url_for('index') if current_user.is_manager else url_for('employee_dashboard') }}" 
-                   class="liquid-glass dashboard-link shadow-md">
-                   <span class="w-10 h-10 flex items-center justify-center text-xl">📊</span> 
-                   <span class="text-base font-semibold">Tableau de bord</span>
-                </a>
-                
-                {% if current_user.is_manager %}
-                  <a href="{{ url_for('planning') }}" 
-                     class="liquid-glass planning-link">
-                    <span class="w-10 h-10 flex items-center justify-center text-xl">📅</span> 
-                    <span class="text-base font-semibold">Planning</span>
-                  </a>
-                  
-                  <a href="{{ url_for('show_employees') }}" 
-                     class="liquid-glass">
-                    <span class="w-10 h-10 flex items-center justify-center text-xl">👥</span> 
-                    <span class="text-base font-semibold">Employés</span>
-                  </a>
-                  
-                  <a href="{{ url_for('manage_teams') }}" 
-                     class="liquid-glass">
-                    <span class="w-10 h-10 flex items-center justify-center text-xl">🏢</span> 
-                    <span class="text-base font-semibold">Équipes</span>
-                  </a>
-                  
-                  <a href="{{ url_for('show_shifts') }}" 
-                     class="liquid-glass">
-                    <span class="w-10 h-10 flex items-center justify-center text-xl">🕐</span> 
-                    <span class="text-base font-semibold">Services</span>
-                  </a>
-                  
-                  <a href="{{ url_for('assignments') }}" 
-                     class="liquid-glass">
-                    <span class="w-10 h-10 flex items-center justify-center text-xl">📋</span> 
-                    <span class="text-base font-semibold">Assignations</span>
-                  </a>
-                {% endif %}
-                
-                <a href="{{ url_for('settings') }}" 
-                   class="liquid-glass settings-link">
-                  <span class="w-10 h-10 flex items-center justify-center text-xl">⚙️</span> 
-                  <span class="text-base font-semibold">Paramètres</span>
-                </a>
-              {% else %}
-                <a href="{{ url_for('login') }}" 
-                   class="liquid-glass">
-                  <span class="w-10 h-10 flex items-center justify-center text-xl">🔑</span> 
-                  <span class="text-base font-semibold">Connexion</span>
-                </a>
-                <a href="{{ url_for('register') }}" 
-                   class="liquid-glass">
-                  <span class="w-10 h-10 flex items-center justify-center text-xl">📝</span> 
-                  <span class="text-base font-semibold">Inscription</span>
-                </a>
-              {% endif %}
-            </div>
-        </nav>
-
+    <div class="flex-1 mt-4 p-8 rounded-[30px] bg-maihlili-figma-blue flex flex-col justify-between shadow-2xl">
+      
+      <nav class="space-y-4">
         {% if current_user.is_authenticated %}
-        <div class="liquid-glass absolute top-[501px] left-[39px] w-[352px] h-[95px] rounded-[30px] flex items-center p-4 gap-4 shadow-lg user-profile">
-            <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center text-nouveau-bleu-500 text-2xl font-bold bebas-neue">
-              {{ current_user.username[0].upper() }}
-            </div>
-            <div class="flex flex-col justify-center">
-              <p class="bebas-neue text-2xl tracking-widest leading-none text-white" style="font-size: 36px;">
-                {{ current_user.username.upper() }}
-              </p>
-              <p class="text-sm font-light leading-none mt-1 text-white opacity-80">
-                {% if current_user.is_admin %}👑 ADMIN
-                {% elif current_user.is_manager %}👑 MANAGER
-                {% else %}👤 EMPLOYÉ{% endif %}
-              </p>
-            </div>
-        </div>
+          {% set menu_items = [
+            ('📊', 'Planning', url_for('index') if current_user.is_manager else url_for('employee_dashboard'), current_user.is_authenticated),
+            ('📅', 'Planning Avancé', url_for('planning'), current_user.is_manager),
+            ('👥', 'Employés', url_for('show_employees'), current_user.is_manager),
+            ('🏢', 'Équipes', url_for('manage_teams'), current_user.is_manager),
+            ('🕐', 'Services', url_for('show_shifts'), current_user.is_manager),
+            ('📋', 'Assignations', url_for('assignments'), current_user.is_manager),
+            ('⚙️', 'Paramètres', url_for('settings'), current_user.is_authenticated)
+          ] %}
 
-        <a id="logout-link" href="{{ url_for('logout') }}" 
-           class="absolute top-[609px] left-[36px] w-[352px] h-[61px] rounded-[30px] flex items-center justify-center gap-4 cursor-pointer shadow-lg">
-            <span class="text-2xl">🛑</span>
-            <span class="bebas-neue text-3xl tracking-widest">SE DÉCONNECTER</span>
-        </a>
-        {% endif %}
+          {% for icon, label, url, condition in menu_items %}
+            {% if condition %}
+            <a href="{{ url }}" 
+               class="nav-link flex items-center p-2 rounded-[15px] hover:bg-white/20 transition-all duration-200 shadow-md
+                      {% if loop.index == 1 %} liquid-glass-selected {% else %} liquid-glass-default {% endif %}"
+               style="height: 70px; gap: 1rem;"> 
+              
+              <span class="text-3xl p-1 bg-white/20 rounded-full w-10 h-10 flex items-center justify-center">{{ icon }}</span>
+              <span class="text-3xl text-white font-medium ml-2">{{ label }}</span>
+            </a>
+            {% endif %}
+          {% endfor %}
         
+        {% else %}
+          <a href="{{ url_for('login') }}" 
+             class="nav-link flex items-center p-2 rounded-[15px] liquid-glass-default hover:bg-white/20"
+             style="height: 70px; gap: 1rem;">
+            <span class="text-3xl p-1 bg-white/20 rounded-full w-10 h-10 flex items-center justify-center">🔑</span>
+            <span class="text-3xl text-white font-medium ml-2">Connexion</span>
+          </a>
+          <a href="{{ url_for('register') }}" 
+             class="nav-link flex items-center p-2 rounded-[15px] liquid-glass-default hover:bg-white/20"
+             style="height: 70px; gap: 1rem;">
+            <span class="text-3xl p-1 bg-white/20 rounded-full w-10 h-10 flex items-center justify-center">📝</span>
+            <span class="text-3xl text-white font-medium ml-2">Inscription</span>
+          </a>
+        {% endif %}
+      </nav>
+      
+      {% if current_user.is_authenticated %}
+      <div class="mt-8 space-y-4">
+        
+        <div class="flex items-center p-4 rounded-[30px] bg-white/30 backdrop-blur-sm shadow-inner" style="height: 95px;">
+          <div class="w-16 h-16 bg-white/50 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg">
+            👤
+          </div>
+          <div class="flex-1 ml-4 text-white">
+            <p class="text-3xl font-['Bebas_Neue'] uppercase tracking-wider">{{ current_user.username }}</p>
+            <p class="text-sm font-light -mt-1">
+              {% if current_user.is_admin %}Administrateur
+              {% elif current_user.is_manager %}Manager
+              {% else %}Employé{% endif %}
+            </p>
+          </div>
+        </div>
+        
+        <a href="{{ url_for('logout') }}" 
+           class="flex items-center justify-center p-4 rounded-[30px] bg-red-400/70 hover:bg-red-500/80 backdrop-blur-sm text-white font-['Bebas_Neue'] uppercase text-3xl transition-all duration-200"
+           style="height: 61px;">
+          <span class="text-4xl mr-2 -translate-y-0.5">🚪</span>
+          Se Déconnecter
+        </a>
+      </div>
+      {% endif %}
     </div>
   </aside>
   <main class="flex-1 p-6">
@@ -303,16 +476,16 @@
       {% if messages %}
         <ul class="mb-4">
           {% for msg in messages %}
-            <li class="bg-gradient-to-r from-nouveau-bleu-100 to-nouveau-bleu-50 border border-nouveau-bleu-200 text-nouveau-bleu-700 px-4 py-3 rounded-lg mb-2 shadow-sm">
+            <li class="bg-gradient-to-r from-maihlili-100 to-maihlili-50 border border-maihlili-200 text-maihlili-700 px-4 py-3 rounded-lg mb-2 shadow-sm">
               <span class="font-medium">ℹ️</span> {{ msg }}
             </li>
           {% endfor %}
         </ul>
       {% endif %}
     {% endwith %}
-    
     {% block content %}{% endblock %}
   </main>
+
   <button class="theme-toggle" id="themeToggle">
     🌙
   </button>
@@ -349,38 +522,18 @@
 
     document.addEventListener('DOMContentLoaded', function() {
       const currentPath = window.location.pathname;
-      const navLinks = document.querySelectorAll('.liquid-glass');
+      const navLinks = document.querySelectorAll('.nav-link');
       
       navLinks.forEach(link => {
-        // Supprimer toutes les classes actives
-        link.classList.remove('active');
-
-        // Définir le lien actif basé sur le chemin
+        // Logique pour mettre en surbrillance le lien actif dans la nouvelle structure
         if (link.getAttribute('href') === currentPath) {
-          link.classList.add('active');
-        } 
-        
-        // Logique spécifique pour le tableau de bord (index)
-        if (currentPath === '/' && link.classList.contains('dashboard-link')) {
-             link.classList.add('active');
+          link.classList.add('liquid-glass-selected');
+          link.classList.remove('liquid-glass-default');
+        } else {
+          link.classList.add('liquid-glass-default');
+          link.classList.remove('liquid-glass-selected');
         }
-
-        // Cas où Planning Avancé (planning) est actif
-        if (currentPath.includes('/planning') && link.classList.contains('planning-link')) {
-             link.classList.add('active');
-        }
-        
       });
-      
-      // Si aucun lien n'est actif (par exemple, la page de base est "/" et il y a des redirections), activer le dashboard
-      const activeLinkExists = document.querySelector('.liquid-glass.active');
-      if (!activeLinkExists) {
-        const dashboardLink = document.querySelector('.dashboard-link');
-        if (dashboardLink) {
-             dashboardLink.classList.add('active');
-        }
-      }
-      
     });
   </script>
 </body>
