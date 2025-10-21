@@ -390,20 +390,20 @@
 </head>
 <body class="bg-gray-50 flex min-h-screen" data-theme="light">
 
-  <aside class="w-[450px] p-4 flex flex-col bg-gray-50 dark:bg-gray-800" style="min-height: 100vh;">
-    <div class="h-[185px] rounded-[50px] bg-maihlili-figma-blue flex items-center p-6 shadow-xl">
-      <div class="w-[162px] h-[162px] rounded-[50px] bg-white flex items-center justify-center -translate-y-2 shadow-2xl">
-        <img src="{{ url_for('static', filename='images/maihlili-logo-light.png') }}" alt="Logo Maihlili clair" class="h-10 w-10">
+  <aside class="w-[320px] p-3 flex flex-col bg-gray-50 dark:bg-gray-800" style="min-height: 100vh;">
+    <div class="h-[140px] rounded-[50px] bg-maihlili-figma-blue flex items-center p-4 shadow-xl">
+      <div class="w-[110px] h-[110px] rounded-[50px] bg-white flex items-center justify-center -translate-y-1 shadow-xl">
+        <img src="{{ url_for('static', filename='images/maihlili-logo-light.png') }}" alt="Logo Maihlili clair" class="h-8 w-8">
       </div>
-      <div class="ml-4 flex flex-col leading-none text-white font-['Bebas_Neue'] uppercase">
-        <span class="text-5xl tracking-widest">Maihlili.</span>
-        <span class="text-5xl -translate-x-4 tracking-widest">Paie</span>
+      <div class="ml-3 flex flex-col leading-none text-white font-['Bebas_Neue'] uppercase">
+        <span class="text-4xl tracking-widest">Maihlili.</span>
+        <span class="text-4xl -translate-x-3 tracking-widest">Paie</span>
       </div>
     </div>
 
-    <div class="flex-1 mt-4 p-8 rounded-[30px] bg-maihlili-figma-blue flex flex-col justify-between shadow-2xl">
+    <div class="flex-1 mt-3 p-6 rounded-[30px] bg-maihlili-figma-blue flex flex-col justify-between shadow-2xl">
       
-      <nav class="space-y-4">
+      <nav class="space-y-3">
         {% if current_user.is_authenticated %}
           {% set menu_items = [
             ('📊', 'Planning', url_for('index') if current_user.is_manager else url_for('employee_dashboard'), current_user.is_authenticated),
@@ -420,40 +420,35 @@
             <a href="{{ url }}" 
                class="nav-link flex items-center p-2 rounded-[15px] hover:bg-white/20 transition-all duration-200 shadow-md
                       {% if loop.index == 1 %} liquid-glass-selected {% else %} liquid-glass-default {% endif %}"
-               style="height: 70px; gap: 1rem;"> 
-              
-              <span class="text-3xl p-1 bg-white/20 rounded-full w-10 h-10 flex items-center justify-center">{{ icon }}</span>
-              <span class="text-3xl text-white font-medium ml-2">{{ label }}</span>
-            </a>
+               style="height: 60px; gap: 0.75rem;"> <span class="text-xl p-1 bg-white/20 rounded-full w-9 h-9 flex items-center justify-center">{{ icon }}</span>
+              <span class="text-xl text-white font-medium ml-2">{{ label }}</span> </a>
             {% endif %}
           {% endfor %}
         
         {% else %}
           <a href="{{ url_for('login') }}" 
              class="nav-link flex items-center p-2 rounded-[15px] liquid-glass-default hover:bg-white/20"
-             style="height: 70px; gap: 1rem;">
-            <span class="text-3xl p-1 bg-white/20 rounded-full w-10 h-10 flex items-center justify-center">🔑</span>
-            <span class="text-3xl text-white font-medium ml-2">Connexion</span>
+             style="height: 60px; gap: 0.75rem;">
+            <span class="text-xl p-1 bg-white/20 rounded-full w-9 h-9 flex items-center justify-center">🔑</span>
+            <span class="text-xl text-white font-medium ml-2">Connexion</span>
           </a>
           <a href="{{ url_for('register') }}" 
              class="nav-link flex items-center p-2 rounded-[15px] liquid-glass-default hover:bg-white/20"
-             style="height: 70px; gap: 1rem;">
-            <span class="text-3xl p-1 bg-white/20 rounded-full w-10 h-10 flex items-center justify-center">📝</span>
-            <span class="text-3xl text-white font-medium ml-2">Inscription</span>
+             style="height: 60px; gap: 0.75rem;">
+            <span class="text-xl p-1 bg-white/20 rounded-full w-9 h-9 flex items-center justify-center">📝</span>
+            <span class="text-xl text-white font-medium ml-2">Inscription</span>
           </a>
         {% endif %}
       </nav>
       
       {% if current_user.is_authenticated %}
-      <div class="mt-8 space-y-4">
+      <div class="mt-8 space-y-3">
         
-        <div class="flex items-center p-4 rounded-[30px] bg-white/30 backdrop-blur-sm shadow-inner" style="height: 95px;">
-          <div class="w-16 h-16 bg-white/50 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg">
+        <div class="flex items-center p-3 rounded-[30px] bg-white/30 backdrop-blur-sm shadow-inner" style="height: 75px;"> <div class="w-12 h-12 bg-white/50 rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-lg">
             👤
           </div>
-          <div class="flex-1 ml-4 text-white">
-            <p class="text-3xl font-['Bebas_Neue'] uppercase tracking-wider">{{ current_user.username }}</p>
-            <p class="text-sm font-light -mt-1">
+          <div class="flex-1 ml-3 text-white">
+            <p class="text-2xl font-['Bebas_Neue'] uppercase tracking-wider">{{ current_user.username }}</p> <p class="text-xs font-light -mt-1">
               {% if current_user.is_admin %}Administrateur
               {% elif current_user.is_manager %}Manager
               {% else %}Employé{% endif %}
@@ -462,9 +457,8 @@
         </div>
         
         <a href="{{ url_for('logout') }}" 
-           class="flex items-center justify-center p-4 rounded-[30px] bg-red-400/70 hover:bg-red-500/80 backdrop-blur-sm text-white font-['Bebas_Neue'] uppercase text-3xl transition-all duration-200"
-           style="height: 61px;">
-          <span class="text-4xl mr-2 -translate-y-0.5">🚪</span>
+           class="flex items-center justify-center p-3 rounded-[30px] bg-red-400/70 hover:bg-red-500/80 backdrop-blur-sm text-white font-['Bebas_Neue'] uppercase text-2xl transition-all duration-200"
+           style="height: 50px;"> <span class="text-3xl mr-1 -translate-y-0.5">🚪</span>
           Se Déconnecter
         </a>
       </div>
