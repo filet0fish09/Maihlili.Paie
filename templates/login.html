@@ -73,7 +73,7 @@
       min-height: 100vh;
       display: flex;
       align-items: center;
-      justify-content: center;
+      justify-content: center; /* CENTRAGE HORIZONTAL ET VERTICAL */
     }
     [data-theme="dark"] body {
       background-color: var(--color-bg-dark);
@@ -132,8 +132,8 @@
 </head>
 <body data-theme="light">
 
-    <div class="p-8 w-full max-w-md">
-    <div class="card p-8 w-full max-w-md rounded-2xl">
+      <div class="p-8 w-full max-w-sm">
+    <div class="card p-8 w-full max-w-sm rounded-2xl">
         
                 <div class="flex justify-center mb-6">
                         <img src="{{ url_for('static', filename='images/maihlili-logo-light.png') }}" 
