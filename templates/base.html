@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Maihlili SPV</title>
+  <title>Maihlili Paie</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -41,7 +41,7 @@
   </script>
   <style>
     /* -------------------------------------------------------------------------------------------------- */
-    /* Couleurs & Thème Maihlili SPV                                                                       */
+    /* Couleurs & Thème Maihlili Paie AMÉLIORÉ                                                              */
     /* -------------------------------------------------------------------------------------------------- */
     :root {
       /* Couleurs Claires */
@@ -49,23 +49,27 @@
       --color-text-light: #1f2937;
       --color-text-subtle-light: #6b7280;
       --color-border-light: #e5e7eb;
-      --color-card-bg-light: #fff0f8;
+      --color-card-bg-light: #ffffff;
     }
 
     [data-theme="dark"] {
-      /* Couleurs Sombres pour le tableau de bord uniquement */
+      /* NOUVEAU GRADIENT INSPIRÉ DE force_password_change */
+      --gradient-hero: linear-gradient(135deg, #4F46E5 0%, #EC4899 100%);
+      --gradient-primary: linear-gradient(135deg, #4F46E5 0%, #6366F1 100%);
+      
+      /* Couleurs Sombres pour le tableau de bord */
       --color-bg-dark-dashboard: #1f2937;
       --color-text-dark-dashboard: #f9fafb;
       --color-text-subtle-dark-dashboard: #9ca3af;
       --color-border-dark-dashboard: #374151;
       --color-card-bg-dark-dashboard: #2d3748;
       
-      /* Couleurs pour la sidebar en mode sombre (bleu) */
-      --color-bg-dark-sidebar: #3055ff;
+      /* Couleurs pour la sidebar en mode sombre (GRADIENT) */
+      --color-bg-dark-sidebar: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
       --color-text-dark-sidebar: #f9fafb;
-      --color-text-subtle-dark-sidebar: #c7d2fe;
+      --color-text-subtle-dark-sidebar: #E0E7FF;
       --color-border-dark-sidebar: rgba(255, 255, 255, 0.1);
-      --color-card-bg-dark-sidebar: #2a4ce5;
+      --color-card-bg-dark-sidebar: rgba(255, 255, 255, 0.1);
     }
 
     body {
@@ -73,7 +77,13 @@
       color: var(--color-text-light);
       transition: background-color 0.5s ease, color 0.5s ease;
     }
-    
+
+    /* Mode sombre avec GRADIENT de fond */
+    [data-theme="dark"] body {
+      background: linear-gradient(135deg, #1f2937 0%, #111827 50%, #0f172a 100%);
+      background-attachment: fixed;
+    }
+
     .card {
       background-color: var(--color-card-bg-light);
       border: 1px solid var(--color-border-light);
@@ -82,362 +92,383 @@
 
     /* Styles pour la zone de contenu principale en mode sombre */
     [data-theme="dark"] main {
-        background-color: var(--color-bg-dark-dashboard);
-        color: var(--color-text-dark-dashboard);
+      background: transparent;
+      color: var(--color-text-dark-dashboard);
     }
-    
+
     /* Correction pour les cartes et éléments 'bg-white' dans le dashboard */
     [data-theme="dark"] main .bg-white {
-        background-color: var(--color-card-bg-dark-dashboard);
-        border-color: var(--color-border-dark-dashboard);
+      background: linear-gradient(135deg, rgba(45, 55, 72, 0.95) 0%, rgba(31, 41, 55, 0.95) 100%);
+      border-color: var(--color-border-dark-dashboard);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 32px rgba(79, 70, 229, 0.2);
     }
-    
-    /* Styles pour la sidebar en mode sombre */
+
+    /* Styles pour la sidebar en mode sombre avec GRADIENT */
     [data-theme="dark"] aside {
-        background: var(--color-bg-dark-sidebar);
-        color: var(--color-text-dark-sidebar);
-        border-color: var(--color-border-dark-sidebar);
+      background: var(--color-bg-dark-sidebar);
+      color: var(--color-text-dark-sidebar);
+      border-color: var(--color-border-dark-sidebar);
+      box-shadow: 4px 0 24px rgba(79, 70, 229, 0.3);
     }
-    
+
     [data-theme="dark"] aside .card {
-        background: var(--color-card-bg-dark-sidebar);
-        border: 1px solid var(--color-border-dark-sidebar);
+      background: var(--color-card-bg-dark-sidebar);
+      border: 1px solid var(--color-border-dark-sidebar);
+      backdrop-filter: blur(10px);
     }
 
     /* Couleurs du texte dans le contenu principal */
-    [data-theme="dark"] main .text-gray-800 { color: var(--color-text-dark-dashboard); }
+    [data-theme="dark"] main .text-gray-800 { color: #F3F4F6 !important; }
     [data-theme="dark"] main .text-gray-500 { color: var(--color-text-subtle-dark-dashboard); }
-    [data-theme="dark"] main .border-gray-200 { border-color: var(--color-border-dark-dashboard); }
-    
+    [data-theme="dark"] main .border-gray-200 { border-color: rgba(255, 255, 255, 0.1); }
+
     /* Couleurs du texte dans la sidebar */
     [data-theme="dark"] aside .text-gray-800 { color: var(--color-text-dark-sidebar); }
     [data-theme="dark"] aside .text-gray-500 { color: var(--color-text-subtle-dark-sidebar); }
-    [data-theme="dark"] aside .border-gray-200 { border-color: var(--color-border-dark-sidebar); }
 
     /* -------------------------------------------------------------------------------------------------- */
-    /* AMÉLIORATIONS MODE SOMBRE - LISIBILITÉ ACCRUE                                                      */
+    /* AMÉLIORATIONS MODE SOMBRE - LISIBILITÉ ACCRUE                                                       */
     /* -------------------------------------------------------------------------------------------------- */
-    
+
     /* Couleurs pour les textes en mode sombre */
     [data-theme="dark"] main .text-gray-700 { color: #E5E7EB !important; }
     [data-theme="dark"] main .text-gray-600 { color: #D1D5DB !important; }
-    [data-theme="dark"] main .text-gray-400 { color: #6B7280 !important; }
-    
+    [data-theme="dark"] main .text-gray-400 { color: #9CA3AF !important; }
+
     /* Améliorations des bordures */
-    [data-theme="dark"] main .border-gray-300 { border-color: #6B7280 !important; }
-    
+    [data-theme="dark"] main .border-gray-300 { border-color: rgba(255, 255, 255, 0.15) !important; }
+
     /* Dividers plus visibles */
-    [data-theme="dark"] main .divide-gray-200 > * + * { border-color: #4B5563 !important; }
-    
+    [data-theme="dark"] main .divide-gray-200 > * + * { border-color: rgba(255, 255, 255, 0.1) !important; }
+
     /* Tables plus lisibles */
-    [data-theme="dark"] main .bg-gray-50 { 
-        background-color: #374151 !important;
-        color: #F3F4F6 !important;
+    [data-theme="dark"] main .bg-gray-50 { 
+      background: linear-gradient(135deg, rgba(75, 85, 99, 0.5) 0%, rgba(55, 65, 81, 0.5) 100%) !important;
+      color: #F3F4F6 !important;
+      backdrop-filter: blur(10px);
     }
-    
-    [data-theme="dark"] main .hover\:bg-gray-50:hover { 
-        background-color: #4B5563 !important; 
+
+    [data-theme="dark"] main .hover\:bg-gray-50:hover { 
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(124, 58, 237, 0.2) 100%) !important;
     }
-    
-    /* Cartes et conteneurs */
-    [data-theme="dark"] main .shadow-sm { 
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3) !important; 
+
+    /* Cartes et conteneurs avec effet glassmorphism */
+    [data-theme="dark"] main .shadow-sm { 
+      box-shadow: 0 1px 3px 0 rgba(79, 70, 229, 0.3), 0 0 20px rgba(124, 58, 237, 0.1) !important; 
     }
-    
-    [data-theme="dark"] main .shadow-lg { 
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2) !important; 
+
+    [data-theme="dark"] main .shadow-lg { 
+      box-shadow: 0 10px 25px rgba(79, 70, 229, 0.4), 0 0 40px rgba(124, 58, 237, 0.2) !important; 
     }
-    
+
     /* Inputs et selects plus lisibles */
-    [data-theme="dark"] main input, 
-    [data-theme="dark"] main select, 
+    [data-theme="dark"] main input, 
+    [data-theme="dark"] main select, 
     [data-theme="dark"] main textarea {
-        background-color: #374151 !important;
-        border-color: #6B7280 !important;
-        color: #F3F4F6 !important;
+      background: linear-gradient(135deg, rgba(55, 65, 81, 0.8) 0%, rgba(31, 41, 55, 0.8) 100%) !important;
+      border-color: rgba(99, 102, 241, 0.3) !important;
+      color: #F3F4F6 !important;
+      backdrop-filter: blur(10px);
     }
-    
+
     [data-theme="dark"] main input::placeholder,
     [data-theme="dark"] main textarea::placeholder {
-        color: #9CA3AF !important;
+      color: #9CA3AF !important;
     }
-    
+
     [data-theme="dark"] main input:focus,
     [data-theme="dark"] main select:focus,
     [data-theme="dark"] main textarea:focus {
-        border-color: #4F46E5 !important;
-        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.3) !important;
-        background-color: #4B5563 !important;
+      border-color: #6366F1 !important;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3) !important;
+      background: linear-gradient(135deg, rgba(75, 85, 99, 0.9) 0%, rgba(55, 65, 81, 0.9) 100%) !important;
     }
-    
+
     /* Modals en mode sombre */
     [data-theme="dark"] .fixed.bg-black.bg-opacity-50 {
-        background-color: rgba(0, 0, 0, 0.8) !important;
+      background: linear-gradient(135deg, rgba(79, 70, 229, 0.3) 0%, rgba(0, 0, 0, 0.8) 100%) !important;
+      backdrop-filter: blur(5px);
     }
-    
+
     [data-theme="dark"] .fixed .bg-white {
-        background-color: #1F2937 !important;
-        border: 1px solid #374151 !important;
+      background: linear-gradient(135deg, rgba(31, 41, 55, 0.98) 0%, rgba(17, 24, 39, 0.98) 100%) !important;
+      border: 1px solid rgba(99, 102, 241, 0.3) !important;
+      box-shadow: 0 20px 60px rgba(79, 70, 229, 0.4) !important;
+      backdrop-filter: blur(20px);
     }
-    
-    /* Badges et statuts plus contrastés */
+
+    /* Badges et statuts plus contrastés avec effet glow */
     [data-theme="dark"] main .bg-green-100 {
-        background-color: #065F46 !important;
-        color: #A7F3D0 !important;
+      background: linear-gradient(135deg, rgba(6, 95, 70, 0.8) 0%, rgba(4, 120, 87, 0.8) 100%) !important;
+      color: #A7F3D0 !important;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
     }
-    
+
     [data-theme="dark"] main .bg-blue-100 {
-        background-color: #1E3A8A !important;
-        color: #BFDBFE !important;
+      background: linear-gradient(135deg, rgba(30, 58, 138, 0.8) 0%, rgba(37, 99, 235, 0.8) 100%) !important;
+      color: #BFDBFE !important;
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
     }
-    
+
     [data-theme="dark"] main .bg-purple-100 {
-        background-color: #581C87 !important;
-        color: #DDD6FE !important;
+      background: linear-gradient(135deg, rgba(88, 28, 135, 0.8) 0%, rgba(124, 58, 237, 0.8) 100%) !important;
+      color: #DDD6FE !important;
+      box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
     }
-    
+
     [data-theme="dark"] main .bg-yellow-100 {
-        background-color: #92400E !important;
-        color: #FED7AA !important;
+      background: linear-gradient(135deg, rgba(146, 64, 14, 0.8) 0%, rgba(217, 119, 6, 0.8) 100%) !important;
+      color: #FED7AA !important;
+      box-shadow: 0 0 20px rgba(251, 146, 60, 0.3);
     }
-    
+
     [data-theme="dark"] main .bg-red-100 {
-        background-color: #7F1D1D !important;
-        color: #FECACA !important;
-    }
-    
-    /* Amélioration du contraste des couleurs de texte pour les badges */
-    [data-theme="dark"] main .text-green-800 { color: #A7F3D0 !important; }
-    [data-theme="dark"] main .text-blue-800 { color: #BFDBFE !important; }
-    [data-theme="dark"] main .text-purple-800 { color: #DDD6FE !important; }
-    [data-theme="dark"] main .text-yellow-800 { color: #FED7AA !important; }
-    [data-theme="dark"] main .text-red-800 { color: #FECACA !important; }
-    
-    /* Boutons hover améliorés */
-    [data-theme="dark"] main .hover\:bg-blue-50:hover { 
-        background-color: rgba(79, 70, 229, 0.2) !important; 
-    }
-    
-    [data-theme="dark"] main .hover\:bg-green-50:hover { 
-        background-color: rgba(34, 197, 94, 0.2) !important; 
-    }
-    
-    [data-theme="dark"] main .hover\:bg-red-50:hover { 
-        background-color: rgba(239, 68, 68, 0.2) !important; 
-    }
-    
-    [data-theme="dark"] main .hover\:bg-gray-200:hover { 
-        background-color: #6B7280 !important; 
-    }
-    
-    /* Stats cards plus lisibles */
-    [data-theme="dark"] main .text-blue-600 { color: #60A5FA !important; }
-    [data-theme="dark"] main .text-green-600 { color: #34D399 !important; }
-    [data-theme="dark"] main .text-purple-600 { color: #A78BFA !important; }
-    [data-theme="dark"] main .text-orange-600 { color: #FB923C !important; }
-    [data-theme="dark"] main .text-red-600 { color: #F87171 !important; }
-
-    /* -------------------------------------------------------------------------------------------------- */
-    /* Logos                                                                                              */
-    /* -------------------------------------------------------------------------------------------------- */
-    .logo-dark { display: none; }
-    .logo-light { display: inline-block; }
-    [data-theme="dark"] .logo-light { display: none; }
-    [data-theme="dark"] .logo-dark { display: inline-block; }
-
-    /* -------------------------------------------------------------------------------------------------- */
-    /* Animations & Scrollbar                                                                             */
-    /* -------------------------------------------------------------------------------------------------- */
-    * { transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, transform 0.2s ease !important; }
-    
-    ::-webkit-scrollbar { width: 8px; }
-    ::-webkit-scrollbar-track { background: rgba(79, 70, 229, 0.1); border-radius: 10px; }
-    ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #4F46E5 0%, #4338CA 100%); border-radius: 10px; }
-    ::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #4338CA 0%, #3730A3 100%); }
-    
-    /* Scrollbars pour le mode sombre */
-    [data-theme="dark"] ::-webkit-scrollbar-track { 
-        background: #1F2937 !important; 
-    }
-    
-    [data-theme="dark"] ::-webkit-scrollbar-thumb { 
-        background: linear-gradient(180deg, #4F46E5 0%, #7C3AED 100%) !important; 
-    }
-    
-    [data-theme="dark"] ::-webkit-scrollbar-thumb:hover { 
-        background: linear-gradient(180deg, #4338CA 0%, #6D28D9 100%) !important; 
-    }
-    
-    /* Style du bouton de thème */
-    .theme-toggle {
-      position: fixed;
-      bottom: 2rem;
-      right: 2rem;
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      background: #f8fafc;
-      border: 1px solid #e5e7eb;
-      box-shadow: 0 8px 32px rgba(79, 70, 229, 0.15);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      z-index: 1000;
-      font-size: 1.5rem;
+      background: linear-gradient(135deg, rgba(127, 29, 29, 0.8) 0%, rgba(220, 38, 38, 0.8) 100%) !important;
+      color: #FECACA !important;
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
     }
 
-    /* Toggle theme button amélioré */
+    /* Stats cards plus lisibles avec effet glow */
+    [data-theme="dark"] main .text-blue-600 { 
+      color: #60A5FA !important; 
+      text-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
+    }
+    [data-theme="dark"] main .text-green-600 { 
+      color: #34D399 !important; 
+      text-shadow: 0 0 10px rgba(52, 211, 153, 0.5);
+    }
+    [data-theme="dark"] main .text-purple-600 { 
+      color: #A78BFA !important; 
+      text-shadow: 0 0 10px rgba(167, 139, 250, 0.5);
+    }
+    [data-theme="dark"] main .text-orange-600 { 
+      color: #FB923C !important; 
+      text-shadow: 0 0 10px rgba(251, 146, 60, 0.5);
+    }
+    [data-theme="dark"] main .text-red-600 { 
+      color: #F87171 !important; 
+      text-shadow: 0 0 10px rgba(248, 113, 113, 0.5);
+    }
+
+    /* Toggle theme button avec effet PREMIUM */
     [data-theme="dark"] .theme-toggle {
-        background: linear-gradient(135deg, #4F46E5, #7C3AED) !important;
-        border: none !important;
-        box-shadow: 0 8px 32px rgba(79, 70, 229, 0.4) !important;
-        color: #E0E7FF;
-    }
-    
-    [data-theme="dark"] .theme-toggle:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 12px 40px rgba(79, 70, 229, 0.5) !important;
+      background: linear-gradient(135deg, #6366F1, #EC4899) !important;
+      border: 2px solid rgba(255, 255, 255, 0.2) !important;
+      box-shadow: 0 8px 32px rgba(236, 72, 153, 0.5), 0 0 60px rgba(99, 102, 241, 0.3) !important;
+      color: #FFFFFF;
     }
 
-    /* Sidebar améliorée */
-    [data-theme="dark"] aside {
-        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3) !important;
+    [data-theme="dark"] .theme-toggle:hover {
+      transform: translateY(-4px) scale(1.05) !important;
+      box-shadow: 0 12px 48px rgba(236, 72, 153, 0.6), 0 0 80px rgba(99, 102, 241, 0.5) !important;
     }
-    
+
+    /* Sidebar amélioration des liens */
     [data-theme="dark"] aside .nav-link {
-        color: #E0E7FF !important;
-        transition: all 0.2s ease !important;
+      color: #E0E7FF !important;
+      transition: all 0.3s ease !important;
+      position: relative;
+      overflow: hidden;
     }
-    
+
+    [data-theme="dark"] aside .nav-link::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    [data-theme="dark"] aside .nav-link:hover::before {
+      left: 100%;
+    }
+
     [data-theme="dark"] aside .nav-link:hover {
-        background-color: rgba(255, 255, 255, 0.1) !important;
-        color: #FFFFFF !important;
-        transform: translateX(4px) !important;
+      background: rgba(255, 255, 255, 0.15) !important;
+      color: #FFFFFF !important;
+      transform: translateX(8px) !important;
+      box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
     }
-    
-    /* User profile dans la sidebar */
+
+    /* User profile dans la sidebar avec glassmorphism */
     [data-theme="dark"] aside .user-profile {
-        background-color: rgba(255, 255, 255, 0.1) !important;
-        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+      background: rgba(255, 255, 255, 0.1) !important;
+      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
     }
-    
+
     /* Flash messages améliorés */
     [data-theme="dark"] .bg-gradient-to-r.from-maihlili-100.to-maihlili-50 {
-        background: linear-gradient(to right, rgba(79, 70, 229, 0.2), rgba(99, 102, 241, 0.1)) !important;
-        border-color: rgba(79, 70, 229, 0.3) !important;
-        color: #E0E7FF !important;
+      background: linear-gradient(to right, rgba(99, 102, 241, 0.3), rgba(168, 85, 247, 0.2)) !important;
+      border: 1px solid rgba(99, 102, 241, 0.4) !important;
+      color: #E0E7FF !important;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
     }
 
-    /* Couleurs du menu en mode sombre */
-    [data-theme="dark"] .nav-link {
-        color: var(--color-text-subtle-dark-sidebar);
+    /* Scrollbars pour le mode sombre avec gradient */
+    [data-theme="dark"] ::-webkit-scrollbar-track { 
+      background: rgba(31, 41, 55, 0.5) !important; 
     }
-    [data-theme="dark"] .nav-link:hover {
-        background-color: var(--color-card-bg-dark-sidebar);
-        color: var(--color-text-dark-sidebar);
+
+    [data-theme="dark"] ::-webkit-scrollbar-thumb { 
+      background: linear-gradient(180deg, #6366F1 0%, #EC4899 100%) !important;
+      border-radius: 10px;
+    }
+
+    [data-theme="dark"] ::-webkit-scrollbar-thumb:hover { 
+      background: linear-gradient(180deg, #7C3AED 0%, #F472B6 100%) !important;
+      box-shadow: 0 0 10px rgba(236, 72, 153, 0.5);
+    }
+
+    /* Animation de particules (optionnel - effet premium) */
+    [data-theme="dark"] body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(236, 72, 153, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 20%, rgba(124, 58, 237, 0.1) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    [data-theme="dark"] aside,
+    [data-theme="dark"] main {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Boutons hover améliorés avec effet glow */
+    [data-theme="dark"] main .hover\:bg-blue-50:hover { 
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(79, 70, 229, 0.25) 100%) !important;
+      box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+    }
+
+    [data-theme="dark"] main .hover\:bg-green-50:hover { 
+      background: linear-gradient(135deg, rgba(52, 211, 153, 0.25) 0%, rgba(16, 185, 129, 0.25) 100%) !important;
+      box-shadow: 0 0 15px rgba(52, 211, 153, 0.4);
+    }
+
+    [data-theme="dark"] main .hover\:bg-red-50:hover { 
+      background: linear-gradient(135deg, rgba(248, 113, 113, 0.25) 0%, rgba(239, 68, 68, 0.25) 100%) !important;
+      box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+    }
+
+    [data-theme="dark"] main .hover\:bg-gray-200:hover { 
+      background: linear-gradient(135deg, rgba(156, 163, 175, 0.3) 0%, rgba(107, 114, 128, 0.3) 100%) !important;
     }
   </style>
-  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/main.min.css" rel="stylesheet">
+  <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css' rel='stylesheet' />
 </head>
-<body class="bg-gray-50 flex min-h-screen" data-theme="light">
-
-  <aside class="w-64 card shadow-lg flex flex-col">
-    <div class="p-6 border-b border-gray-200">
-      <div class="flex items-center justify-center">
-        <a href="{{ url_for('index') }}" class="flex items-center space-x-2">
-          <img src="{{ url_for('static', filename='images/maihlili-logo-light.png') }}" alt="Logo Maihlili clair" class="h-32 logo-light">
-          <img src="{{ url_for('static', filename='images/maihlili-logo-dark.png') }}" alt="Logo Maihlili sombre" class="h-32 logo-dark">
-        </a>
+<body class="min-h-screen">
+  
+  <div class="flex h-full">
+    <aside class="w-64 min-h-screen p-4 border-r border-gray-200 flex-shrink-0 transition-all duration-500 ease-in-out">
+      
+      <div class="flex items-center mb-6 px-1">
+        <span class="text-2xl font-extrabold text-maihlili-500">
+            Maihlili Paie
+        </span>
       </div>
-    </div>
-    
-    <nav class="flex-1 p-4 space-y-1">
-      {% if current_user.is_authenticated %}
-        <a href="{{ url_for('index') if current_user.is_manager else url_for('employee_dashboard') }}" 
-           class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-maihlili-50 hover:text-maihlili-700 text-maihlili-600 font-medium">
-           <span class="text-lg">📊</span> Planning
-        </a>
-         {% if current_user.is_manager %}
-          <a href="{{ url_for('planning') }}" 
-             class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-indigo-50 hover:text-indigo-700 text-indigo-600 font-medium">
-            <span class="text-lg">📅</span> Planning Avancé
-          </a>
+      
+      <nav class="space-y-2">
+        {% if current_user.is_authenticated %}
+          {% if current_user.is_manager %}
+            <a href="{{ url_for('index') }}" class="nav-link flex items-center p-3 rounded-lg text-gray-800 hover:bg-maihlili-50">
+              <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+              <span>Tableau de bord</span>
+            </a>
+            <a href="{{ url_for('planning') }}" class="nav-link flex items-center p-3 rounded-lg text-gray-800 hover:bg-maihlili-50">
+              <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+              <span>Planning</span>
+            </a>
+            <a href="{{ url_for('show_employees') }}" class="nav-link flex items-center p-3 rounded-lg text-gray-800 hover:bg-maihlili-50">
+              <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+              <span>Employés</span>
+            </a>
+            <a href="{{ url_for('manage_teams') }}" class="nav-link flex items-center p-3 rounded-lg text-gray-800 hover:bg-maihlili-50">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 19h2a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2h2m0 0h10m-10 0l-4-4m4 4l4-4m7 0l4-4m-4 4l-4-4m-5-4h10a2 2 0 012 2v10a2 2 0 01-2 2H7a2 2 0 01-2-2V9a2 2 0 012-2z"></path></svg>
+                <span>Équipes</span>
+            </a>
+            <a href="{{ url_for('show_shifts') }}" class="nav-link flex items-center p-3 rounded-lg text-gray-800 hover:bg-maihlili-50">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span>Services</span>
+            </a>
+          {% else %}
+            <a href="{{ url_for('employee_dashboard') }}" class="nav-link flex items-center p-3 rounded-lg text-gray-800 hover:bg-maihlili-50">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                <span>Mon Tableau de bord</span>
+            </a>
+            <a href="{{ url_for('planning') }}" class="nav-link flex items-center p-3 rounded-lg text-gray-800 hover:bg-maihlili-50">
+              <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+              <span>Mon Planning</span>
+            </a>
+          {% endif %}
           
-          <a href="{{ url_for('show_employees') }}" 
-             class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-green-50 hover:text-green-700 text-green-600 font-medium">
-            <span class="text-lg">👥</span> Employés
+          <a href="{{ url_for('logout') }}" class="nav-link flex items-center p-3 rounded-lg text-gray-800 hover:bg-red-100 hover:text-red-700">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3v-3m11-1V5a3 3 0 00-3-3H6a3 3 0 00-3 3v4"></path></svg>
+            <span>Déconnexion</span>
           </a>
-          <a href="{{ url_for('manage_teams') }}" 
-             class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 hover:text-blue-700 text-blue-600 font-medium">
-            <span class="text-lg">🏢</span> Équipes
-          </a>
-          <a href="{{ url_for('show_shifts') }}" 
-             class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-purple-50 hover:text-purple-700 text-purple-600 font-medium">
-            <span class="text-lg">🕐</span> Services
-          </a>
-          <a href="{{ url_for('assignments') }}" 
-             class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-orange-50 hover:text-orange-700 text-orange-600 font-medium">
-            <span class="text-lg">📋</span> Assignations
+        {% else %}
+          <a href="{{ url_for('login') }}" class="nav-link flex items-center p-3 rounded-lg text-gray-800 hover:bg-maihlili-50">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3v-3"></path></svg>
+            <span>Connexion</span>
           </a>
         {% endif %}
-        <a href="{{ url_for('settings') }}" 
-           class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 hover:text-gray-700 text-gray-600 font-medium">
-          <span class="text-lg">⚙️</span> Paramètres
-        </a>
-      {% else %}
-        <a href="{{ url_for('login') }}" 
-           class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-maihlili-50 hover:text-maihlili-700 text-maihlili-600 font-medium">
-          <span class="text-lg">🔑</span> Connexion
-        </a>
-        <a href="{{ url_for('register') }}" 
-           class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-green-50 hover:text-green-700 text-green-600 font-medium">
-          <span class="text-lg">📝</span> Inscription
-        </a>
-      {% endif %}
-    </nav>
-
-    {% if current_user.is_authenticated %}
-    <div class="p-4 border-t border-gray-200">
-      <div class="user-profile flex items-center gap-3 p-3 rounded-lg card">
-        <div class="w-10 h-10 bg-gradient-to-br from-maihlili-500 to-maihlili-600 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-md">
-          {{ current_user.username[0].upper() }}
-        </div>
-        <div class="flex-1">
-          <p class="text-sm font-semibold text-gray-800">{{ current_user.username }}</p>
-          <p class="text-xs text-gray-500">
-            {% if current_user.is_admin %}⚡ Administrateur
-            {% elif current_user.is_manager %}👑 Manager
-            {% else %}👤 Employé{% endif %}
-          </p>
+      </nav>
+      
+      {% if current_user.is_authenticated and current_user.employee %}
+      <div class="user-profile card mt-6 p-4 rounded-xl">
+        <div class="flex items-center">
+          <div class="flex-shrink-0 h-10 w-10 bg-maihlili-500 rounded-full flex items-center justify-center text-white font-semibold mr-3">
+            {{ current_user.employee.full_name[0]|upper }}
+          </div>
+          <div class="text-sm">
+            <p class="font-medium text-gray-800 leading-none">
+                {{ current_user.employee.full_name }}
+            </p>
+            <p class="text-gray-500 leading-tight">
+                {{ current_user.employee.position or ('Manager' if current_user.is_manager else 'Employé') }}
+            </p>
+          </div>
         </div>
       </div>
-      <a href="{{ url_for('logout') }}" 
-         class="nav-link flex items-center gap-3 p-2 rounded-lg hover:bg-red-50 hover:text-red-700 text-red-600 text-sm mt-3 font-medium">
-        <span class="text-base">🚪</span> Déconnexion
-      </a>
-    </div>
-    {% endif %}
-  </aside>
-
-  <main class="flex-1 p-6">
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        <ul class="mb-4">
-          {% for msg in messages %}
-            <li class="bg-gradient-to-r from-maihlili-100 to-maihlili-50 border border-maihlili-200 text-maihlili-700 px-4 py-3 rounded-lg mb-2 shadow-sm">
-              <span class="font-medium">ℹ️</span> {{ msg }}
-            </li>
-          {% endfor %}
-        </ul>
       {% endif %}
-    {% endwith %}
-    {% block content %}{% endblock %}
-  </main>
+      
+    </aside>
 
-  <button class="theme-toggle" id="themeToggle">
-    🌙
-  </button>
+    <main class="flex-1 p-8 transition-all duration-500 ease-in-out overflow-y-auto">
+      
+      <div class="mb-6 space-y-3">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="bg-gradient-to-r from-maihlili-100 to-maihlili-50 border-l-4 border-maihlili-500 p-4 rounded-lg shadow-sm text-sm" role="alert">
+                <p class="font-medium text-maihlili-800">{{ message }}</p>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+      </div>
+      
+      {% block content %}
+      {% endblock %}
+    </main>
+    
+    <button class="theme-toggle fixed bottom-6 right-6 p-4 rounded-full text-2xl cursor-pointer shadow-lg z-50 transition-all duration-300 ease-in-out" id="themeToggle">
+      🌙
+    </button>
+  </div>
 
   <script>
     const themeToggle = document.getElementById('themeToggle');
@@ -475,11 +506,11 @@
       
       navLinks.forEach(link => {
         if (link.getAttribute('href') === currentPath) {
-          link.classList.add('bg-maihlili-100', 'text-maihlili-800', 'shadow-sm');
+          link.classList.add('bg-maihlili-100', 'text-maihlili-700', 'font-semibold');
+          link.classList.remove('text-gray-800', 'hover:bg-maihlili-50');
         }
       });
     });
   </script>
 </body>
 </html>
-
