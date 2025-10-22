@@ -1,31 +1,47 @@
 {% extends "base.html" %}
+
 {% block content %}
-<div class="max-w-md mx-auto mt-20 bg-white p-8 rounded-xl shadow-lg">
-  <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">🔐 Connexion</h2>
-  <form method="POST" action="{{ url_for('login') }}" class="space-y-4">
-    <div>
-      <input type="text" name="username" placeholder="Nom d'utilisateur ou Email" required
-             class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-    </div>
-    
-    <div class="relative">
-      <input type="password" name="password" id="password" placeholder="Mot de passe" required
-             class="w-full px-4 py-2 pr-12 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-      <button type="button" onclick="togglePassword()" 
-              class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none">
-        <span id="eye-icon">👁️</span>
-      </button>
-    </div>
-    
-    <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors">
-      Se connecter
-    </button>
-  </form>
+<div class="max-w-md mx-auto mt-20 p-6 relative" style="z-index: 10;">
   
-  <p class="mt-4 text-sm text-center text-gray-500">
-    Pas de compte ? 
-    <a href="{{ url_for('register') }}" class="text-blue-600 hover:underline">S'inscrire</a>
-  </p>
+  <div class="bg-white p-8 rounded-[50px] shadow-2xl relative overflow-hidden" 
+       style="box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); border: 1px solid rgba(255, 255, 255, 0.7);">
+    
+    <div class="flex flex-col items-center mb-6">
+      <div class="w-20 h-20 rounded-full bg-maihlili-figma-rose flex items-center justify-center shadow-lg mb-3">
+        <img src="{{ url_for('static', filename='images/maihlili-logo-light.png') }}" alt="Logo Maihlili" class="h-12 w-12">
+      </div>
+      <h2 class="text-2xl font-bold text-maihlili-figma-blue tracking-wider font-['Bebas_Neue'] uppercase">Connexion</h2>
+    </div>
+
+    <form method="POST" action="{{ url_for('login') }}" class="space-y-6">
+      
+      <div class="relative flex items-center border-b border-gray-300 focus-within:border-maihlili-figma-blue pb-2">
+        <span class="text-2xl text-gray-500 mr-3">👤</span>
+        <input type="text" name="username" placeholder="Nom d'utilisateur ou Email" required
+               class="flex-1 bg-transparent placeholder-gray-500 focus:outline-none text-gray-700 p-0 text-lg">
+      </div>
+      
+      <div class="relative flex items-center border-b border-gray-300 focus-within:border-maihlili-figma-blue pb-2">
+        <span class="text-2xl text-gray-500 mr-3">🔒</span>
+        <input type="password" name="password" id="password" placeholder="Mot de passe" required
+               class="flex-1 bg-transparent placeholder-gray-500 focus:outline-none text-gray-700 p-0 text-lg pr-12">
+        <button type="button" onclick="togglePassword()" 
+                class="absolute right-0 text-gray-500 hover:text-gray-700 focus:outline-none">
+          <span id="eye-icon">👁️</span>
+        </button>
+      </div>
+      
+      <button type="submit" 
+              class="w-full bg-maihlili-figma-rose text-maihlili-figma-blue py-3 mt-8 rounded-full shadow-md hover:shadow-lg font-['Bebas_Neue'] text-xl tracking-widest transition-all duration-300 hover:bg-red-200">
+        Se connecter
+      </button>
+    </form>
+    
+    <p class="mt-6 text-sm text-center text-gray-500 font-medium">
+      Pas de compte ? 
+      <a href="{{ url_for('register') }}" class="text-maihlili-figma-blue hover:underline font-bold">S'inscrire</a>
+    </p>
+  </div>
 </div>
 
 <script>
