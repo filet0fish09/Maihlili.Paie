@@ -6,12 +6,15 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
   <style>
-    .icon-container svg {
-        width: 1.5rem; /* 24px */
-        height: 1.5rem; /* 24px */
-        stroke-width: 2; /* Épaisseur par défaut de Heroicons */
-        color: white; /* Les icônes sont blanches par défaut */
-        transition: color 0.2s ease;
+    /* NOUVEAUX STYLES POUR LES EMOJIS */
+    .emoji-container {
+        font-size: 1.5rem; /* Taille de l'emoji */
+        line-height: 1;
+        width: 1.5rem; /* Assure un espace constant */
+        height: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
     
     /* Styles pour la barre de navigation */
@@ -22,7 +25,7 @@
         width: 100%;
         height: 50px;
         text-decoration: none;
-        padding-left: 0.5rem; /* Espace pour l'icône non encapsulée */
+        padding-left: 0.5rem; /* Espace pour l'emoji */
     }
     
     /* Style par défaut du label (Liquid Glass) */
@@ -33,7 +36,7 @@
         align-items: center;
         justify-content: flex-start;
         padding: 0 1.5rem; /* Padding horizontal augmenté pour l'arrondi */
-        border-radius: 50px; /* NOUVEL ARRONDI: 50px */
+        border-radius: 50px; /* ARRONDI: 50px */
         color: white; /* Texte blanc par défaut */
         font-weight: 500;
         text-align: left;
@@ -55,11 +58,8 @@
         border: 1px solid #FFDCE4;
     }
 
-    /* Le style de l'icône sélectionnée devient bleue */
-    .liquid-glass-selected .icon-container svg {
-        color: #3055ff; /* Icône bleue */
-    }
-
+    /* L'emoji ne change pas de couleur (il n'a pas stroke/fill) */
+    
   </style>
   <script>
     tailwind.config = {
@@ -428,15 +428,7 @@
 </head>
 <body class="bg-[#fff0f8] flex min-h-screen" data-theme="light"> 
 
-  {% set icons = {
-    'PresentationChartBarIcon': '<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h2.25M3.75 3h16.5M3.75 3l4.72.633a9 9 0 0 1 4.244 4.244L20.25 3M16.5 7.5h.008v.008H16.5v-.008ZM12.75 16.5h.008v.008H12.75V16.5Z" />',
-    'CalendarDaysIcon': '<path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />',
-    'UsersIcon': '<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />',
-    'BuildingOfficeIcon': '<path stroke-linecap="round" stroke-linejoin="round" d="M12 18V9M4.5 9h15m-7.5 0V3.75m0 0L14.25 6M9.75 6 12 3.75" /><path stroke-linecap="round" stroke-linejoin="round" d="m3.75 21 9-9m0 0 9-9m-9 9h.008v.008H12v-.008Z" />',
-    'ClockIcon': '<path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />',
-    'ClipboardDocumentListIcon': '<path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v2.75m15 0a2.25 2.25 0 0 1-2.25 2.25H4.5M21 16.5a2.25 2.25 0 0 1-2.25 2.25H5.25a2.25 2.25 0 0 1-2.25-2.25V5.25a2.25 2.25 0 0 1 2.25-2.25h13.5a2.25 2.25 0 0 1 2.25 2.25v11.25ZM12 9.75h.008v.008H12V9.75Zm0 2.25h.008v.008H12v-.008Zm0 2.25h.008v.008H12v-.008Z" />',
-    'Cog6ToothIcon': '<path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.75c.57.198 1.144.376 1.725.534.148.455.27.917.37 1.39a1.69 1.69 0 0 0 2.373 1.968l1.724.086c.653.033 1.25.32 1.765.751A5.992 5.992 0 0 1 21 12c0 1.287-.367 2.483-1.002 3.535a2.766 2.766 0 0 1-1.765.75l-1.724.085a1.69 1.69 0 0 0-2.373 1.968c-.1-.473-.223-.935-.371-1.39-.581.158-1.155.336-1.724.534a1.69 1.69 0 0 0-1.968 2.373c.085 1.723.336 3.42.751 5.066h.086a9 9 0 0 0 3.535-1.002 2.766 2.766 0 0 1 .75-1.765l.085-1.724a1.69 1.69 0 0 0 1.968-2.373c.473-.1.935-.223 1.39-.371.158-.581.336-1.155.534-1.724a1.69 1.69 0 0 0 2.373-1.968c-.033-1.723-.32-3.42-.751-5.066h-.086a9 9 0 0 0-3.535 1.002 2.766 2.766 0 0 1-1.765.75l-.085 1.724a1.69 1.69 0 0 0-1.968 2.373c-.1.473-.223.935-.371 1.39-.581.158-1.155.336-1.724.534a1.69 1.69 0 0 0-2.373-1.968c-.653-.033-1.25-.32-1.765-.751A5.992 5.992 0 0 1 3 12c0-1.287.367-2.483 1.002-3.535a2.766 2.766 0 0 1 1.765-.75l1.724-.085a1.69 1.69 0 0 0 2.373-1.968c.1-.473.223-.935.371-1.39-.581-.158-1.155-.336-1.724-.534a1.69 1.69 0 0 0-1.968-2.373Z" />'
-  } %}
+  {# Suppression du bloc 'icons' car nous utilisons des emojis #}
 
   <aside class="w-[320px] p-3 flex flex-col bg-[#fff0f8]" style="min-height: 100vh;">
     <div class="h-[140px] rounded-[50px] bg-maihlili-figma-blue flex items-center p-4 shadow-xl"> <div class="w-[110px] h-[110px] rounded-full bg-white flex items-center justify-center -translate-y-1 shadow-xl">
@@ -451,25 +443,21 @@
     <div class="flex-1 mt-3 p-4 rounded-[50px] bg-maihlili-figma-blue flex flex-col justify-between shadow-2xl"> <nav class="space-y-2">
         {% if current_user.is_authenticated %}
           {% set menu_items_data = [
-            ('PresentationChartBarIcon', 'Planning', url_for('index') if current_user.is_manager else url_for('employee_dashboard'), current_user.is_authenticated),
-            ('CalendarDaysIcon', 'Planning Avancé', url_for('planning'), current_user.is_manager),
-            ('UsersIcon', 'Employés', url_for('show_employees'), current_user.is_manager),
-            ('BuildingOfficeIcon', 'Équipes', url_for('manage_teams'), current_user.is_manager),
-            ('ClockIcon', 'Services', url_for('show_shifts'), current_user.is_manager),
-            ('ClipboardDocumentListIcon', 'Assignations', url_for('assignments'), current_user.is_manager),
-            ('Cog6ToothIcon', 'Paramètres', url_for('settings'), current_user.is_authenticated)
+            ('📊', 'Planning', url_for('index') if current_user.is_manager else url_for('employee_dashboard'), current_user.is_authenticated),
+            ('📅', 'Planning Avancé', url_for('planning'), current_user.is_manager),
+            ('👥', 'Employés', url_for('show_employees'), current_user.is_manager),
+            ('🏢', 'Équipes', url_for('manage_teams'), current_user.is_manager),
+            ('⏱️', 'Services', url_for('show_shifts'), current_user.is_manager),
+            ('📋', 'Assignations', url_for('assignments'), current_user.is_manager),
+            ('⚙️', 'Paramètres', url_for('settings'), current_user.is_authenticated)
           ] %}
 
-          {% for icon_name, label, url, condition in menu_items_data %}
+          {% for emoji, label, url, condition in menu_items_data %}
             {% if condition %}
             <a href="{{ url }}" 
                class="nav-link-group {% if loop.index == 1 %} liquid-glass-selected {% endif %}"> 
               
-              <span class="icon-container w-8 h-8 flex items-center justify-center transition-all duration-200">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    {{ icons[icon_name] | safe }}
-                  </svg>
-              </span>
+              <span class="emoji-container">{{ emoji | safe }}</span>
               
               <span class="liquid-glass-label text-lg font-['Bebas_Neue'] uppercase tracking-wider">{{ label }}</span> 
             </a>
@@ -479,20 +467,12 @@
         {% else %}
           <a href="{{ url_for('login') }}" 
              class="nav-link-group">
-            <span class="icon-container w-8 h-8 flex items-center justify-center transition-all duration-200">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l3 3m0 0-3 3m3-3H6" />
-                </svg>
-            </span>
+            <span class="emoji-container">🔑</span>
             <span class="liquid-glass-label text-lg font-['Bebas_Neue'] uppercase tracking-wider">Connexion</span>
           </a>
           <a href="{{ url_for('register') }}" 
              class="nav-link-group">
-            <span class="icon-container w-8 h-8 flex items-center justify-center transition-all duration-200">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 18.07a4.5 4.5 0 0 1-1.897 1.13L6 20l.859-2.288a4.5 4.5 0 0 1 1.13-1.897l8.283-8.281zM18 10.5l1.5 1.5M12.75 9h-4.5" />
-                </svg>
-            </span>
+            <span class="emoji-container">📝</span>
             <span class="liquid-glass-label text-lg font-['Bebas_Neue'] uppercase tracking-wider">Inscription</span>
           </a>
         {% endif %}
