@@ -134,17 +134,17 @@
     /* -------------------------------------------------------------------------------------------------- */
     :root {
       /* Couleurs Claires */
-      --color-bg-light: white; /* Fond de PAGE et MAIN en blanc (ce qui est autour) */
+      --color-bg-light: white; /* Fond de PAGE et MAIN en BLANC */
       --color-text-light: #1f2937;
       --color-text-subtle-light: #6b7280;
       --color-border-light: #e5e7eb;
       --color-card-bg-light: white; 
       
-      /* COULEUR DE FOND DE SIDEBAR - ROSE MAIHLILI */
+      /* COULEUR DE FOND DE SIDEBAR (pour l'intérieur du bloc) */
       --color-sidebar-bg-light: #fff0f8; 
     }
     
-    /* CORRECTION DU FOND DE PAGE ET DE MAIN */
+    /* FOND DE PAGE ET DE MAIN EN BLANC */
     body {
       background-color: var(--color-bg-light); /* Le fond du BODY est BLANC */
       color: var(--color-text-light);
@@ -155,35 +155,17 @@
       background-color: var(--color-bg-light); /* Le contenu principal est BLANC */
     }
 
-    [data-theme="dark"] {
-      /* ... (Couleurs sombres non modifiées pour la sidebar) ... */
-      --color-bg-dark-dashboard: #1f2937;
-      --color-text-dark-dashboard: #f9fafb;
-      --color-text-subtle-dark-dashboard: #9ca3af;
-      --color-border-dark-dashboard: #374151;
-      --color-card-bg-dark-dashboard: #2d3748;
-      --color-bg-dark-sidebar: #3055ff;
-      --color-text-dark-sidebar: #f9fafb;
-      --color-text-subtle-dark-sidebar: #c7d2fe;
-      --color-border-dark-sidebar: rgba(255, 255, 255, 0.1);
-      --color-card-bg-dark-sidebar: #2a4ce5;
-    }
-
-    /* Styles pour la zone de contenu principale en mode sombre */
-    [data-theme="dark"] main {
-        background-color: var(--color-bg-dark-dashboard);
-        color: var(--color-text-dark-dashboard);
-    }
-    
-    /* NOUVEAU STYLE SIDEBAR CLAIR: Fond Rose Maihlili */
+    /* ************************************************************ */
+    /* CORRECTION DU CONTOUR: ASIDE et CONTENEUR DE CONTENU EN BLANC */
+    /* ************************************************************ */
     aside {
-        background: var(--color-sidebar-bg-light) !important; /* Sidebar en ROSE */
+        background: white !important; /* Sidebar en BLANC (Conteneur extérieur) */
         box-shadow: none !important; 
         border: none !important;
         border-radius: 50px !important; 
     }
     
-    /* Conteneur principal de la sidebar */
+    /* Conteneur principal de la sidebar (Reste ROSE pour le design) */
     .sidebar-main-content {
       background-color: var(--color-sidebar-bg-light) !important; /* Contenu interne de la sidebar en ROSE */
     }
@@ -198,8 +180,6 @@
         font-family: 'Bebas Neue', cursive;
     }
     
-    /* ... (Reste des styles non modifiés pour la concision) ... */
-
     /* -------------------------------------------------------------------------------------------------- */
     /* Animations & Scrollbar                                                                             */
     /* -------------------------------------------------------------------------------------------------- */
@@ -208,7 +188,11 @@
   </style>
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/main.min.css" rel="stylesheet">
 </head>
-<body class="bg-white flex min-h-screen" data-theme="light"> <aside class="w-[320px] p-3 flex flex-col bg-maihlili-figma-rose-sidebar" style="min-height: 100vh;"> <div class="h-[140px] rounded-[50px] bg-maihlili-figma-blue flex items-center p-4 shadow-xl logo-container"> 
+<body class="bg-white flex min-h-screen" data-theme="light"> 
+
+  <aside class="w-[320px] p-3 flex flex-col bg-white" style="min-height: 100vh;"> 
+    
+    <div class="h-[140px] rounded-[50px] bg-maihlili-figma-blue flex items-center p-4 shadow-xl logo-container"> 
       <div class="w-[110px] h-[110px] rounded-full bg-white flex items-center justify-center -translate-y-1 shadow-xl">
         <img src="{{ url_for('static', filename='images/maihlili-logo-light.png') }}" alt="Logo Maihlili clair" class="h-24 w-24 rounded-full">
       </div>
@@ -349,14 +333,17 @@
         const label = link.querySelector('.liquid-glass-label');
         
         // 1. Gérer la sélection (Bleu)
-        // Note: Cette logique est basée sur une sélection par défaut du premier élément si l'URL ne correspond pas exactement
-        if (linkURL === currentPath || (currentPath === '/' && linkURL === '{{ url_for('index') }}') || (currentPath === '/employee-dashboard' && linkURL === '{{ url_for('employee_dashboard') }}')) {
+        // La première ancre est sélectionnée par défaut si l'URL correspond à la racine ou au dashboard
+        const isDefaultSelected = link.querySelector('.emoji-container').textContent.trim() === '📊' && 
+                                  (currentPath === '/' || currentPath.endsWith('/employee-dashboard') || currentPath.endsWith('/'));
+
+        if (linkURL === currentPath || isDefaultSelected) {
           link.classList.add('liquid-glass-selected');
         } else {
           link.classList.remove('liquid-glass-selected');
         }
 
-        // 2. Gérer l'effet de survol (fond blanc cassé)
+        // 2. Gérer l'effet de survol (légère ombre blanche)
         if (label) {
           link.addEventListener('mouseover', function() {
             if (!link.classList.contains('liquid-glass-selected')) {
