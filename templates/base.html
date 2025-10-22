@@ -10,15 +10,8 @@
         width: 1.5rem; /* 24px */
         height: 1.5rem; /* 24px */
         stroke-width: 2; /* Épaisseur par défaut de Heroicons */
-        color: #3055ff; /* Les icônes sont bleues par défaut */
-    }
-    
-    /* Le conteneur d'icône lui-même est blanc/transparent */
-    .icon-container-wrapper {
-        background-color: rgba(255, 255, 255, 0.6); /* Fond de l'icône */
-        border: 1px solid rgba(255, 255, 255, 0.7);
-        backdrop-filter: blur(5px); 
-        -webkit-backdrop-filter: blur(5px);
+        color: white; /* Les icônes sont blanches par défaut */
+        transition: color 0.2s ease;
     }
     
     /* Styles pour la barre de navigation */
@@ -29,6 +22,7 @@
         width: 100%;
         height: 50px;
         text-decoration: none;
+        padding-left: 0.5rem; /* Espace pour l'icône non encapsulée */
     }
     
     /* Style par défaut du label (Liquid Glass) */
@@ -38,10 +32,11 @@
         display: flex;
         align-items: center;
         justify-content: flex-start;
-        padding: 0 1rem; /* Padding horizontal */
-        border-radius: 15px; /* Bordure arrondie */
+        padding: 0 1.5rem; /* Padding horizontal augmenté pour l'arrondi */
+        border-radius: 50px; /* NOUVEL ARRONDI: 50px */
         color: white; /* Texte blanc par défaut */
         font-weight: 500;
+        text-align: left;
         
         /* Styles Liquid Glass par défaut */
         background-color: rgba(255, 255, 255, 0.3); /* Blanc transparent */
@@ -49,6 +44,7 @@
         backdrop-filter: blur(5px);
         -webkit-backdrop-filter: blur(5px);
         border: 1px solid rgba(255, 255, 255, 0.5); /* Bordure légère */
+        transition: all 0.2s ease;
     }
     
     /* Style de l'élément sélectionné (Liquid Glass Rose) */
@@ -59,14 +55,9 @@
         border: 1px solid #FFDCE4;
     }
 
-    /* Le style de l'icône sélectionnée doit rester dans son cercle mais changer de couleur */
+    /* Le style de l'icône sélectionnée devient bleue */
     .liquid-glass-selected .icon-container svg {
         color: #3055ff; /* Icône bleue */
-    }
-    
-    .liquid-glass-selected .icon-container-wrapper {
-        background-color: white; /* Fond blanc du cercle de l'icône */
-        border: 1px solid rgba(255, 255, 255, 0.5); 
     }
 
   </style>
@@ -114,7 +105,6 @@
     }
   </script>
   <style>
-    /* ... (CSS existant pour le thème et les autres éléments) ... */
     /* -------------------------------------------------------------------------------------------------- */
     /* Couleurs & Thème Maihlili SPV                                                                       */
     /* -------------------------------------------------------------------------------------------------- */
@@ -449,8 +439,7 @@
   } %}
 
   <aside class="w-[320px] p-3 flex flex-col bg-[#fff0f8]" style="min-height: 100vh;">
-    <div class="h-[140px] rounded-[30px] bg-maihlili-figma-blue flex items-center p-4 shadow-xl">
-      <div class="w-[110px] h-[110px] rounded-full bg-white flex items-center justify-center -translate-y-1 shadow-xl">
+    <div class="h-[140px] rounded-[50px] bg-maihlili-figma-blue flex items-center p-4 shadow-xl"> <div class="w-[110px] h-[110px] rounded-full bg-white flex items-center justify-center -translate-y-1 shadow-xl">
         <img src="{{ url_for('static', filename='images/maihlili-logo-light.png') }}" alt="Logo Maihlili clair" class="h-24 w-24 rounded-full">
       </div>
       <div class="ml-3 flex flex-col leading-none text-white font-['Bebas_Neue'] uppercase">
@@ -459,9 +448,7 @@
       </div>
     </div>
 
-    <div class="flex-1 mt-3 p-4 rounded-[30px] bg-maihlili-figma-blue flex flex-col justify-between shadow-2xl">
-      
-      <nav class="space-y-2">
+    <div class="flex-1 mt-3 p-4 rounded-[50px] bg-maihlili-figma-blue flex flex-col justify-between shadow-2xl"> <nav class="space-y-2">
         {% if current_user.is_authenticated %}
           {% set menu_items_data = [
             ('PresentationChartBarIcon', 'Planning', url_for('index') if current_user.is_manager else url_for('employee_dashboard'), current_user.is_authenticated),
@@ -478,15 +465,13 @@
             <a href="{{ url }}" 
                class="nav-link-group {% if loop.index == 1 %} liquid-glass-selected {% endif %}"> 
               
-              <span class="icon-container-wrapper p-1 rounded-full w-10 h-10 flex items-center justify-center shadow-lg transition-all duration-200">
-                  <span class="icon-container">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        {{ icons[icon_name] | safe }}
-                      </svg>
-                  </span>
+              <span class="icon-container w-8 h-8 flex items-center justify-center transition-all duration-200">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    {{ icons[icon_name] | safe }}
+                  </svg>
               </span>
               
-              <span class="liquid-glass-label text-lg">{{ label }}</span> 
+              <span class="liquid-glass-label text-lg font-['Bebas_Neue'] uppercase tracking-wider">{{ label }}</span> 
             </a>
             {% endif %}
           {% endfor %}
@@ -494,25 +479,21 @@
         {% else %}
           <a href="{{ url_for('login') }}" 
              class="nav-link-group">
-            <span class="icon-container-wrapper p-1 rounded-full w-10 h-10 flex items-center justify-center shadow-lg transition-all duration-200">
-                <span class="icon-container">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l3 3m0 0-3 3m3-3H6" />
-                    </svg>
-                </span>
+            <span class="icon-container w-8 h-8 flex items-center justify-center transition-all duration-200">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l3 3m0 0-3 3m3-3H6" />
+                </svg>
             </span>
-            <span class="liquid-glass-label text-lg">Connexion</span>
+            <span class="liquid-glass-label text-lg font-['Bebas_Neue'] uppercase tracking-wider">Connexion</span>
           </a>
           <a href="{{ url_for('register') }}" 
              class="nav-link-group">
-            <span class="icon-container-wrapper p-1 rounded-full w-10 h-10 flex items-center justify-center shadow-lg transition-all duration-200">
-                <span class="icon-container">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 18.07a4.5 4.5 0 0 1-1.897 1.13L6 20l.859-2.288a4.5 4.5 0 0 1 1.13-1.897l8.283-8.281zM18 10.5l1.5 1.5M12.75 9h-4.5" />
-                    </svg>
-                </span>
+            <span class="icon-container w-8 h-8 flex items-center justify-center transition-all duration-200">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 18.07a4.5 4.5 0 0 1-1.897 1.13L6 20l.859-2.288a4.5 4.5 0 0 1 1.13-1.897l8.283-8.281zM18 10.5l1.5 1.5M12.75 9h-4.5" />
+                </svg>
             </span>
-            <span class="liquid-glass-label text-lg">Inscription</span>
+            <span class="liquid-glass-label text-lg font-['Bebas_Neue'] uppercase tracking-wider">Inscription</span>
           </a>
         {% endif %}
       </nav>
@@ -520,8 +501,7 @@
       <div class="mt-4 space-y-2"> 
         
         {% if current_user.is_authenticated %}
-        <div class="user-profile flex items-center p-3 rounded-[30px] bg-white/30 backdrop-blur-sm shadow-inner" style="height: 65px;"> 
-          <div class="w-10 h-10 bg-white/50 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-lg">
+        <div class="user-profile flex items-center p-3 rounded-[50px] bg-white/30 backdrop-blur-sm shadow-inner" style="height: 65px;"> <div class="w-10 h-10 bg-white/50 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-lg">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-maihlili-figma-blue">
               <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 4.743A9.522 9.522 0 0 0 12 3.5c-4.972 0-9 4.028-9 9s4.028 9 9 9 9-4.028 9-9c0-.448-.046-.889-.138-1.32" />
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
@@ -539,9 +519,8 @@
         </div>
         
         <a href="{{ url_for('logout') }}" 
-           class="flex items-center justify-center p-3 rounded-[30px] bg-red-400/70 hover:bg-red-50/70 backdrop-blur-sm text-white font-['Bebas_Neue'] uppercase text-xl transition-all duration-200"
-           style="height: 45px;"> 
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 mr-2 -translate-y-0.5 text-white">
+           class="flex items-center justify-center p-3 rounded-[50px] bg-red-400/70 hover:bg-red-500/80 backdrop-blur-sm text-white font-['Bebas_Neue'] uppercase text-xl transition-all duration-200"
+           style="height: 45px;"> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 mr-2 -translate-y-0.5 text-white">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l3 3m0 0-3 3m3-3H6" />
           </svg>
           Se Déconnecter
@@ -602,34 +581,31 @@
 
     document.addEventListener('DOMContentLoaded', function() {
       const currentPath = window.location.pathname;
-      const navLinks = document.querySelectorAll('.nav-link-group'); // Cibler le nouveau conteneur
+      const navLinks = document.querySelectorAll('.nav-link-group'); 
 
       navLinks.forEach(link => {
-        // Logique pour mettre en surbrillance le lien actif dans la nouvelle structure
         const linkURL = link.getAttribute('href');
         
-        // Ajout/suppression de la classe de sélection sur le conteneur principal
+        // Appliquer la classe de sélection si le chemin correspond
         if (linkURL === currentPath) {
           link.classList.add('liquid-glass-selected');
         } else {
           link.classList.remove('liquid-glass-selected');
         }
 
-        // Ajouter un effet de survol pour que le label réagisse
+        // Effet de survol sur le label
         const label = link.querySelector('.liquid-glass-label');
         if (label) {
           link.addEventListener('mouseover', function() {
             if (!link.classList.contains('liquid-glass-selected')) {
-              // Effet hover: rendre le label plus opaque/clair si non sélectionné
               label.style.backgroundColor = 'rgba(255, 255, 255, 0.45)';
               label.style.border = '1px solid rgba(255, 255, 255, 0.7)';
             }
           });
           link.addEventListener('mouseout', function() {
             if (!link.classList.contains('liquid-glass-selected')) {
-              // Revenir au style par défaut
-              label.style.backgroundColor = ''; // Revert au CSS (rgba(255, 255, 255, 0.3))
-              label.style.border = ''; // Revert au CSS (rgba(255, 255, 255, 0.5))
+              label.style.backgroundColor = ''; // Revert au CSS
+              label.style.border = ''; // Revert au CSS
             }
           });
         }
