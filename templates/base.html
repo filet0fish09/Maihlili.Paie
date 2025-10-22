@@ -283,13 +283,7 @@
         box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3) !important;
     }
     
-    /* Assurez-vous que le main content est ajusté pour la nouvelle largeur */
-    main {
-        /* Utilisez margin-left au lieu de padding-left pour éviter les chevauchements */
-        margin-left: 320px; /* Largeur de la sidebar */
-        width: calc(100% - 320px); /* Ajuste la largeur restante */
-        padding: 1.5rem; /* Réapplique le padding normal */
-    }
+    /* Les règles de décalage et de largeur ont été supprimées d'ici pour corriger le décalage. */
     
     /* -------------------------------------------------------------------------------------------------- */
     /* Logos                                                                                              */
@@ -400,7 +394,7 @@
 </head>
 <body class="bg-[#fff0f8] flex min-h-screen" data-theme="light"> 
 
-  <aside class="w-[320px] p-3 flex flex-col bg-[#fff0f8] dark:bg-gray-800" style="min-height: 100vh;">
+  <aside class="w-[320px] p-3 flex flex-col bg-[#fff0f8]" style="min-height: 100vh;">
     <div class="h-[140px] rounded-[30px] bg-maihlili-figma-blue flex items-center p-4 shadow-xl">
       <div class="w-[110px] h-[110px] rounded-full bg-white flex items-center justify-center -translate-y-1 shadow-xl">
         <img src="{{ url_for('static', filename='images/maihlili-logo-light.png') }}" alt="Logo Maihlili clair" class="h-24 w-24 rounded-full">
