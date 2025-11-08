@@ -8,80 +8,71 @@
   <style>
     /* NOUVEAUX STYLES POUR LES EMOJIS */
     .emoji-container {
-        font-size: 1.5rem; /* Taille de l'emoji */
+        font-size: 1.5rem; 
         line-height: 1;
-        width: 1.5rem; /* Assure un espace constant */
+        width: 1.5rem; 
         height: 1.5rem;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: #3055ff; /* Couleur de texte par défaut bleue pour les emojis */
+        /* Les icônes par défaut prennent la couleur du label */
+        color: inherit; 
     }
     
     /* Styles pour la barre de navigation */
     .nav-link-group {
         display: flex;
         align-items: center;
-        gap: 0.75rem; /* 12px d'espace entre l'icône et le label */
+        gap: 0.75rem; 
         width: 100%;
         height: 50px;
         text-decoration: none;
-        padding-left: 0.5rem; /* Espace pour l'emoji */
+        padding-left: 0.5rem; 
     }
     
     /* ************************************************************ */
-    /* STYLES LIQUID GLASS / COULEURS SIDEBAR ROSE                  */
+    /* STYLES DES LABELS (PAS DE LIQUID GLASS)                     */
     /* ************************************************************ */
 
-    /* Style par défaut du label (Blanc pur sur fond Rose Sidebar) */
-    .liquid-glass-label {
+    /* Style par défaut du label (Fond blanc, texte bleu vif) */
+    .minimal-label {
         flex-grow: 1; 
         height: 100%;
         display: flex;
         align-items: center;
         justify-content: flex-start;
         padding: 0 1.5rem;
-        border-radius: 50px; /* ARRONDI: 50px */
-        color: #3055ff; /* Texte bleu sur fond clair */
+        border-radius: 50px; 
+        background-color: white; /* Fond BLANC */
+        color: #3055ff; /* Texte BLEU VIF */
         font-weight: 500;
         text-align: left;
-        
-        /* Styles Liquid Glass par défaut (Fond blanc pur) */
-        background-color: #fff; /* Blanc pur pour l'élément inactif */
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-        backdrop-filter: blur(2px);
-        -webkit-backdrop-filter: blur(2px);
-        border: 1px solid #FFDCE4; /* Bordure rose très claire */
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08); /* Ombre très légère */
         transition: all 0.2s ease;
     }
     
     /* Style de l'élément sélectionné (Bleu Maihlili) */
-    .liquid-glass-selected .liquid-glass-label {
-        background-color: #3055ff !important; /* Bleu Maihlili */
-        color: white !important; /* Texte blanc sur fond bleu */
-        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
-        border: 1px solid #3055ff !important;
-    }
-
-    /* Le style de l'icône sélectionnée devient blanc */
-    .liquid-glass-selected .emoji-container {
-        color: white !important; 
+    .minimal-selected .minimal-label {
+        background-color: #3055ff !important; /* Bleu VIF */
+        color: white !important; /* Texte BLANC */
+        box-shadow: 0 4px 10px rgba(48, 85, 255, 0.4); /* Ombre de couleur */
     }
 
     /* ************************************************************ */
-    /* Bouton Déconnexion ROUGE                                     */
+    /* Bouton Déconnexion ROSE (Selon Figma)                        */
     /* ************************************************************ */
     .logout-button {
-      background-color: #EF4444; /* Rouge 500 */
-      color: white; /* Texte blanc sur fond rouge */
-      box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
+      background-color: #ffc9e2; /* Rose du Figma */
+      color: #3055ff; /* Texte BLEU VIF */
+      box-shadow: 0 4px 10px rgba(255, 201, 226, 0.5);
     }
     .logout-button:hover {
-      background-color: #DC2626; /* Rouge 600 au hover */
+      background-color: #ffb8d6; 
+      color: #1e3fcc;
     }
-    /* Icône de déconnexion en blanc */
+    /* Icône de déconnexion */
     .logout-button svg {
-      color: white;
+      color: #3055ff;
     }
 
   </style>
@@ -90,38 +81,15 @@
       theme: {
         extend: {
           colors: {
-            // Couleurs exactes du logo Maihlili (bleu pur)
-            'maihlili': {
-              50: '#EEF2FF',
-              100: '#E0E7FF', 
-              200: '#C7D2FE',
-              300: '#A5B4FC',
-              400: '#818CF8',
-              500: '#4F46E5', // Bleu exact de votre logo
-              600: '#4338CA', 
-              700: '#3730A3',
-              800: '#312E81',
-              900: '#1E1B4B'
-            },
-            'nouveau-bleu': {
-                50: '#E6E9FF',
-                100: '#C8CEFF',
-                200: '#AAAEFF',
-                300: '#8C8FFF',
-                400: '#6E71FF',
-                500: '#3055ff', // Le nouveau bleu
-                600: '#2A4CE5',
-                700: '#2343CC',
-                800: '#1D3AAA',
-                900: '#163188'
-            },
-            // NOUVELLES COULEURS POUR LE STYLE FIGMA
             'maihlili-figma-blue': { 
                 DEFAULT: '#3055ff', 
             },
+            'maihlili-figma-cyan': {
+                DEFAULT: '#5ce1e6', /* Cyan de votre nouveau logo */
+            },
             'maihlili-figma-rose': { 
-                DEFAULT: '#FFDCE4', // Rose clair pour les éléments (maintenu pour les petites touches)
-                sidebar: '#fff0f8', // Fond de sidebar (rose très pâle)
+                DEFAULT: '#FFDCE4', 
+                sidebar: '#fff0f8', // Le rose très pâle pour la zone de navigation
             },
           }
         }
@@ -133,56 +101,42 @@
     /* Couleurs & Thème Maihlili SPV                                                                       */
     /* -------------------------------------------------------------------------------------------------- */
     :root {
-      /* Couleurs Claires */
       --color-bg-light: white; /* Fond de PAGE et MAIN en BLANC */
       --color-text-light: #1f2937;
-      --color-text-subtle-light: #6b7280;
-      --color-border-light: #e5e7eb;
-      --color-card-bg-light: white; 
-      
-      /* COULEUR DE FOND DE SIDEBAR (pour l'intérieur du bloc) */
-      --color-sidebar-bg-light: #fff0f8; 
+      --color-sidebar-bg-light: #fff0f8; /* ROSE pour l'intérieur du bloc de navigation */
     }
     
-    /* FOND DE PAGE ET DE MAIN EN BLANC */
     body {
       background-color: var(--color-bg-light); /* Le fond du BODY est BLANC */
       color: var(--color-text-light);
-      transition: background-color 0.5s ease, color 0.5s ease;
     }
 
     main {
       background-color: var(--color-bg-light); /* Le contenu principal est BLANC */
     }
 
-    /* ************************************************************ */
-    /* CORRECTION DU CONTOUR: ASIDE et CONTENEUR DE CONTENU EN BLANC */
-    /* ************************************************************ */
+    /* Le conteneur ASIDE est BLANC (pour le contour entre les blocs) */
     aside {
-        background: white !important; /* Sidebar en BLANC (Conteneur extérieur) */
+        background: white !important; 
         box-shadow: none !important; 
         border: none !important;
         border-radius: 50px !important; 
     }
     
-    /* Conteneur principal de la sidebar (Reste ROSE pour le design) */
+    /* Conteneur principal de la sidebar (ROSE pour la zone de navigation) */
     .sidebar-main-content {
-      background-color: var(--color-sidebar-bg-light) !important; /* Contenu interne de la sidebar en ROSE */
+      background-color: var(--color-sidebar-bg-light) !important; 
     }
     
-    /* Conteneur du logo - doit rester bleu */
+    /* Conteneur du logo - BLEU VIF */
     .logo-container {
       background-color: #3055ff !important;
     }
     
-    /* Force la police pour les éléments de la nouvelle sidebar */
     .font-['Bebas_Neue'] {
         font-family: 'Bebas Neue', cursive;
     }
     
-    /* -------------------------------------------------------------------------------------------------- */
-    /* Animations & Scrollbar                                                                             */
-    /* -------------------------------------------------------------------------------------------------- */
     * { transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, transform 0.2s ease !important; }
     
   </style>
@@ -219,11 +173,11 @@
           {% for emoji, label, url, condition in menu_items_data %}
             {% if condition %}
             <a href="{{ url }}" 
-               class="nav-link-group {% if loop.index == 1 %} liquid-glass-selected {% endif %}"> 
+               class="nav-link-group {% if loop.index == 1 %} minimal-selected {% endif %}"> 
               
-              <span class="emoji-container">{{ emoji | safe }}</span> 
+              <span class="emoji-container text-maihlili-figma-blue">{{ emoji | safe }}</span> 
               
-              <span class="liquid-glass-label text-lg font-['Bebas_Neue'] uppercase tracking-wider">{{ label }}</span> 
+              <span class="minimal-label text-lg font-['Bebas_Neue'] uppercase tracking-wider">{{ label }}</span> 
             </a>
             {% endif %}
           {% endfor %}
@@ -231,13 +185,13 @@
         {% else %}
           <a href="{{ url_for('login') }}" 
              class="nav-link-group">
-            <span class="emoji-container">🔑</span>
-            <span class="liquid-glass-label text-lg font-['Bebas_Neue'] uppercase tracking-wider">Connexion</span>
+            <span class="emoji-container text-maihlili-figma-blue">🔑</span>
+            <span class="minimal-label text-lg font-['Bebas_Neue'] uppercase tracking-wider">Connexion</span>
           </a>
           <a href="{{ url_for('register') }}" 
              class="nav-link-group">
-            <span class="emoji-container">📝</span>
-            <span class="liquid-glass-label text-lg font-['Bebas_Neue'] uppercase tracking-wider">Inscription</span>
+            <span class="emoji-container text-maihlili-figma-blue">📝</span>
+            <span class="minimal-label text-lg font-['Bebas_Neue'] uppercase tracking-wider">Inscription</span>
           </a>
         {% endif %}
       </nav>
@@ -245,7 +199,7 @@
       <div class="mt-4 space-y-2"> 
         
         {% if current_user.is_authenticated %}
-        <div class="user-profile flex items-center p-3 rounded-[50px] bg-white shadow-inner" style="height: 65px; border: 1px solid #FFDCE4;"> 
+        <div class="user-profile flex items-center p-3 rounded-[50px] bg-white shadow-md" style="height: 65px; border: 1px solid #FFDCE4;"> 
           <div class="w-10 h-10 bg-maihlili-figma-rose rounded-full flex items-center justify-center text-xl font-bold shadow-lg">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-maihlili-figma-blue">
               <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 4.743A9.522 9.522 0 0 0 12 3.5c-4.972 0-9 4.028-9 9s4.028 9 9 9 9-4.028 9-9c0-.448-.046-.889-.138-1.32" />
@@ -264,12 +218,12 @@
         </div>
         
         <a href="{{ url_for('logout') }}" 
-           class="flex items-center justify-center p-3 rounded-[50px] logout-button hover:bg-red-600 backdrop-blur-sm text-white font-['Bebas_Neue'] uppercase text-xl transition-all duration-200"
+           class="flex items-center justify-center p-3 rounded-[50px] logout-button transition-all duration-200"
            style="height: 45px;"> 
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 mr-2 -translate-y-0.5 text-white">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 mr-2 -translate-y-0.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l3 3m0 0-3 3m3-3H6" />
           </svg>
-          Se Déconnecter
+          <span class="font-['Bebas_Neue'] uppercase text-xl tracking-wider">Se Déconnecter</span>
         </a>
         {% endif %}
       </div>
@@ -330,29 +284,30 @@
 
       navLinks.forEach(link => {
         const linkURL = link.getAttribute('href');
-        const label = link.querySelector('.liquid-glass-label');
+        const label = link.querySelector('.minimal-label');
         
-        // 1. Gérer la sélection (Bleu)
-        // La première ancre est sélectionnée par défaut si l'URL correspond à la racine ou au dashboard
+        // 1. Gérer la sélection (Bleu Vif)
         const isDefaultSelected = link.querySelector('.emoji-container').textContent.trim() === '📊' && 
                                   (currentPath === '/' || currentPath.endsWith('/employee-dashboard') || currentPath.endsWith('/'));
+        
+        const isSelected = (linkURL === currentPath) || isDefaultSelected;
 
-        if (linkURL === currentPath || isDefaultSelected) {
-          link.classList.add('liquid-glass-selected');
+        if (isSelected) {
+          link.classList.add('minimal-selected');
         } else {
-          link.classList.remove('liquid-glass-selected');
+          link.classList.remove('minimal-selected');
         }
 
-        // 2. Gérer l'effet de survol (légère ombre blanche)
+        // 2. Gérer l'effet de survol (fond blanc cassé/gris très clair)
         if (label) {
           link.addEventListener('mouseover', function() {
-            if (!link.classList.contains('liquid-glass-selected')) {
-              label.style.backgroundColor = '#f8f8f8'; 
+            if (!link.classList.contains('minimal-selected')) {
+              label.style.backgroundColor = '#f8f8f8'; // Gris très clair pour le survol
             }
           });
           link.addEventListener('mouseout', function() {
-            if (!link.classList.contains('liquid-glass-selected')) {
-              label.style.backgroundColor = '#fff'; // Revert au blanc pur
+            if (!link.classList.contains('minimal-selected')) {
+              label.style.backgroundColor = 'white'; // Revert au blanc pur
             }
           });
         }
