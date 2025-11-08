@@ -2,335 +2,286 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Maihlili SPV</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+  <style>
+    /* NOUVEAUX STYLES POUR LES EMOJIS */
+    .emoji-container {
+        font-size: 1.5rem; /* Taille de l'emoji */
+        line-height: 1;
+        width: 1.5rem; /* Assure un espace constant */
+        height: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #3055ff; /* Couleur de texte par défaut bleue pour les emojis */
+    }
+    
+    /* Styles pour la barre de navigation */
+    .nav-link-group {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem; /* 12px d'espace entre l'icône et le label */
+        width: 100%;
+        height: 50px;
+        text-decoration: none;
+        padding-left: 0.5rem; /* Espace pour l'emoji */
+    }
+    
+    /* ************************************************************ */
+    /* STYLES LIQUID GLASS / COULEURS SIDEBAR ROSE                  */
+    /* ************************************************************ */
+
+    /* Style par défaut du label (Blanc pur sur fond Rose Sidebar) */
+    .liquid-glass-label {
+        flex-grow: 1; 
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 0 1.5rem;
+        border-radius: 50px; /* ARRONDI: 50px */
+        color: #3055ff; /* Texte bleu sur fond clair */
+        font-weight: 500;
+        text-align: left;
+        
+        /* Styles Liquid Glass par défaut (Fond blanc pur) */
+        background-color: #fff; /* Blanc pur pour l'élément inactif */
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        backdrop-filter: blur(2px);
+        -webkit-backdrop-filter: blur(2px);
+        border: 1px solid #FFDCE4; /* Bordure rose très claire */
+        transition: all 0.2s ease;
+    }
+    
+    /* Style de l'élément sélectionné (Bleu Maihlili) */
+    .liquid-glass-selected .liquid-glass-label {
+        background-color: #3055ff !important; /* Bleu Maihlili */
+        color: white !important; /* Texte blanc sur fond bleu */
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+        border: 1px solid #3055ff !important;
+    }
+
+    /* Le style de l'icône sélectionnée devient blanc */
+    .liquid-glass-selected .emoji-container {
+        color: white !important; 
+    }
+
+    /* ************************************************************ */
+    /* Bouton Déconnexion ROUGE                                     */
+    /* ************************************************************ */
+    .logout-button {
+      background-color: #EF4444; /* Rouge 500 */
+      color: white; /* Texte blanc sur fond rouge */
+      box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
+    }
+    .logout-button:hover {
+      background-color: #DC2626; /* Rouge 600 au hover */
+    }
+    /* Icône de déconnexion en blanc */
+    .logout-button svg {
+      color: white;
+    }
+
+  </style>
   <script>
     tailwind.config = {
       theme: {
         extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-          },
           colors: {
-            // Palette Maihlili personnalisée (les 3 couleurs)
-            'maihlili-blue': { 
-                DEFAULT: '#3055ff', // Bleu Vif principal (Accent / Active Badge)
-                50: '#E6E9FF', // Bleu très pâle (Active Link Background, comme dans Figma)
-                800: '#1D3AAA', // Dark mode sidebar
+            // Couleurs exactes du logo Maihlili (bleu pur)
+            'maihlili': {
+              50: '#EEF2FF',
+              100: '#E0E7FF', 
+              200: '#C7D2FE',
+              300: '#A5B4FC',
+              400: '#818CF8',
+              500: '#4F46E5', // Bleu exact de votre logo
+              600: '#4338CA', 
+              700: '#3730A3',
+              800: '#312E81',
+              900: '#1E1B4B'
             },
-            'maihlili-cyan': {
-                DEFAULT: '#5ce1e6', // Cyan d'accentuation (Highlight icon)
+            'nouveau-bleu': {
+                50: '#E6E9FF',
+                100: '#C8CEFF',
+                200: '#AAAEFF',
+                300: '#8C8FFF',
+                400: '#6E71FF',
+                500: '#3055ff', // Le nouveau bleu
+                600: '#2A4CE5',
+                700: '#2343CC',
+                800: '#1D3AAA',
+                900: '#163188'
             },
-            'maihlili-rose': { 
-                DEFAULT: '#fff0f8', // Rose Pâle (Fond principal LIGHT, comme dans Figma)
+            // NOUVELLES COULEURS POUR LE STYLE FIGMA
+            'maihlili-figma-blue': { 
+                DEFAULT: '#3055ff', 
+            },
+            'maihlili-figma-rose': { 
+                DEFAULT: '#FFDCE4', // Rose clair pour les éléments (maintenu pour les petites touches)
+                sidebar: '#fff0f8', // Fond de sidebar (rose très pâle)
             },
           }
         }
       }
     }
   </script>
-  
   <style>
     /* -------------------------------------------------------------------------------------------------- */
-    /* VARIABLES DE THÈME (Basées sur le nouveau design Figma)                                         */
+    /* Couleurs & Thème Maihlili SPV                                                                       */
     /* -------------------------------------------------------------------------------------------------- */
     :root {
-      /* Mode Clair */
-      --color-bg-light: #fff0f8; /* Rose Pâle */
-      --color-sidebar-bg-light: white; /* Sidebar Blanche */
-      --color-text-primary: #1f2937;
+      /* Couleurs Claires */
+      --color-bg-light: white; /* Fond de PAGE et MAIN en BLANC */
+      --color-text-light: #1f2937;
+      --color-text-subtle-light: #6b7280;
       --color-border-light: #e5e7eb;
-      --color-shadow-sidebar: 0 0 20px rgba(0, 0, 0, 0.08); /* Ombre légère pour la sidebar */
-      --color-bg-light-active: #E6E9FF; /* Bleu très pâle (maihlili-blue-50) */
+      --color-card-bg-light: white; 
+      
+      /* COULEUR DE FOND DE SIDEBAR (pour l'intérieur du bloc) */
+      --color-sidebar-bg-light: #fff0f8; 
     }
-
-    [data-theme="dark"] {
-      /* Mode Sombre - Dashboard sombre */
-      --color-bg-dark: #111827; 
-      --color-text-dark: #e5e7eb;
-      --color-border-dark: #374151;
-      --color-card-bg-dark: #1f2937; 
-      /* Mode Sombre - Sidebar Bleu Vif Foncé (Deep Indigo) */
-      --color-sidebar-bg-dark: #1d3aaa; 
-      --color-sidebar-text-dark: #e0e7ff; 
-      --color-bg-dark-active: #162a84; /* Fond actif sur le dark blue */
-    }
-
+    
+    /* FOND DE PAGE ET DE MAIN EN BLANC */
     body {
-      background-color: var(--color-bg-light);
-      color: var(--color-text-primary);
-      transition: all 0.5s ease;
-      min-height: 100vh;
-      display: flex;
-      font-family: 'Inter', sans-serif;
+      background-color: var(--color-bg-light); /* Le fond du BODY est BLANC */
+      color: var(--color-text-light);
+      transition: background-color 0.5s ease, color 0.5s ease;
     }
-    
+
     main {
-      flex: 1;
-      padding: 2.5rem; 
-      transition: background-color 0.5s ease;
-    }
-    
-    [data-theme="dark"] body {
-        background-color: var(--color-bg-dark);
-        color: var(--color-text-dark);
-    }
-    [data-theme="dark"] main {
-        background-color: var(--color-bg-dark);
+      background-color: var(--color-bg-light); /* Le contenu principal est BLANC */
     }
 
-    /* -------------------------------------------------------------------------------------------------- */
-    /* SIDEBAR (ASIDE) - Style épuré et ombré                                                         */
-    /* -------------------------------------------------------------------------------------------------- */
+    /* ************************************************************ */
+    /* CORRECTION DU CONTOUR: ASIDE et CONTENEUR DE CONTENU EN BLANC */
+    /* ************************************************************ */
     aside {
-        width: 256px; /* w-64 */
-        background: var(--color-sidebar-bg-light);
-        box-shadow: var(--color-shadow-sidebar); /* Nouvelle ombre */
-        display: flex;
-        flex-direction: column;
-        border-right: none;
-        transition: all 0.5s ease;
-        z-index: 10;
+        background: white !important; /* Sidebar en BLANC (Conteneur extérieur) */
+        box-shadow: none !important; 
+        border: none !important;
+        border-radius: 50px !important; 
     }
     
-    [data-theme="dark"] aside {
-        background: var(--color-sidebar-bg-dark) !important;
-        box-shadow: none !important;
+    /* Conteneur principal de la sidebar (Reste ROSE pour le design) */
+    .sidebar-main-content {
+      background-color: var(--color-sidebar-bg-light) !important; /* Contenu interne de la sidebar en ROSE */
     }
     
-    /* Logo Section */
+    /* Conteneur du logo - doit rester bleu */
     .logo-container {
-        padding: 1.5rem 0;
-        display: flex;
-        justify-content: center;
-    }
-
-    /* ************************************************************ */
-    /* STYLE LIENS DE NAVIGATION (Badge Flottant à Droite - Figma)  */
-    /* ************************************************************ */
-
-    .nav-link {
-        display: flex;
-        align-items: center;
-        padding: 0.85rem 1rem;
-        border-radius: 12px; 
-        font-weight: 500;
-        transition: all 0.3s ease;
-        text-decoration: none;
-        color: #4b5563; /* Gris par défaut */
-        gap: 0.75rem;
-        position: relative; 
-        margin-right: -1rem; /* Pour que le badge soit au bord */
-        padding-right: 1.5rem;
+      background-color: #3055ff !important;
     }
     
-    /* Normal Link Hover - Light Mode */
-    .nav-link:hover:not(.selected-link) {
-        background-color: #f3f4f6;
-        color: var(--color-text-primary);
-    }
-
-    /* Active Link (Selected Link) - Light Mode */
-    .selected-link {
-        background-color: var(--color-bg-light-active) !important; /* Bleu très pâle */
-        color: var(--color-text-primary) !important;
-        font-weight: 700;
-    }
-    .selected-link .link-icon {
-        color: #3055FF; /* Bleu Vif pour l'icône active */
-    }
-    /* BADGE BLEU VIF ARRONDI À DROITE (Pilule Verticale) */
-    .selected-link::after {
-        content: '';
-        position: absolute;
-        right: 0; 
-        top: 50%;
-        transform: translateY(-50%);
-        width: 6px;
-        height: 80%; 
-        background-color: #3055FF; /* BLEU VIF */
-        border-radius: 9999px;
-        transition: all 0.3s ease; 
+    /* Force la police pour les éléments de la nouvelle sidebar */
+    .font-['Bebas_Neue'] {
+        font-family: 'Bebas Neue', cursive;
     }
     
-    /* Normal Link - Dark Mode */
-    [data-theme="dark"] .nav-link {
-        color: var(--color-sidebar-text-dark);
-        margin-right: 0; 
-        padding-right: 1rem;
-    }
-    [data-theme="dark"] .nav-link:hover:not(.selected-link) {
-        background-color: rgba(255, 255, 255, 0.1) !important;
-        color: white;
-    }
+    /* -------------------------------------------------------------------------------------------------- */
+    /* Animations & Scrollbar                                                                             */
+    /* -------------------------------------------------------------------------------------------------- */
+    * { transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, transform 0.2s ease !important; }
     
-    /* Active Link (Selected Link) - Dark Mode */
-    [data-theme="dark"] .selected-link {
-        background-color: var(--color-bg-dark-active) !important;
-        color: white !important;
-        font-weight: 700;
-    }
-    [data-theme="dark"] .selected-link .link-icon {
-        color: #5ce1e6 !important; /* CYAN pour l'icône dans le dark mode */
-    }
-    /* BADGE CYAN ARRONDI À DROITE (Pour Dark Mode) */
-    [data-theme="dark"] .selected-link::after {
-        background-color: #5ce1e6; /* CYAN */
-    }
-
-
-    /* Flash Messages - Dégradé Bleu Vif / Cyan */
-    .flash-message {
-        background: linear-gradient(135deg, #3055ff, #5ce1e6); 
-        color: white;
-        padding: 1rem 1.5rem;
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(48, 85, 255, 0.3);
-        font-weight: 600;
-        text-align: center;
-        max-width: 600px;
-        margin: 0 auto 1.5rem auto;
-    }
-    
-    [data-theme="dark"] .flash-message {
-        background: linear-gradient(135deg, #5ce1e6, #3055ff); 
-        color: #1f2937;
-        box-shadow: 0 4px 15px rgba(92, 225, 230, 0.3);
-    }
-    
-    /* Cartes de contenu */
-    .card {
-        background-color: white;
-        border: 1px solid var(--color-border-light);
-        border-radius: 1rem;
-        padding: 1.5rem;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-        transition: all 0.5s ease;
-    }
-    
-    [data-theme="dark"] .card {
-        background-color: #1f2937 !important;
-        border-color: var(--color-border-dark) !important;
-        box-shadow: none !important;
-    }
-    
-    /* Bouton Theme Toggle */
-    .theme-toggle {
-        position: fixed; bottom: 2rem; right: 2rem;
-        width: 56px; height: 56px;
-        border-radius: 50%;
-        background: white;
-        border: 1px solid #e5e7eb;
-        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-        display: flex; align-items: center; justify-content: center;
-        cursor: pointer; z-index: 1000; font-size: 1.5rem;
-        transition: all 0.3s ease;
-    }
-    .theme-toggle:hover {
-        transform: scale(1.05);
-    }
   </style>
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/main.min.css" rel="stylesheet">
 </head>
-<body data-theme="light">
+<body class="bg-white flex min-h-screen" data-theme="light"> 
 
-  <aside class="w-64">
-    <div class="logo-container">
-      <svg width="180" height="40" viewBox="0 0 180 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="0" y="0" width="180" height="40" fill="transparent" />
-        
-        <path d="M12 4C5.373 4 0 9.373 0 16V36H8V16C8 11.582 11.582 8 16 8H24C28.418 8 32 11.582 32 16V36H40V16C40 9.373 34.627 4 28 4H12Z" fill="#3055FF" class="fill-maihlili-blue-default"/>
-        
-        <path d="M48 28H44V8C44 7.447 44.447 7 45 7H47C47.553 7 48 7.447 48 8V28Z" fill="#5CE1E6" class="fill-maihlili-cyan-default"/>
-
-        <text x="56" y="27" font-family="Inter, sans-serif" font-size="20" font-weight="900" fill="#1F2937">
-          Maihlili
-        </text>
-        <text x="140" y="27" font-family="Inter, sans-serif" font-size="20" font-weight="500" fill="#3055FF">
-          SPV
-        </text>
-      </svg>
-    </div>
+  <aside class="w-[320px] p-3 flex flex-col bg-white" style="min-height: 100vh;"> 
     
-    <nav class="flex-1 p-4 space-y-2">
-      {% if current_user.is_authenticated %}
-        
-        <a href="{{ url_for('index') if current_user.is_manager else url_for('employee_dashboard') }}" 
-           class="nav-link" data-path="{% if current_user.is_manager %}{{ url_for('index') }}{% else %}{{ url_for('employee_dashboard') }}{% endif %}">
-            <span class="text-lg link-icon">📊</span> Planning
-        </a>
-          {% if current_user.is_manager %}
-           <a href="{{ url_for('planning') }}" 
-              class="nav-link" data-path="{{ url_for('planning') }}">
-             <span class="text-lg link-icon">📅</span> Planning Avancé
-           </a>
-           
-           <a href="{{ url_for('show_employees') }}" 
-              class="nav-link" data-path="{{ url_for('show_employees') }}">
-             <span class="text-lg link-icon">👥</span> Employés
-           </a>
-           <a href="{{ url_for('manage_teams') }}" 
-              class="nav-link" data-path="{{ url_for('manage_teams') }}">
-             <span class="text-lg link-icon">🏢</span> Équipes
-           </a>
-           <a href="{{ url_for('show_shifts') }}" 
-              class="nav-link" data-path="{{ url_for('show_shifts') }}">
-             <span class="text-lg link-icon">🕐</span> Services
-           </a>
-           <a href="{{ url_for('assignments') }}" 
-              class="nav-link" data-path="{{ url_for('assignments') }}">
-             <span class="text-lg link-icon">📋</span> Assignations
-           </a>
-         {% endif %}
-         <a href="{{ url_for('settings') }}" 
-            class="nav-link" data-path="{{ url_for('settings') }}">
-           <span class="text-lg link-icon">⚙️</span> Paramètres
-         </a>
-      {% else %}
-        <a href="{{ url_for('login') }}" 
-           class="nav-link" data-path="{{ url_for('login') }}">
-          <span class="text-lg link-icon">🔑</span> Connexion
-        </a>
-        <a href="{{ url_for('register') }}" 
-           class="nav-link" data-path="{{ url_for('register') }}">
-          <span class="text-lg link-icon">📝</span> Inscription
-        </a>
-      {% endif %}
-    </nav>
-
-    {% if current_user.is_authenticated %}
-    <div class="p-4 border-t border-gray-100 dark:border-gray-700">
-      <div class="user-profile flex items-center gap-3 bg-gray-50 dark:bg-maihlili-blue-800 p-3 rounded-xl shadow-inner">
-        <div class="w-10 h-10 bg-gradient-to-br from-maihlili-blue to-maihlili-cyan rounded-full flex items-center justify-center text-white text-base font-bold shadow-md flex-shrink-0">
-          {{ current_user.username[0].upper() }}
-        </div>
-        <div class="flex-1 overflow-hidden">
-          <p class="text-sm font-extrabold text-gray-800 dark:text-gray-100 truncate">{{ current_user.username }}</p>
-          <p class="text-xs text-gray-500 dark:text-gray-300 font-medium">
-            {% if current_user.is_admin %}⚡ Admin
-            {% elif current_user.is_manager %}👑 Manager
-            {% else %}👤 Employé{% endif %}
-          </p>
-        </div>
+    <div class="h-[140px] rounded-[50px] bg-maihlili-figma-blue flex items-center p-4 shadow-xl logo-container"> 
+      <div class="w-[110px] h-[110px] rounded-full bg-white flex items-center justify-center -translate-y-1 shadow-xl">
+        <img src="{{ url_for('static', filename='images/maihlili-logo-light.png') }}" alt="Logo Maihlili clair" class="h-24 w-24 rounded-full">
       </div>
-      <a href="{{ url_for('logout') }}" 
-         class="nav-link flex items-center gap-3 p-3 rounded-xl hover:bg-red-50 hover:text-red-700 text-red-600 text-sm mt-3 font-medium transition-all duration-200">
-        <span class="text-base">🚪</span> Déconnexion
-      </a>
+      <div class="ml-3 flex flex-col leading-none text-white font-['Bebas_Neue'] uppercase">
+        <span class="text-3xl tracking-widest -mb-1">Maihlili.</span>
+        <span class="text-3xl tracking-widest">Paie</span>
+      </div>
     </div>
-    {% endif %}
+
+    <div class="flex-1 mt-3 p-4 rounded-[50px] bg-maihlili-figma-rose-sidebar flex flex-col justify-between shadow-2xl sidebar-main-content"> 
+      
+      <nav class="space-y-2">
+        {% if current_user.is_authenticated %}
+          {% set menu_items_data = [
+            ('📊', 'Planning', url_for('index') if current_user.is_manager else url_for('employee_dashboard'), current_user.is_authenticated),
+            ('📅', 'Planning Avancé', url_for('planning'), current_user.is_manager),
+            ('👥', 'Employés', url_for('show_employees'), current_user.is_manager),
+            ('🏢', 'Équipes', url_for('manage_teams'), current_user.is_manager),
+            ('⏱️', 'Services', url_for('show_shifts'), current_user.is_manager),
+            ('📋', 'Assignations', url_for('assignments'), current_user.is_manager),
+            ('⚙️', 'Paramètres', url_for('settings'), current_user.is_authenticated)
+          ] %}
+
+          {% for emoji, label, url, condition in menu_items_data %}
+            {% if condition %}
+            <a href="{{ url }}" 
+               class="nav-link-group {% if loop.index == 1 %} liquid-glass-selected {% endif %}"> 
+              
+              <span class="emoji-container">{{ emoji | safe }}</span> 
+              
+              <span class="liquid-glass-label text-lg font-['Bebas_Neue'] uppercase tracking-wider">{{ label }}</span> 
+            </a>
+            {% endif %}
+          {% endfor %}
+        
+        {% else %}
+          <a href="{{ url_for('login') }}" 
+             class="nav-link-group">
+            <span class="emoji-container">🔑</span>
+            <span class="liquid-glass-label text-lg font-['Bebas_Neue'] uppercase tracking-wider">Connexion</span>
+          </a>
+          <a href="{{ url_for('register') }}" 
+             class="nav-link-group">
+            <span class="emoji-container">📝</span>
+            <span class="liquid-glass-label text-lg font-['Bebas_Neue'] uppercase tracking-wider">Inscription</span>
+          </a>
+        {% endif %}
+      </nav>
+      
+      <div class="mt-4 space-y-2"> 
+        
+        {% if current_user.is_authenticated %}
+        <div class="user-profile flex items-center p-3 rounded-[50px] bg-white shadow-inner" style="height: 65px; border: 1px solid #FFDCE4;"> 
+          <div class="w-10 h-10 bg-maihlili-figma-rose rounded-full flex items-center justify-center text-xl font-bold shadow-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-maihlili-figma-blue">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 4.743A9.522 9.522 0 0 0 12 3.5c-4.972 0-9 4.028-9 9s4.028 9 9 9 9-4.028 9-9c0-.448-.046-.889-.138-1.32" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.406 20.088c-1.691-.715-3.593-1.088-5.406-1.088-1.813 0-3.715.373-5.406 1.088a1.5 1.5 0 0 0-.844 1.341c0 .828.672 1.5 1.5 1.5h9.75a1.5 1.5 0 0 0 1.5-1.5 1.5 1.5 0 0 0-.844-1.341Z" />
+            </svg>
+          </div>
+          <div class="flex-1 ml-3 text-maihlili-figma-blue">
+            <p class="text-xl font-['Bebas_Neue'] uppercase tracking-wider text-maihlili-figma-blue">{{ current_user.username }}</p> 
+            <p class="text-xs font-light -mt-1 text-gray-700">
+              {% if current_user.is_admin %}Administrateur
+              {% elif current_user.is_manager %}Manager
+              {% else %}Employé{% endif %}
+            </p>
+          </div>
+        </div>
+        
+        <a href="{{ url_for('logout') }}" 
+           class="flex items-center justify-center p-3 rounded-[50px] logout-button hover:bg-red-600 backdrop-blur-sm text-white font-['Bebas_Neue'] uppercase text-xl transition-all duration-200"
+           style="height: 45px;"> 
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 mr-2 -translate-y-0.5 text-white">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l3 3m0 0-3 3m3-3H6" />
+          </svg>
+          Se Déconnecter
+        </a>
+        {% endif %}
+      </div>
+    </div>
   </aside>
 
-  <main>
-    {% with messages = get_flashed_messages() %}
+  <main class="flex-1 p-6 bg-white"> {% with messages = get_flashed_messages() %}
       {% if messages %}
-        <ul class="mb-6">
+        <ul class="mb-4">
           {% for msg in messages %}
-            <li class="flash-message mb-2 shadow-xl">
-              <span class="font-bold">ℹ️ Information:</span> {{ msg }}
+            <li class="bg-gradient-to-r from-maihlili-100 to-maihlili-50 border border-maihlili-200 text-maihlili-700 px-4 py-3 rounded-lg mb-2 shadow-sm">
+              <span class="font-medium">ℹ️</span> {{ msg }}
             </li>
           {% endfor %}
         </ul>
@@ -362,42 +313,48 @@
     }
     
     function updateThemeToggle(theme) {
-      const toggleButton = document.getElementById('themeToggle');
       if (theme === 'light') {
-        toggleButton.innerHTML = '🌙';
-        toggleButton.title = 'Passer en mode sombre';
+        themeToggle.textContent = '🌙';
+        themeToggle.title = 'Passer en mode sombre';
       } else {
-        toggleButton.innerHTML = '☀️';
-        toggleButton.title = 'Passer en mode clair';
+        themeToggle.textContent = '☀️';
+        themeToggle.title = 'Passer en mode clair';
       }
     }
 
     themeToggle.addEventListener('click', toggleTheme);
 
     document.addEventListener('DOMContentLoaded', function() {
-      // Nettoyage de l'URL pour ne garder que le chemin de base
-      let currentPath = window.location.pathname.replace(/\/$/, '');
-      if (currentPath === '') {
-          currentPath = '/';
-      }
-      
-      const navLinks = document.querySelectorAll('.nav-link');
-      
+      const currentPath = window.location.pathname;
+      const navLinks = document.querySelectorAll('.nav-link-group'); 
+
       navLinks.forEach(link => {
-        // Comparaison avec l'attribut data-path
-        let linkPath = link.getAttribute('data-path').replace(/\/$/, '');
-        if (linkPath === '') {
-            linkPath = '/';
-        }
+        const linkURL = link.getAttribute('href');
+        const label = link.querySelector('.liquid-glass-label');
         
-        // Logique de sélection pour le dashboard par défaut
-        const isDefaultDashboard = (linkPath === '/' || linkPath === '/employee-dashboard') && (currentPath === '/' || currentPath === '/employee-dashboard');
-        
-        if (linkPath === currentPath || isDefaultDashboard) {
-          link.classList.add('selected-link');
+        // 1. Gérer la sélection (Bleu)
+        // La première ancre est sélectionnée par défaut si l'URL correspond à la racine ou au dashboard
+        const isDefaultSelected = link.querySelector('.emoji-container').textContent.trim() === '📊' && 
+                                  (currentPath === '/' || currentPath.endsWith('/employee-dashboard') || currentPath.endsWith('/'));
+
+        if (linkURL === currentPath || isDefaultSelected) {
+          link.classList.add('liquid-glass-selected');
         } else {
-          // S'assurer qu'ils n'ont pas la classe si non actifs
-          link.classList.remove('selected-link');
+          link.classList.remove('liquid-glass-selected');
+        }
+
+        // 2. Gérer l'effet de survol (légère ombre blanche)
+        if (label) {
+          link.addEventListener('mouseover', function() {
+            if (!link.classList.contains('liquid-glass-selected')) {
+              label.style.backgroundColor = '#f8f8f8'; 
+            }
+          });
+          link.addEventListener('mouseout', function() {
+            if (!link.classList.contains('liquid-glass-selected')) {
+              label.style.backgroundColor = '#fff'; // Revert au blanc pur
+            }
+          });
         }
       });
     });
