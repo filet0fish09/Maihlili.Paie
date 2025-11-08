@@ -15,7 +15,6 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        /* Les icônes par défaut prennent la couleur du label */
         color: inherit; 
     }
     
@@ -31,7 +30,7 @@
     }
     
     /* ************************************************************ */
-    /* STYLES DES LABELS (PAS DE LIQUID GLASS)                     */
+    /* NOUVEAUX STYLES MINIMALISTES ET BOLD (NON-FIGMA)             */
     /* ************************************************************ */
 
     /* Style par défaut du label (Fond blanc, texte bleu vif) */
@@ -47,32 +46,38 @@
         color: #3055ff; /* Texte BLEU VIF */
         font-weight: 500;
         text-align: left;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08); /* Ombre très légère */
+        box-shadow: none; /* Minimalist: Pas d'ombre portée */
+        border: 1px solid #FFDCE4; /* Bordure Rose claire */
         transition: all 0.2s ease;
     }
     
-    /* Style de l'élément sélectionné (Bleu Maihlili) */
+    /* Style de l'élément sélectionné (CYAN Maihlili) */
     .minimal-selected .minimal-label {
-        background-color: #3055ff !important; /* Bleu VIF */
-        color: white !important; /* Texte BLANC */
-        box-shadow: 0 4px 10px rgba(48, 85, 255, 0.4); /* Ombre de couleur */
+        background-color: #5ce1e6 !important; /* CYAN Maihlili (Mise en avant de la 3ème couleur) */
+        color: #3055ff !important; /* Texte BLEU VIF sur Cyan (Forte visibilité) */
+        box-shadow: 0 4px 10px rgba(92, 225, 230, 0.5); /* Ombre de couleur Cyan */
+        border: 1px solid #5ce1e6 !important;
     }
 
+    /* Style de l'icône dans l'élément sélectionné */
+    .minimal-selected .emoji-container {
+        color: #3055ff !important; 
+    }
+    
     /* ************************************************************ */
-    /* Bouton Déconnexion ROSE (Selon Figma)                        */
+    /* Bouton Déconnexion BLEU VIF (Utilisation de la couleur primaire) */
     /* ************************************************************ */
     .logout-button {
-      background-color: #ffc9e2; /* Rose du Figma */
-      color: #3055ff; /* Texte BLEU VIF */
-      box-shadow: 0 4px 10px rgba(255, 201, 226, 0.5);
+      background-color: #3055ff; /* BLEU VIF */
+      color: white; 
+      box-shadow: 0 4px 10px rgba(48, 85, 255, 0.4);
     }
     .logout-button:hover {
-      background-color: #ffb8d6; 
-      color: #1e3fcc;
+      background-color: #2a4ce5; 
     }
-    /* Icône de déconnexion */
+    /* Icône de déconnexion en CYAN pour l'accentuation */
     .logout-button svg {
-      color: #3055ff;
+      color: #5ce1e6;
     }
 
   </style>
@@ -82,14 +87,14 @@
         extend: {
           colors: {
             'maihlili-figma-blue': { 
-                DEFAULT: '#3055ff', 
+                DEFAULT: '#3055ff', // Bleu Vif
             },
             'maihlili-figma-cyan': {
-                DEFAULT: '#5ce1e6', /* Cyan de votre nouveau logo */
+                DEFAULT: '#5ce1e6', // Cyan
             },
             'maihlili-figma-rose': { 
                 DEFAULT: '#FFDCE4', 
-                sidebar: '#fff0f8', // Le rose très pâle pour la zone de navigation
+                sidebar: '#fff0f8', // Rose Pâle
             },
           }
         }
@@ -103,7 +108,6 @@
     :root {
       --color-bg-light: white; /* Fond de PAGE et MAIN en BLANC */
       --color-text-light: #1f2937;
-      --color-sidebar-bg-light: #fff0f8; /* ROSE pour l'intérieur du bloc de navigation */
     }
     
     body {
@@ -115,17 +119,21 @@
       background-color: var(--color-bg-light); /* Le contenu principal est BLANC */
     }
 
-    /* Le conteneur ASIDE est BLANC (pour le contour entre les blocs) */
+    /* ************************************************************ */
+    /* ASIDE en ROSE PÂLE (Couleur Dominante - Nouveau Look)         */
+    /* ************************************************************ */
     aside {
-        background: white !important; 
-        box-shadow: none !important; 
+        /* Sidebar en ROSE PÂLE (#fff0f8) */
+        background: #fff0f8 !important; 
+        box-shadow: 0 0 40px rgba(0, 0, 0, 0.1); 
         border: none !important;
         border-radius: 50px !important; 
+        padding: 20px; /* Ajout d'un padding pour un look plus doux */
     }
     
-    /* Conteneur principal de la sidebar (ROSE pour la zone de navigation) */
+    /* Conteneur principal de la sidebar interne - suppression du fond rose redondant */
     .sidebar-main-content {
-      background-color: var(--color-sidebar-bg-light) !important; 
+      background-color: transparent !important; 
     }
     
     /* Conteneur du logo - BLEU VIF */
@@ -144,11 +152,13 @@
 </head>
 <body class="bg-white flex min-h-screen" data-theme="light"> 
 
-  <aside class="w-[320px] p-3 flex flex-col bg-white" style="min-height: 100vh;"> 
+  <aside class="w-[320px] flex flex-col" style="min-height: 100vh;"> 
     
-    <div class="h-[140px] rounded-[50px] bg-maihlili-figma-blue flex items-center p-4 shadow-xl logo-container"> 
-      <div class="w-[110px] h-[110px] rounded-full bg-white flex items-center justify-center -translate-y-1 shadow-xl">
-        <img src="{{ url_for('static', filename='images/maihlili-logo-light.png') }}" alt="Logo Maihlili clair" class="h-24 w-24 rounded-full">
+    <div class="h-[140px] rounded-[30px] bg-maihlili-figma-blue flex items-center p-4 shadow-xl logo-container mx-auto" style="width: 280px; margin-top: 10px;"> 
+      <div class="w-[110px] h-[110px] rounded-full bg-maihlili-figma-cyan flex items-center justify-center -translate-y-1 shadow-xl">
+        <div class="w-24 h-24 rounded-full bg-white flex items-center justify-center">
+            <img src="{{ url_for('static', filename='images/maihlili-logo-light.png') }}" alt="Logo Maihlili clair" class="h-20 w-20 rounded-full">
+        </div>
       </div>
       <div class="ml-3 flex flex-col leading-none text-white font-['Bebas_Neue'] uppercase">
         <span class="text-3xl tracking-widest -mb-1">Maihlili.</span>
@@ -156,7 +166,7 @@
       </div>
     </div>
 
-    <div class="flex-1 mt-3 p-4 rounded-[50px] bg-maihlili-figma-rose-sidebar flex flex-col justify-between shadow-2xl sidebar-main-content"> 
+    <div class="flex-1 mt-4 flex flex-col justify-between p-4"> 
       
       <nav class="space-y-2">
         {% if current_user.is_authenticated %}
@@ -200,7 +210,7 @@
         
         {% if current_user.is_authenticated %}
         <div class="user-profile flex items-center p-3 rounded-[50px] bg-white shadow-md" style="height: 65px; border: 1px solid #FFDCE4;"> 
-          <div class="w-10 h-10 bg-maihlili-figma-rose rounded-full flex items-center justify-center text-xl font-bold shadow-lg">
+          <div class="w-10 h-10 bg-maihlili-figma-cyan rounded-full flex items-center justify-center text-xl font-bold shadow-lg">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-maihlili-figma-blue">
               <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 4.743A9.522 9.522 0 0 0 12 3.5c-4.972 0-9 4.028-9 9s4.028 9 9 9 9-4.028 9-9c0-.448-.046-.889-.138-1.32" />
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
@@ -286,7 +296,7 @@
         const linkURL = link.getAttribute('href');
         const label = link.querySelector('.minimal-label');
         
-        // 1. Gérer la sélection (Bleu Vif)
+        // 1. Gérer la sélection (Cyan Vif)
         const isDefaultSelected = link.querySelector('.emoji-container').textContent.trim() === '📊' && 
                                   (currentPath === '/' || currentPath.endsWith('/employee-dashboard') || currentPath.endsWith('/'));
         
