@@ -5,6 +5,34 @@
   <title>Maihlili SPV</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            // Couleurs exactes du logo Maihlili (bleu pur)
+            'maihlili': {
+              500: '#4F46E5', // Bleu exact de votre logo
+            },
+            // NOUVELLES COULEURS POUR LE STYLE FIGMA
+            'maihlili-figma-blue': { 
+                DEFAULT: '#3055ff', // Bleu principal
+            },
+            'maihlili-figma-rose': { 
+                DEFAULT: '#FFDCE4', 
+                sidebar: '#fff0f8', // Fond de sidebar et de site (rose très pâle)
+            },
+            'maihlili-figma-cyan': { 
+                DEFAULT: '#5ce1e6', // Le nouveau cyan (bouton compte)
+            },
+            'maihlili-figma-salmon': { 
+                DEFAULT: '#F5B7B1', // Rose Saumon clair (bouton déconnexion)
+            },
+          }
+        }
+      }
+    }
+  </script>
   <style>
     /* NOUVEAUX STYLES POUR LES EMOJIS */
     .emoji-container {
@@ -15,7 +43,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        color: #3055ff; /* Couleur de texte par défaut bleue pour les emojis */
+        color: #3055ff; /* Texte emoji par défaut bleu */
     }
     
     /* Styles pour la barre de navigation */
@@ -33,7 +61,7 @@
     /* STYLES LIQUID GLASS / COULEURS SIDEBAR ROSE                  */
     /* ************************************************************ */
 
-    /* Style par défaut du label (Blanc pur sur fond Rose Sidebar) */
+    /* Style par défaut du label (INACTIF) */
     .liquid-glass-label {
         flex-grow: 1; 
         height: 100%;
@@ -41,160 +69,121 @@
         align-items: center;
         justify-content: flex-start;
         padding: 0 1.5rem;
-        border-radius: 50px; /* ARRONDI: 50px */
-        color: #3055ff; /* Texte bleu sur fond clair */
+        border-radius: 50px; 
+        
+        /* COULEURS INACTIVES (Contrainte: Fond Rose Clair, Texte Bleu) */
+        background-color: #fff0f8; /* Rose Sidebar Background */
+        color: #3055ff; /* Texte bleu */
+        
         font-weight: 500;
         text-align: left;
-        
-        /* Styles Liquid Glass par défaut (Fond blanc pur) */
-        background-color: #fff; /* Blanc pur pour l'élément inactif */
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
         backdrop-filter: blur(2px);
         -webkit-backdrop-filter: blur(2px);
-        border: 1px solid #FFDCE4; /* Bordure rose très claire */
+        border: 1px solid transparent; /* Pas de bordure visible pour inactif */
         transition: all 0.2s ease;
     }
     
-    /* Style de l'élément sélectionné (Bleu Maihlili) */
+    /* Style de l'élément sélectionné (ACTIF) */
     .liquid-glass-selected .liquid-glass-label {
+        /* COULEURS ACTIVES (Contrainte: Fond Bleu, Texte Rose Clair) */
         background-color: #3055ff !important; /* Bleu Maihlili */
-        color: white !important; /* Texte blanc sur fond bleu */
+        color: #fff0f8 !important; /* Texte Rose Clair */
         box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
         border: 1px solid #3055ff !important;
     }
 
-    /* Le style de l'icône sélectionnée devient blanc */
+    /* L'icône sélectionnée devient rose clair */
     .liquid-glass-selected .emoji-container {
-        color: white !important; 
+        color: #fff0f8 !important; 
     }
 
     /* ************************************************************ */
-    /* Bouton Déconnexion ROUGE                                     */
+    /* Bouton Déconnexion ROSE SAUMON CLAIR                         */
     /* ************************************************************ */
     .logout-button {
-      background-color: #EF4444; /* Rouge 500 */
-      color: white; /* Texte blanc sur fond rouge */
-      box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
+      background-color: #F5B7B1; /* Rose Saumon clair */
+      color: #DC2626; /* Texte rouge foncé pour le contraste */
+      box-shadow: 0 4px 10px rgba(245, 183, 177, 0.5);
     }
     .logout-button:hover {
-      background-color: #DC2626; /* Rouge 600 au hover */
-    }
-    /* Icône de déconnexion en blanc */
-    .logout-button svg {
+      background-color: #F472B6; /* Hover plus foncé */
       color: white;
     }
-
-  </style>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            // Couleurs exactes du logo Maihlili (bleu pur)
-            'maihlili': {
-              50: '#EEF2FF',
-              100: '#E0E7FF', 
-              200: '#C7D2FE',
-              300: '#A5B4FC',
-              400: '#818CF8',
-              500: '#4F46E5', // Bleu exact de votre logo
-              600: '#4338CA', 
-              700: '#3730A3',
-              800: '#312E81',
-              900: '#1E1B4B'
-            },
-            'nouveau-bleu': {
-                50: '#E6E9FF',
-                100: '#C8CEFF',
-                200: '#AAAEFF',
-                300: '#8C8FFF',
-                400: '#6E71FF',
-                500: '#3055ff', // Le nouveau bleu
-                600: '#2A4CE5',
-                700: '#2343CC',
-                800: '#1D3AAA',
-                900: '#163188'
-            },
-            // NOUVELLES COULEURS POUR LE STYLE FIGMA
-            'maihlili-figma-blue': { 
-                DEFAULT: '#3055ff', 
-            },
-            'maihlili-figma-rose': { 
-                DEFAULT: '#FFDCE4', // Rose clair pour les éléments (maintenu pour les petites touches)
-                sidebar: '#fff0f8', // Fond de sidebar (rose très pâle)
-            },
-          }
-        }
-      }
+    /* Icône de déconnexion */
+    .logout-button svg {
+      color: #DC2626;
     }
-  </script>
-  <style>
-    /* -------------------------------------------------------------------------------------------------- */
-    /* Couleurs & Thème Maihlili SPV                                                                       */
-    /* -------------------------------------------------------------------------------------------------- */
-    :root {
-      /* Couleurs Claires */
-      --color-bg-light: white; /* Fond de PAGE et MAIN en BLANC */
-      --color-text-light: #1f2937;
-      --color-text-subtle-light: #6b7280;
-      --color-border-light: #e5e7eb;
-      --color-card-bg-light: white; 
-      
-      /* COULEUR DE FOND DE SIDEBAR (pour l'intérieur du bloc) */
-      --color-sidebar-bg-light: #fff0f8; 
+    .logout-button:hover svg {
+      color: white;
     }
     
-    /* FOND DE PAGE ET DE MAIN EN BLANC */
+    /* ************************************************************ */
+    /* Global Styles and Themeing (for full adherence)              */
+    /* ************************************************************ */
+    
+    /* Le fond du site doit être #fff0f8 */
     body {
-      background-color: var(--color-bg-light); /* Le fond du BODY est BLANC */
-      color: var(--color-text-light);
+      background-color: #fff0f8;
       transition: background-color 0.5s ease, color 0.5s ease;
+      font-family: 'Bebas Neue', cursive; /* Force la police */
     }
 
-    main {
-      background-color: var(--color-bg-light); /* Le contenu principal est BLANC */
-    }
-
-    /* ************************************************************ */
-    /* CORRECTION DU CONTOUR: ASIDE et CONTENEUR DE CONTENU EN BLANC */
-    /* ************************************************************ */
+    /* Le conteneur principal du site est BLANC */
     aside {
-        background: white !important; /* Sidebar en BLANC (Conteneur extérieur) */
-        box-shadow: none !important; 
-        border: none !important;
+        background: white !important; 
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
         border-radius: 50px !important; 
     }
     
-    /* Conteneur principal de la sidebar (Reste ROSE pour le design) */
-    .sidebar-main-content {
-      background-color: var(--color-sidebar-bg-light) !important; /* Contenu interne de la sidebar en ROSE */
+    /* Contenu du tableau de bord (Main) est Blanc */
+    main {
+        background-color: white; 
+        border-radius: 50px; 
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
     }
     
-    /* Conteneur du logo - doit rester bleu */
-    .logo-container {
-      background-color: #3055ff !important;
-    }
-    
-    /* Force la police pour les éléments de la nouvelle sidebar */
+    /* Forcer la police pour les éléments de la nouvelle sidebar */
     .font-['Bebas_Neue'] {
         font-family: 'Bebas Neue', cursive;
     }
     
     /* -------------------------------------------------------------------------------------------------- */
-    /* Animations & Scrollbar                                                                             */
+    /* Mode Sombre (Désactivé pour la Sidebar, mais Main reste gérable)                                   */
     /* -------------------------------------------------------------------------------------------------- */
-    * { transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, transform 0.2s ease !important; }
+
+    /* Masquer le thème toggle si le mode sombre n'est pas utilisé, ou le styliser */
+    .theme-toggle {
+        /* Styles conservés si vous voulez le laisser, mais non affiché dans le nouveau design */
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: #3055ff;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 8px 32px rgba(48, 85, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 1000;
+        font-size: 1.5rem;
+        color: white;
+    }
+    /* ... Les styles de transition et scrollbar sont omis pour la clarté mais peuvent être conservés ... */
     
   </style>
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/main.min.css" rel="stylesheet">
 </head>
-<body class="bg-white flex min-h-screen" data-theme="light"> 
+<body class="bg-[#fff0f8] flex min-h-screen" data-theme="light"> 
 
-  <aside class="w-[320px] p-3 flex flex-col bg-white" style="min-height: 100vh;"> 
+  <aside class="w-[320px] p-3 flex flex-col" style="min-height: 100vh;"> 
     
-    <div class="h-[140px] rounded-[50px] bg-maihlili-figma-blue flex items-center p-4 shadow-xl logo-container"> 
-      <div class="w-[110px] h-[110px] rounded-full bg-white flex items-center justify-center -translate-y-1 shadow-xl">
-        <img src="{{ url_for('static', filename='images/maihlili-logo-light.png') }}" alt="Logo Maihlili clair" class="h-24 w-24 rounded-full">
+    <div class="h-[140px] rounded-[20px] bg-maihlili-figma-blue flex items-center p-4 shadow-xl logo-container"> 
+      <div class="w-[100px] h-[100px] rounded-full bg-white flex items-center justify-center -translate-y-1 shadow-xl">
+        <img src="{{ url_for('static', filename='images/maihlili-logo-light.png') }}" alt="Logo Maihlili clair" class="h-20 w-20 rounded-full">
       </div>
       <div class="ml-3 flex flex-col leading-none text-white font-['Bebas_Neue'] uppercase">
         <span class="text-3xl tracking-widest -mb-1">Maihlili.</span>
@@ -202,18 +191,20 @@
       </div>
     </div>
 
-    <div class="flex-1 mt-3 p-4 rounded-[50px] bg-maihlili-figma-rose-sidebar flex flex-col justify-between shadow-2xl sidebar-main-content"> 
+    <div class="flex-1 mt-3 p-4 rounded-[50px] bg-maihlili-figma-rose-sidebar flex flex-col justify-between shadow-xl sidebar-main-content"> 
       
       <nav class="space-y-2">
+        <p class="text-sm font-['Bebas_Neue'] uppercase tracking-wider text-maihlili-figma-blue ml-5 pt-1">Section 1</p>
+        
         {% if current_user.is_authenticated %}
           {% set menu_items_data = [
-            ('📊', 'Planning', url_for('index') if current_user.is_manager else url_for('employee_dashboard'), current_user.is_authenticated),
-            ('📅', 'Planning Avancé', url_for('planning'), current_user.is_manager),
-            ('👥', 'Employés', url_for('show_employees'), current_user.is_manager),
-            ('🏢', 'Équipes', url_for('manage_teams'), current_user.is_manager),
-            ('⏱️', 'Services', url_for('show_shifts'), current_user.is_manager),
-            ('📋', 'Assignations', url_for('assignments'), current_user.is_manager),
-            ('⚙️', 'Paramètres', url_for('settings'), current_user.is_authenticated)
+            ('✨', 'Tableau de bord', url_for('index') if current_user.is_manager else url_for('employee_dashboard'), current_user.is_authenticated),
+            ('✨', 'Planning Avancé', url_for('planning'), current_user.is_manager),
+            ('✨', 'Employés', url_for('show_employees'), current_user.is_manager),
+            ('✨', 'Équipes', url_for('manage_teams'), current_user.is_manager),
+            ('✨', 'Services', url_for('show_shifts'), current_user.is_manager),
+            ('✨', 'Assignations', url_for('assignments'), current_user.is_manager),
+            ('✨', 'Paramètres', url_for('settings'), current_user.is_authenticated)
           ] %}
 
           {% for emoji, label, url, condition in menu_items_data %}
@@ -245,16 +236,16 @@
       <div class="mt-4 space-y-2"> 
         
         {% if current_user.is_authenticated %}
-        <div class="user-profile flex items-center p-3 rounded-[50px] bg-white shadow-inner" style="height: 65px; border: 1px solid #FFDCE4;"> 
-          <div class="w-10 h-10 bg-maihlili-figma-rose rounded-full flex items-center justify-center text-xl font-bold shadow-lg">
+        <div class="user-profile flex items-center p-3 rounded-[50px] bg-maihlili-figma-cyan shadow-inner" style="height: 65px; border: 1px solid #5ce1e6;"> 
+          <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-xl font-bold shadow-lg">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-maihlili-figma-blue">
               <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 4.743A9.522 9.522 0 0 0 12 3.5c-4.972 0-9 4.028-9 9s4.028 9 9 9 9-4.028 9-9c0-.448-.046-.889-.138-1.32" />
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
               <path stroke-linecap="round" stroke-linejoin="round" d="M15.406 20.088c-1.691-.715-3.593-1.088-5.406-1.088-1.813 0-3.715.373-5.406 1.088a1.5 1.5 0 0 0-.844 1.341c0 .828.672 1.5 1.5 1.5h9.75a1.5 1.5 0 0 0 1.5-1.5 1.5 1.5 0 0 0-.844-1.341Z" />
             </svg>
           </div>
-          <div class="flex-1 ml-3 text-maihlili-figma-blue">
-            <p class="text-xl font-['Bebas_Neue'] uppercase tracking-wider text-maihlili-figma-blue">{{ current_user.username }}</p> 
+          <div class="flex-1 ml-3 text-[#1f2937]">
+            <p class="text-xl font-['Bebas_Neue'] uppercase tracking-wider text-[#1f2937]">{{ current_user.username }}</p> 
             <p class="text-xs font-light -mt-1 text-gray-700">
               {% if current_user.is_admin %}Administrateur
               {% elif current_user.is_manager %}Manager
@@ -264,9 +255,9 @@
         </div>
         
         <a href="{{ url_for('logout') }}" 
-           class="flex items-center justify-center p-3 rounded-[50px] logout-button hover:bg-red-600 backdrop-blur-sm text-white font-['Bebas_Neue'] uppercase text-xl transition-all duration-200"
+           class="flex items-center justify-center p-3 rounded-[50px] logout-button backdrop-blur-sm font-['Bebas_Neue'] uppercase text-xl transition-all duration-200"
            style="height: 45px;"> 
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 mr-2 -translate-y-0.5 text-white">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 mr-2 -translate-y-0.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l3 3m0 0-3 3m3-3H6" />
           </svg>
           Se Déconnecter
@@ -276,7 +267,8 @@
     </div>
   </aside>
 
-  <main class="flex-1 p-6 bg-white"> {% with messages = get_flashed_messages() %}
+  <main class="flex-1 p-6 m-3"> 
+    {% with messages = get_flashed_messages() %}
       {% if messages %}
         <ul class="mb-4">
           {% for msg in messages %}
@@ -304,6 +296,8 @@
     updateThemeToggle(savedTheme);
     
     function toggleTheme() {
+      // NOTE: Le mode sombre n'est pas stylisé pour la sidebar dans ce design.
+      // Le mode sombre s'appliquera au contenu principal (main) uniquement.
       const currentTheme = body.getAttribute('data-theme');
       const newTheme = currentTheme === 'light' ? 'dark' : 'light';
       
@@ -334,8 +328,12 @@
         
         // 1. Gérer la sélection (Bleu)
         // La première ancre est sélectionnée par défaut si l'URL correspond à la racine ou au dashboard
-        const isDefaultSelected = link.querySelector('.emoji-container').textContent.trim() === '📊' && 
-                                  (currentPath === '/' || currentPath.endsWith('/employee-dashboard') || currentPath.endsWith('/'));
+        const isDashboardLink = link.querySelector('.emoji-container').textContent.trim() === '✨' && linkURL.includes('dashboard');
+        const isIndex = linkURL.endsWith('/');
+        
+        const isDefaultSelected = (isDashboardLink && (currentPath === '/' || currentPath.endsWith('/employee-dashboard') || currentPath.endsWith('/index'))) || 
+                                  (isIndex && currentPath === '/');
+
 
         if (linkURL === currentPath || isDefaultSelected) {
           link.classList.add('liquid-glass-selected');
@@ -343,16 +341,18 @@
           link.classList.remove('liquid-glass-selected');
         }
 
-        // 2. Gérer l'effet de survol (légère ombre blanche)
+        // 2. Gérer l'effet de survol (fond rose très pâle)
         if (label) {
           link.addEventListener('mouseover', function() {
             if (!link.classList.contains('liquid-glass-selected')) {
-              label.style.backgroundColor = '#f8f8f8'; 
+              // Léger effet de survol plus clair
+              label.style.backgroundColor = '#fce7f3'; 
             }
           });
           link.addEventListener('mouseout', function() {
             if (!link.classList.contains('liquid-glass-selected')) {
-              label.style.backgroundColor = '#fff'; // Revert au blanc pur
+              // Retour au fond rose très pâle
+              label.style.backgroundColor = '#fff0f8'; 
             }
           });
         }
