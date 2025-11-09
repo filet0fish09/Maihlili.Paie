@@ -119,7 +119,7 @@
     }
     
     /* ************************************************************ */
-    /* Global Styles and Themeing (for full adherence)              */
+    /* Global Styles and Themeing (Fond #fff0f8, Sidebar BLANCHE)   */
     /* ************************************************************ */
     
     /* Le fond du site doit être #fff0f8 */
@@ -148,10 +148,6 @@
         font-family: 'Bebas Neue', cursive;
     }
     
-    /* -------------------------------------------------------------------------------------------------- */
-    /* Mode Sombre (Désactivé pour la Sidebar, mais Main reste gérable)                                   */
-    /* -------------------------------------------------------------------------------------------------- */
-
     /* Masquer le thème toggle si le mode sombre n'est pas utilisé, ou le styliser */
     .theme-toggle {
         /* Styles conservés si vous voulez le laisser, mais non affiché dans le nouveau design */
@@ -172,7 +168,6 @@
         font-size: 1.5rem;
         color: white;
     }
-    /* ... Les styles de transition et scrollbar sont omis pour la clarté mais peuvent être conservés ... */
     
   </style>
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/main.min.css" rel="stylesheet">
@@ -194,17 +189,15 @@
     <div class="flex-1 mt-3 p-4 rounded-[50px] bg-maihlili-figma-rose-sidebar flex flex-col justify-between shadow-xl sidebar-main-content"> 
       
       <nav class="space-y-2">
-        <p class="text-sm font-['Bebas_Neue'] uppercase tracking-wider text-maihlili-figma-blue ml-5 pt-1">Section 1</p>
-        
         {% if current_user.is_authenticated %}
           {% set menu_items_data = [
-            ('✨', 'Tableau de bord', url_for('index') if current_user.is_manager else url_for('employee_dashboard'), current_user.is_authenticated),
-            ('✨', 'Planning Avancé', url_for('planning'), current_user.is_manager),
-            ('✨', 'Employés', url_for('show_employees'), current_user.is_manager),
-            ('✨', 'Équipes', url_for('manage_teams'), current_user.is_manager),
-            ('✨', 'Services', url_for('show_shifts'), current_user.is_manager),
-            ('✨', 'Assignations', url_for('assignments'), current_user.is_manager),
-            ('✨', 'Paramètres', url_for('settings'), current_user.is_authenticated)
+            ('📊', 'Tableau de bord', url_for('index') if current_user.is_manager else url_for('employee_dashboard'), current_user.is_authenticated),
+            ('📅', 'Planning Avancé', url_for('planning'), current_user.is_manager),
+            ('👥', 'Employés', url_for('show_employees'), current_user.is_manager),
+            ('🏢', 'Équipes', url_for('manage_teams'), current_user.is_manager),
+            ('⏱️', 'Services', url_for('show_shifts'), current_user.is_manager),
+            ('📋', 'Assignations', url_for('assignments'), current_user.is_manager),
+            ('⚙️', 'Paramètres', url_for('settings'), current_user.is_authenticated)
           ] %}
 
           {% for emoji, label, url, condition in menu_items_data %}
@@ -327,15 +320,14 @@
         const label = link.querySelector('.liquid-glass-label');
         
         // 1. Gérer la sélection (Bleu)
-        // La première ancre est sélectionnée par défaut si l'URL correspond à la racine ou au dashboard
-        const isDashboardLink = link.querySelector('.emoji-container').textContent.trim() === '✨' && linkURL.includes('dashboard');
-        const isIndex = linkURL.endsWith('/');
+        // La première ancre (Tableau de bord) est sélectionnée si l'URL correspond à la racine ou au dashboard
+        const isDashboardLink = link.querySelector('.emoji-container').textContent.trim() === '📊';
         
-        const isDefaultSelected = (isDashboardLink && (currentPath === '/' || currentPath.endsWith('/employee-dashboard') || currentPath.endsWith('/index'))) || 
-                                  (isIndex && currentPath === '/');
+        // La condition de sélection est basée sur l'URL actuelle
+        const isDefaultSelected = (linkURL === currentPath) ||
+                                  (isDashboardLink && (currentPath === '/' || currentPath.endsWith('/index') || currentPath.endsWith('/employee-dashboard')));
 
-
-        if (linkURL === currentPath || isDefaultSelected) {
+        if (isDefaultSelected) {
           link.classList.add('liquid-glass-selected');
         } else {
           link.classList.remove('liquid-glass-selected');
