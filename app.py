@@ -14,20 +14,9 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 # ------------------------------------------
 
 # Définition de la couleur de branding à partir de votre logo
-MAIHLILI_FOND_TABLE = colors.HexColor('#FFF0F8')    # Fond du planning (Rose Maihlili)
-MAIHLILI_TITRES_BLEU = colors.HexColor('#3055FF')   # Titres (Bleu Maihlili - normal)
-MAIHLILI_ENTETES_CYAN = colors.HexColor('#5CE1E6')  # En-têtes (Dimanche, Lundi...) (Cyan Maihlili)
+MAIHLILI_FOND_TABLE = colors.HexColor('#FFF0F8') # Fond du tableau (simule le fond du doc)
+MAIHLILI_TITRES_BLEU = colors.HexColor('#3055FF') # Bleu pour les titres et en-têtes
 MAIHLILI_BLANC = colors.white
-
-# Helper pour déterminer la couleur de texte (ReportLab) pour un meilleur contraste
-def get_text_color_name(hex_color_string):
-    """Détermine si le texte doit être blanc ou noir en fonction de la luminosité du fond."""
-    hex_color_string = hex_color_string.lstrip('#')
-    r = int(hex_color_string[0:2], 16)
-    g = int(hex_color_string[2:4], 16)
-    b = int(hex_color_string[4:6], 16)
-    luminance = (r * 0.2126 + g * 0.7152 + b * 0.0722) / 255
-    return "white" if luminance < 0.5 else "black"
 
 # ... le reste du fichier app.py ...
 
@@ -2404,6 +2393,9 @@ def api_planning_stats():
         "compliance": compliance
     })
 
+
+# --- NOUVELLE ROUTE POUR L'EXPORT PDF (REMPLACE LE PLACEHOLDER) ---
+# NOTE: Cette fonction doit se trouver DANS votre fichier app.py
 @app.route('/api/export-gantt-pdf', methods=['GET'])
 @login_required
 def export_gantt_pdf():
@@ -2414,16 +2406,13 @@ def export_gantt_pdf():
     def get_text_color_name(hex_color_str):
         """Détermine si le texte doit être blanc ou noir en fonction de la couleur de fond."""
         try:
-            # ReportLab Colors accepte les chaînes HEX
-            color_obj = colors.HexColor(hex_color_str) 
+            color_obj = colors.HexColor(hex_color_str)
         except: 
             color_obj = colors.HexColor('#888888') 
             
-        # ReportLab utilise 0-1.0 pour RGB
         r, g, b = color_obj.red, color_obj.green, color_obj.blue
-        # Formule de luminance pour le contraste
-        luminance = (r * 0.2126 + g * 0.7152 + b * 0.0722) 
-        return "white" if luminance < 0.5 else "black"
+        brightness = (r * 0.299 + g * 0.587 + b * 0.114)
+        return "white" if brightness < 0.5 else "black"
 
     # --- 2. Préparation des dates et récupération des données ---
     start_date_str = request.args.get('start')
@@ -2434,6 +2423,7 @@ def export_gantt_pdf():
         start_date = today - timedelta(days=today.weekday())
 
     try:
+        # Assurez-vous que cette fonction est correctement importée ou définie.
         data = get_gantt_data_for_week(start_date, current_user)
         employees = data['employees']
         assignments = data['assignments']
@@ -2441,33 +2431,27 @@ def export_gantt_pdf():
         return jsonify({'error': 'La fonction get_gantt_data_for_week est introuvable.'}), 500
     
     week_start = data['week_start']
-    week_end = week_start + timedelta(days=6)
+    week_end = week_start + timedelta(days=6) # 6 jours après le début de semaine
 
     # --- 3. Préparation du PDF ---
     buffer = BytesIO()
-    # Utilisation de l'unité cm pour les marges (ajout nécessaire si ce n'est pas déjà fait)
-    # Assurez-vous d'avoir 'from reportlab.lib.units import cm' en tête de fichier
-    doc = SimpleDocTemplate(buffer, pagesize=(A4[1], A4[0]), leftMargin=30, rightMargin=30, topMargin=50, bottomMargin=30)
+    # Format Paysage (A4[1], A4[0])
+    doc = SimpleDocTemplate(buffer, pagesize=(A4[1], A4[0]), leftMargin=30, rightMargin=30, topMargin=30, bottomMargin=30)
     styles = getSampleStyleSheet()
     story = []
 
-    # MODIFICATION 1: Définition des couleurs Maihlili (ajout du Cyan)
-    MAIHLILI_TITRES_BLEU = colors.HexColor('#3055FF')  # Titre
-    MAIHLILI_ENTETES_CYAN = colors.HexColor('#5CE1E6') # NOUVEAU : En-têtes (jours)
+    # Définition des couleurs ReportLab
+    MAIHLILI_TITRES_BLEU = colors.HexColor('#3055FF') 
     MAIHLILI_BLANC = colors.white
-    MAIHLILI_FOND_TABLE = colors.HexColor('#FFF0F8')   # NOUVEAU : Fond du planning (Rose très pâle)
+    MAIHLILI_FOND_TABLE = colors.HexColor('#F8F8F8') 
 
     # --- 4. En-tête (Logo et Titre) ---
     logo_path = os.path.join(app.root_path, 'static', 'images', 'maihlili-logo-light.png') 
     
-    # *** CORRECTION DE LA TAILLE DU LOGO ***
-    # Utiliser une petite taille, par exemple 40, sans forcer la hauteur
-    LOGO_WIDTH = 40
-    
     logo_element = Spacer(1, 1) 
     if os.path.exists(logo_path):
-        # La LIGNE CORRIGÉE : Utiliser 40 en largeur et laisser height=None pour les proportions
-        logo_element = Image(logo_path, width=40, height=None) 
+        # Logo non étiré, taille fixée
+        logo_element = Image(logo_path, width=70, height=35) 
         logo_element.hAlign = 'LEFT'
         
     title_text = f"""
@@ -2475,14 +2459,9 @@ def export_gantt_pdf():
     <font size='10' color='#555555'>Du {week_start.strftime('%d/%m/%Y')} au {week_end.strftime('%d/%m/%Y')}</font>
     """
     title_element = Paragraph(title_text, styles['Normal'])
-    title_element.alignment = 1 
+    title_element.alignment = 1 # Center
 
-    # La largeur de la colonne du logo est ajustée à 50 pixels (40 pour le logo + 10 de marge)
-    header_table = Table([[logo_element, title_element, Spacer(1, 1)]], colWidths=[50, doc.width - 60, 10])
-    # ... (le reste du style de la table d'en-tête ne change pas)
-
-    # Ajustement de la table d'en-tête
-    header_table = Table([[logo_element, title_element, Spacer(1, 1)]], colWidths=[60, doc.width - 120, 60])
+    header_table = Table([[logo_element, title_element, Spacer(1, 1)]], colWidths=[70, doc.width - 140, 70])
     header_table.setStyle(TableStyle([
         ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
@@ -2490,9 +2469,7 @@ def export_gantt_pdf():
         ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
     ]))
     story.append(header_table)
-    # Remplacer le Spacer(1, 18) pour un alignement vertical plus propre avec le logo
-    from reportlab.lib.units import cm 
-    story.append(Spacer(1, 0.5 * cm)) 
+    story.append(Spacer(1, 18)) 
 
     # --- 5. Préparation des données du tableau ---
     days_full = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
@@ -2512,7 +2489,6 @@ def export_gantt_pdf():
     assignments_by_employee_and_day = {emp['id']: {i: [] for i in range(7)} for emp in employees}
     
     for a in assignments:
-        # NOTE : 'a['start']' dans ce code est un objet 'datetime.datetime', donc .weekday() est correct.
         day_of_week_index = a['start'].weekday()
         employee_id = a['employee_id']
         
@@ -2523,10 +2499,7 @@ def export_gantt_pdf():
 
     # Remplissage des lignes du tableau (Gantt)
     for emp_index, emp in enumerate(employees):
-        # Pour les employés sans position, utilisez 'Employé'
-        position = next((e.position for e in [Employee.query.get(emp['id'])] if e.position is not None), 'Employé')
-        
-        emp_name_text = f"<b>{emp['name']}</b><br/><font size='7' color='#555555'>{position}</font>"
+        emp_name_text = f"<b>{emp['name']}</b><br/><font size='7' color='#555555'>{emp.get('position', 'Employé')}</font>"
         row = [Paragraph(emp_name_text, styles['Normal'])]
         
         emp_assignments = assignments_by_employee_and_day.get(emp['id'], {i: [] for i in range(7)})
@@ -2537,9 +2510,10 @@ def export_gantt_pdf():
             
             if shifts:
                 for content_str, color_hex in shifts:
-                    text_color_name = get_text_color_name(color_hex).upper() # Renvoie 'WHITE' ou 'BLACK'
+                    # Détermine si le texte doit être 'white' ou 'black' (chaîne)
+                    text_color_name = get_text_color_name(color_hex)
                     
-                    # Obtient l'objet couleur (colors.WHITE/colors.BLACK)
+                    # CORRECTION MAJEURE: Obtient l'objet couleur (colors.white/colors.black)
                     text_color_obj = getattr(colors, text_color_name) 
                     
                     # CRÉATION DU STYLE STABLE: Utilise .clone()
@@ -2551,11 +2525,10 @@ def export_gantt_pdf():
                     p_style.backColor = colors.HexColor(color_hex)
                     p_style.fontSize = 8
                     p_style.fontName = 'Helvetica'
-                    # Retirer borderPadding et borderRadius qui ne sont pas supportés dans ReportLab ParagraphStyle
-                    p_style.leftIndent = 2
-                    p_style.rightIndent = 2
-
-                    markup = f'{content_str}'
+                    p_style.borderPadding = 3 
+                    p_style.borderRadius = 3 
+                    
+                    markup = f'{content_str}' # Ligne à l'origine du problème d'indentation
                     
                     shift_p = Paragraph(markup, p_style)
                     cell_content_html.append(shift_p)
@@ -2578,19 +2551,16 @@ def export_gantt_pdf():
     table = Table(table_data, colWidths=col_widths)
     
     table.setStyle(TableStyle([
-        # MODIFICATION 3 & 4 : En-tête en Cyan Maihlili
-        ('BACKGROUND', (0, 0), (-1, 0), MAIHLILI_ENTETES_CYAN), 
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black), # Le cyan est clair, le texte doit être noir
+        # En-tête
+        ('BACKGROUND', (0, 0), (-1, 0), MAIHLILI_TITRES_BLEU), 
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
         ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
         
-        # MODIFICATION 5 : Corps du tableau (Fond en Rose Maihlili)
-        ('BACKGROUND', (0, 1), (-1, -1), MAIHLILI_FOND_TABLE), 
-        
-        # Style pour la colonne Employé (Nom)
-        ('BACKGROUND', (0, 1), (0, -1), colors.lightgrey), 
+        # Corps du tableau (Lignes alternées)
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [MAIHLILI_FOND_TABLE, MAIHLILI_BLANC]), 
 
         # Alignements et bordures
         ('ALIGN', (0, 0), (0, -1), 'LEFT'), 
@@ -2616,15 +2586,12 @@ def export_gantt_pdf():
         pdf = buffer.getvalue()
         buffer.close()
         
-        # Utilisation de la méthode Flask pour renvoyer le fichier (plus standard que le tuple)
-        from flask import send_file 
-        return send_file(
-            BytesIO(pdf), 
-            as_attachment=True, 
-            download_name=f'planning_maihlili_{week_start.strftime("%Y%m%d")}.pdf', 
-            mimetype='application/pdf'
-        )
+        return pdf, 200, {
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': f'attachment; filename="planning_maihlili_{week_start.strftime("%Y%m%d")}.pdf"'
+        }
     except Exception as e:
+        # Affiche l'erreur pour le débogage et retourne une erreur Flask
         print(f"Erreur lors de la construction du PDF: {e}")
         return jsonify({'error': 'Erreur lors de la construction du PDF.'}), 500
 
@@ -2683,8 +2650,6 @@ if __name__ == "__main__":
     # Configuration pour production Render
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
-
-
 
 
 
