@@ -2460,9 +2460,13 @@ def export_gantt_pdf():
     # --- 4. En-tête (Logo et Titre) ---
     logo_path = os.path.join(app.root_path, 'static', 'images', 'maihlili-logo-light.png') 
     
+    # *** CORRECTION DE LA TAILLE DU LOGO ***
+    # Utiliser une petite taille, par exemple 40, sans forcer la hauteur
+    LOGO_WIDTH = 40
+    
     logo_element = Spacer(1, 1) 
     if os.path.exists(logo_path):
-        # MODIFICATION 2: Logo non étiré, taille fixée en largeur (width=60)
+        # La LIGNE CORRIGÉE : Utiliser 40 en largeur et laisser height=None pour les proportions
         logo_element = Image(logo_path, width=40, height=None) 
         logo_element.hAlign = 'LEFT'
         
@@ -2471,7 +2475,11 @@ def export_gantt_pdf():
     <font size='10' color='#555555'>Du {week_start.strftime('%d/%m/%Y')} au {week_end.strftime('%d/%m/%Y')}</font>
     """
     title_element = Paragraph(title_text, styles['Normal'])
-    title_element.alignment = 1 # Center
+    title_element.alignment = 1 
+
+    # La largeur de la colonne du logo est ajustée à 50 pixels (40 pour le logo + 10 de marge)
+    header_table = Table([[logo_element, title_element, Spacer(1, 1)]], colWidths=[50, doc.width - 60, 10])
+    # ... (le reste du style de la table d'en-tête ne change pas)
 
     # Ajustement de la table d'en-tête
     header_table = Table([[logo_element, title_element, Spacer(1, 1)]], colWidths=[60, doc.width - 120, 60])
@@ -2675,6 +2683,7 @@ if __name__ == "__main__":
     # Configuration pour production Render
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
