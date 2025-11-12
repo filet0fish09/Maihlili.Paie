@@ -1,16 +1,20 @@
 # -*- coding: utf-8 -*-
 from flask import Flask, render_template, request, redirect, url_for, jsonify, flash
-from models import db, User, Employee, Shift, Assignment, Team
+# ⚠️ MISE À JOUR : Import de Establishment
+from models import db, User, Employee, Shift, Assignment, Team, Establishment 
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 # ------------------------------------------------------------------
-from datetime import datetime, timedelta # <-- C'EST CETTE LIGNE QU'IL FAUT GARDER
+from datetime import datetime, timedelta
 import os
+from functools import wraps # ⚠️ NOUVEL IMPORT POUR LE DÉCORATEUR
 # --- NOUVEAUX IMPORTS POUR L'EXPORT PDF ---
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
+from reportlab.lib.units import cm
+
 # ------------------------------------------
 
 # Définition de la couleur de branding à partir de votre logo
@@ -2641,6 +2645,69 @@ def move_assignment():
         # Log l'erreur pour le débogage
         print(f"Erreur lors du déplacement de l'assignation: {e}") 
         return jsonify({'error': 'Erreur serveur lors de la mise à jour'}), 500
+
+def super_admin_required(f):
+    """Décorateur pour exiger que l'utilisateur soit un Ultra-Admin."""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # Utilise getattr pour gérer les cas où la colonne n'existerait pas encore (avant migration)
+        if not current_user.is_authenticated or not getattr(current_user, 'is_super_admin', False):
+            flash("Accès refusé. Fonctionnalité réservée à l'Ultra-Administrateur.", 'error')
+            return redirect(url_for('index')) 
+        return f(*args, **kwargs)
+    return decorated_function
+
+# ----------------------------------------------------------------------
+# 🏰 NOUVELLE ROUTE : Gestion des établissements
+# ----------------------------------------------------------------------
+@app.route('/super-admin/establishments', methods=['GET', 'POST'])
+@login_required
+@super_admin_required # Seul l'Ultra-Admin y a accès
+def manage_establishments():
+    establishments = Establishment.query.all()
+    
+    if request.method == 'POST':
+        action = request.form.get('action')
+        
+        if action == 'create':
+            name = request.form.get('name')
+            if name:
+                if Establishment.query.filter_by(name=name).first():
+                    flash(f'Un établissement nommé "{name}" existe déjà.', 'error')
+                else:
+                    new_est = Establishment(name=name)
+                    db.session.add(new_est)
+                    try:
+                        db.session.commit()
+                        flash(f'Établissement "{name}" créé avec succès.', 'success')
+                    except Exception as e:
+                        db.session.rollback()
+                        flash(f'Erreur lors de la création : {e}', 'error')
+            
+        elif action == 'delete':
+            est_id = request.form.get('establishment_id')
+            est = Establishment.query.get(est_id)
+            
+            if est:
+                try:
+                    # 1. Délier les Users (les Managers/Admins locaux ne sont plus liés à cet établissement)
+                    User.query.filter_by(establishment_id=est.id).update({'establishment_id': None}, synchronize_session=False)
+                    
+                    # 2. Supprimer les Employees (et toutes leurs dépendances via CASCADE : Assignments, TimesheetEntries)
+                    # Note: Les Assignments/TimesheetEntry sont supprimés automatiquement si vous avez mis ondelete='CASCADE' dans models.py
+                    Employee.query.filter_by(establishment_id=est.id).delete(synchronize_session=False)
+                    
+                    # 3. Supprimer l'établissement
+                    db.session.delete(est)
+                    db.session.commit()
+                    flash(f'Établissement "{est.name}" et toutes ses données liées ont été supprimés.', 'success')
+                except Exception as e:
+                    db.session.rollback()
+                    flash(f'Erreur lors de la suppression : {e}', 'error')
+
+        return redirect(url_for('manage_establishments'))
+
+    return render_template('manage_establishments.html', establishments=establishments)
 # --- Lancement de l'application ---
 
 if __name__ == "__main__":
@@ -2650,6 +2717,7 @@ if __name__ == "__main__":
     # Configuration pour production Render
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
