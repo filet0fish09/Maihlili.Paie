@@ -201,9 +201,6 @@
 
         {% set menu_items_data = [
             ('📊', 'Tableau de bord', url_for('index') if current_user.is_manager or current_user.is_super_admin else url_for('employee_dashboard'), current_user.is_authenticated),
-            
-            {# ⚠️ J'AI AJOUTÉ 'current_user.is_super_admin' ICI AUSSI POUR L'ACCÈS DU TABLEAU DE BORD #}
-            
             ('📅', 'Planning Avancé', url_for('planning'), current_user.is_manager or current_user.is_super_admin),
             ('👥', 'Employés', url_for('show_employees'), current_user.is_manager or current_user.is_super_admin),
             ('🏢', 'Équipes', url_for('manage_teams'), current_user.is_manager or current_user.is_super_admin),
@@ -365,5 +362,6 @@
   </script>
 </body>
 </html>
+
 
 
