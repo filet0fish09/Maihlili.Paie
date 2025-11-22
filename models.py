@@ -15,8 +15,7 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     is_manager = db.Column(db.Boolean, default=False)
     is_admin = db.Column(db.Boolean, default=False)
-    # ⭐ AJOUT : Champ is_super_admin
-    is_super_admin = db.Column(db.Boolean, default=False)
+    is_super_admin = db.Column(db.Boolean, default=False) # Ajout
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relations
@@ -42,10 +41,8 @@ class Employee(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     team_id = db.Column(db.Integer, db.ForeignKey('teams.id'))
     
-    # ⭐ NOUVEAU : Clé étrangère vers Establishment
     establishment_id = db.Column(db.Integer, db.ForeignKey('establishments.id'), nullable=True)
     
-    # NOUVEAUX CHAMPS pour les heures contractuelles
     contract_hours_per_week = db.Column(db.Float, default=35.0)
     contract_hours_per_month = db.Column(db.Float, default=151.67)
     contract_type = db.Column(db.String(20), default="CDI")
@@ -56,24 +53,21 @@ class Employee(db.Model):
     assignments = db.relationship('Assignment', backref='employee', lazy=True, cascade='all, delete-orphan')
     managed_teams = db.relationship('Team', foreign_keys='Team.manager_id', backref='manager', lazy=True)
     
-    # ⭐ MODIFICATION CRUCIALE: Utilisation de back_populates pour éviter le conflit
+    # Correction de l'ArgumentError avec back_populates
     establishment = db.relationship('Establishment', back_populates='employees', lazy=True)
     
     @property
     def current_establishment(self):
-        """Retourne l'établissement de l'employé, soit par lien direct, soit par son équipe."""
         if self.establishment:
             return self.establishment
-        if self.team and self.team.establishment: # Vérifie le lien de l'équipe
+        if self.team and self.team.establishment:
             return self.team.establishment
         return None
         
     def can_be_managed_by(self, user):
-        """Vérifie si cet employé peut être géré par l'utilisateur (manager/admin) donné."""
         if not user or not user.is_manager:
             return False
         
-        # L'admin/super-admin peut tout gérer
         if user.is_admin or user.is_super_admin:
             return True
         
@@ -81,7 +75,6 @@ class Employee(db.Model):
         if not manager_employee:
             return False
 
-        # Si l'employé est dans une équipe, vérifier si le manager est le responsable de cette équipe
         if self.team_id:
             if self.team and self.team.manager_id == manager_employee.id:
                 return True
@@ -93,7 +86,6 @@ class Employee(db.Model):
         return False
 
     def get_worked_hours_for_month(self, year=None, month=None):
-        """Calcule les heures travaillées pour un mois donné"""
         if not year:
             year = datetime.now().year
         if not month:
@@ -117,7 +109,6 @@ class Employee(db.Model):
         return round(total_hours, 2)
 
     def get_hours_difference_for_month(self, year=None, month=None):
-        """Calcule la différence entre heures travaillées et contractuelles"""
         worked_hours = self.get_worked_hours_for_month(year, month)
         contract_hours = self.contract_hours_per_month or 151.67
         difference = worked_hours - contract_hours
@@ -131,7 +122,6 @@ class Employee(db.Model):
         }
 
     def get_monthly_hours_history(self, months_count=6):
-        """Retourne l'historique des heures sur les derniers mois"""
         history = []
         current_date = datetime.now()
         
@@ -155,16 +145,14 @@ class Employee(db.Model):
 
     @property
     def current_month_hours_summary(self):
-        """Résumé rapide du mois en cours"""
         return self.get_hours_difference_for_month()
 
     def update_contract_hours(self, hours_per_week):
-        """Met à jour les heures contractuelles"""
         self.contract_hours_per_week = hours_per_week
         self.contract_hours_per_month = round(hours_per_week * 52 / 12, 2)
 
     def __repr__(self):
-        # ⭐ CORRECTION DU SYNTAX ERROR: ajout du '>' de fin
+        # Fix du SyntaxError: ajout du '>' manquant
         return f'<Employee {self.full_name} - {self.contract_hours_per_week}h/sem>'
 
 
@@ -176,15 +164,13 @@ class Team(db.Model):
     description = db.Column(db.Text)
     manager_id = db.Column(db.Integer, db.ForeignKey('employees.id'))
     
-    # ⭐ NOUVEAU : Lien vers l'établissement pour l'équipe
     establishment_id = db.Column(db.Integer, db.ForeignKey('establishments.id'), nullable=True) 
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relations
     members = db.relationship('Employee', foreign_keys='Employee.team_id', backref='team', lazy=True)
-    
-    # ⭐ NOUVEAU : Relation vers Establishment (avec back_populates)
+    # Correction de l'ArgumentError avec back_populates
     establishment = db.relationship('Establishment', back_populates='teams', lazy=True)
 
     def __repr__(self):
@@ -280,16 +266,15 @@ class TimeSheetEntry(db.Model):
     def __repr__(self):
         return f'<TimeSheetEntry {self.id} for Assignment {self.assignment_id}>'
 
-# ⭐ NOUVEAU MODÈLE : Establishment (Établissement)
 class Establishment(db.Model):
     __tablename__ = 'establishments'
     
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    address = db.Column(db.Text)
+    address = db.Column(db.Text) # Colonne address réintégrée
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # ⭐ NOUVEAU : Relations explicites pour la correction de l'erreur
+    # Correction de l'ArgumentError avec back_populates
     employees = db.relationship('Employee', back_populates='establishment', lazy=True)
     teams = db.relationship('Team', back_populates='establishment', lazy=True)
     
