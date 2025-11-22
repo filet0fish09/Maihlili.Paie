@@ -71,6 +71,7 @@ class Employee(db.Model):
     
     # NOUVEAU: Clé étrangère pour l'établissement
     establishment_id = db.Column(db.Integer, db.ForeignKey('establishments.id'), nullable=True) 
+    establishment = db.relationship('Establishment', backref='employees', lazy=True) # <-- AJOUT de la relation
     
     # NOUVEAUX CHAMPS pour les heures contractuelles
     contract_hours_per_week = db.Column(db.Float, default=35.0)
@@ -211,8 +212,17 @@ class Employee(db.Model):
         self.contract_hours_per_month = round(hours_per_week * 52 / 12, 2)
 
     def __repr__(self):
-        return f'<Employee {self.full_name} - {self.contract_hours_per_week}h/sem>'
+        return f'<Employee {self.full_name} - {self.contract_hours_per_week}h/sem
 
+# PROPRIÉTÉ pour déterminer l'établissement actuel (favorise le lien direct si présent)
+    @property
+    def current_establishment(self):
+        """Retourne l'établissement de l'employé, soit par lien direct, soit par son équipe."""
+        if self.establishment:
+            return self.establishment
+        if self.team and self.team.establishment_id:
+            return self.team.establishment
+        return None
 
 # =================================================================
 # MODÈLE MIS À JOUR: Team
@@ -341,3 +351,4 @@ class TimeSheetEntry(db.Model):
         
     def __repr__(self):
         return f'<TimeSheetEntry {self.id} for Assignment {self.assignment_id}>'
+
