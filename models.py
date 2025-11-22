@@ -15,11 +15,15 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     is_manager = db.Column(db.Boolean, default=False)
     is_admin = db.Column(db.Boolean, default=False)
-    is_super_admin = db.Column(db.Boolean, default=False) # Ajout
+    is_super_admin = db.Column(db.Boolean, default=False) 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Clé étrangère vers Establishment
+    establishment_id = db.Column(db.Integer, db.ForeignKey('establishments.id'), nullable=True) 
     
     # Relations
     employee = db.relationship('Employee', backref='user', uselist=False)
+    establishment = db.relationship('Establishment', back_populates='users', lazy=True, foreign_keys=[establishment_id]) 
     
     # Méthodes
     def set_password(self, password):
@@ -49,11 +53,9 @@ class Employee(db.Model):
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Relations
     assignments = db.relationship('Assignment', backref='employee', lazy=True, cascade='all, delete-orphan')
     managed_teams = db.relationship('Team', foreign_keys='Team.manager_id', backref='manager', lazy=True)
     
-    # Correction de l'ArgumentError avec back_populates
     establishment = db.relationship('Establishment', back_populates='employees', lazy=True)
     
     @property
@@ -152,7 +154,6 @@ class Employee(db.Model):
         self.contract_hours_per_month = round(hours_per_week * 52 / 12, 2)
 
     def __repr__(self):
-        # Fix du SyntaxError: ajout du '>' manquant
         return f'<Employee {self.full_name} - {self.contract_hours_per_week}h/sem>'
 
 
@@ -168,9 +169,7 @@ class Team(db.Model):
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Relations
     members = db.relationship('Employee', foreign_keys='Employee.team_id', backref='team', lazy=True)
-    # Correction de l'ArgumentError avec back_populates
     establishment = db.relationship('Establishment', back_populates='teams', lazy=True)
 
     def __repr__(self):
@@ -189,12 +188,10 @@ class Shift(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     employees_needed = db.Column(db.Integer, default=3)
     
-    # Relations
     assignments = db.relationship('Assignment', backref='shift', lazy=True)
     
     @property
     def duration_hours(self):
-        """Calcule la durée du shift en heures"""
         start = datetime.combine(datetime.today(), self.start_time)
         end = datetime.combine(datetime.today(), self.end_time)
         
@@ -223,13 +220,11 @@ class Assignment(db.Model):
     
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     
-    # Relations
     timesheet_entries = db.relationship('TimeSheetEntry', backref='assignment', lazy=True, cascade='all, delete-orphan')
     creator = db.relationship('User', backref='created_assignments', lazy=True, foreign_keys=[created_by])
 
     @property
     def duration_hours(self):
-        """Calcule la durée de l'assignation en heures"""
         duration = self.end - self.start
         return round(duration.total_seconds() / 3600, 2)
     
@@ -271,12 +266,12 @@ class Establishment(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    address = db.Column(db.Text) # Colonne address réintégrée
+    address = db.Column(db.Text) 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Correction de l'ArgumentError avec back_populates
     employees = db.relationship('Employee', back_populates='establishment', lazy=True)
     teams = db.relationship('Team', back_populates='establishment', lazy=True)
+    users = db.relationship('User', back_populates='establishment', lazy=True)
     
     def __repr__(self):
         return f'<Establishment {self.name}>'
