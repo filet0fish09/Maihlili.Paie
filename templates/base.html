@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Maihlili SPV</title>
+  <title>Maihlili Paie</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
   <script>
@@ -189,16 +189,28 @@
     <div class="flex-1 mt-3 p-4 rounded-[50px] bg-maihlili-figma-rose-sidebar flex flex-col justify-between shadow-xl sidebar-main-content"> 
       
       <nav class="space-y-2">
-        {% if current_user.is_authenticated %}
-          {% set menu_items_data = [
-            ('📊', 'Tableau de bord', url_for('index') if current_user.is_manager else url_for('employee_dashboard'), current_user.is_authenticated),
-            ('📅', 'Planning Avancé', url_for('planning'), current_user.is_manager),
-            ('👥', 'Employés', url_for('show_employees'), current_user.is_manager),
-            ('🏢', 'Équipes', url_for('manage_teams'), current_user.is_manager),
-            ('⏱️', 'Services', url_for('show_shifts'), current_user.is_manager),
-            ('📋', 'Assignations', url_for('assignments'), current_user.is_manager),
+    {% if current_user.is_authenticated %}
+        
+        {% if current_user.is_super_admin %}
+            <a href="{{ url_for('manage_establishments') }}" class="nav-link-group mb-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg p-2 transition duration-150"
+               data-route="manage_establishments">
+                <div class="emoji-container">🏰</div>
+                <span class="liquid-glass-label">Gestion Établissements</span>
+            </a>
+        {% endif %}
+
+        {% set menu_items_data = [
+            ('📊', 'Tableau de bord', url_for('index') if current_user.is_manager or current_user.is_super_admin else url_for('employee_dashboard'), current_user.is_authenticated),
+            
+            # ⚠️ J'AI AJOUTÉ 'current_user.is_super_admin' ICI AUSSI POUR L'ACCÈS DU TABLEAU DE BORD
+            
+            ('📅', 'Planning Avancé', url_for('planning'), current_user.is_manager or current_user.is_super_admin),
+            ('👥', 'Employés', url_for('show_employees'), current_user.is_manager or current_user.is_super_admin),
+            ('🏢', 'Équipes', url_for('manage_teams'), current_user.is_manager or current_user.is_super_admin),
+            ('⏱️', 'Services', url_for('show_shifts'), current_user.is_manager or current_user.is_super_admin),
+            ('📋', 'Assignations', url_for('assignments'), current_user.is_manager or current_user.is_super_admin),
             ('⚙️', 'Paramètres', url_for('settings'), current_user.is_authenticated)
-          ] %}
+        ] %}
 
           {% for emoji, label, url, condition in menu_items_data %}
             {% if condition %}
@@ -353,3 +365,4 @@
   </script>
 </body>
 </html>
+
