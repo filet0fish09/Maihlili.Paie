@@ -1,62 +1,78 @@
 {% extends "base.html" %}
-{% block content %}
-<div class="max-w-md mx-auto mt-20 bg-white p-8 rounded-xl shadow-lg">
-  <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Inscription - Maihlili SPV</h2>
-  <form method="POST" action="{{ url_for('register') }}" class="space-y-4">
-    <div>
-      <input type="text" name="username" placeholder="Nom d'utilisateur" required
-             class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-    </div>
-    
-    <div>
-      <input type="email" name="email" placeholder="Email" required
-             class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-    </div>
-    
-    <div>
-      <input type="password" name="password" placeholder="Mot de passe" required
-             class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-    </div>
 
-    <!-- Choix du rôle -->
-    <div class="space-y-3">
-      <label class="block text-sm font-medium text-gray-700">Rôle dans le système :</label>
-      
-      <div class="space-y-2">
-        <label class="flex items-center p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-          <input type="radio" name="role" value="employee" class="mr-3" checked>
-          <div>
-            <div class="font-medium text-gray-800">👤 Employé</div>
-            <div class="text-sm text-gray-500">Consulter son planning personnel</div>
-          </div>
-        </label>
+{% block content %}
+
+<div class="max-w-md mx-auto my-10 p-6 bg-white dark:bg-gray-800 rounded-xl shadow-2xl">
+    <h2 class="text-3xl font-extrabold text-maihlili-figma-blue dark:text-white mb-6 text-center">Créer un Compte</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="p-3 mb-4 rounded text-sm {% if category == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('register') }}">
         
-        <label class="flex items-center p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-          <input type="radio" name="role" value="manager" class="mr-3">
-          <div>
-            <div class="font-medium text-gray-800">👥 Manager</div>
-            <div class="text-sm text-gray-500">Gérer les équipes et plannings</div>
-          </div>
-        </label>
+        <div class="mb-4">
+            <label for="establishment_id" class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">
+                Établissement à affecter
+            </label>
+            <select name="establishment_id" id="establishment_id" required
+                    class="shadow border rounded w-full py-2 px-3 text-gray-700 dark:bg-gray-700 dark:text-white leading-tight focus:outline-none focus:shadow-outline focus:ring-maihlili-figma-blue">
+                {% for est in establishments %}
+                    <option value="{{ est.id }}">{{ est.name }} (ID: {{ est.id }})</option>
+                {% endfor %}
+            </select>
+            {% if not establishments %}
+                <p class="text-red-500 text-xs italic mt-1">⚠️ Aucun établissement n'a été créé. Utilisez le panel Ultra-Admin.</p>
+            {% endif %}
+        </div>
         
-        <label class="flex items-center p-3 border rounded-lg hover:bg-blue-50 cursor-pointer border-blue-200">
-          <input type="radio" name="role" value="admin" class="mr-3">
-          <div>
-            <div class="font-medium text-blue-800">⚡ Administrateur</div>
-            <div class="text-sm text-blue-600">Accès complet au système Maihlili SPV</div>
-          </div>
-        </label>
-      </div>
-    </div>
-    
-    <button type="submit" class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 font-medium">
-      Créer mon compte
-    </button>
-  </form>
-  
-  <p class="mt-4 text-sm text-center text-gray-500">
-    Déjà un compte ? 
-    <a href="{{ url_for('login') }}" class="text-blue-600 hover:underline">Se connecter</a>
-  </p>
+        {% if current_user.is_admin or current_user.is_super_admin %}
+            <div class="mb-4">
+                <label for="role" class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Rôle</label>
+                <select name="role" id="role"
+                        class="shadow border rounded w-full py-2 px-3 text-gray-700 dark:bg-gray-700 dark:text-white leading-tight focus:outline-none focus:shadow-outline focus:ring-maihlili-figma-blue">
+                    <option value="employee">Employé Standard</option>
+                    <option value="manager">Manager d'Équipe</option>
+                    {% if current_user.is_super_admin %}
+                         <option value="admin">Administrateur d'Établissement</option>
+                         <option value="super_admin">Ultra-Administrateur</option>
+                    {% endif %}
+                </select>
+            </div>
+        {% endif %}
+
+        <div class="mb-4">
+            <label for="username" class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Nom d'Utilisateur</label>
+            <input type="text" name="username" id="username" required
+                   class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:bg-gray-700 dark:text-white leading-tight focus:outline-none focus:shadow-outline">
+        </div>
+
+        <div class="mb-4">
+            <label for="email" class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Email</label>
+            <input type="email" name="email" id="email" required
+                   class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:bg-gray-700 dark:text-white leading-tight focus:outline-none focus:shadow-outline">
+        </div>
+
+        <div class="mb-6">
+            <label for="password" class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Mot de Passe (Temporaire)</label>
+            <input type="password" name="password" id="password" required
+                   value="maihlili123" readonly title="Le mot de passe est défini par défaut et doit être changé à la première connexion."
+                   class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:bg-gray-700 dark:text-white leading-tight focus:outline-none focus:shadow-outline bg-gray-100 dark:bg-gray-600 cursor-not-allowed">
+            <p class="text-xs text-gray-500 mt-1">L'utilisateur devra changer ce mot de passe à la première connexion.</p>
+        </div>
+
+        <div class="flex items-center justify-between">
+            <button type="submit" class="w-full bg-maihlili-figma-blue hover:opacity-90 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-150">
+                Créer l'Utilisateur
+            </button>
+        </div>
+    </form>
 </div>
+
 {% endblock %}
