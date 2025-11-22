@@ -10,7 +10,7 @@ from functools import wraps # ⚠️ NOUVEL IMPORT POUR LE DÉCORATEUR
 # --- NOUVEAUX IMPORTS POUR L'EXPORT PDF ---
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleStyleSheet
+from reportlab.lib.styles import getSampleStyleSheet      # ✅ CORRIGÉ
 from io import BytesIO
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
 from reportlab.lib.units import cm
@@ -1319,3 +1319,4 @@ if __name__ == "__main__":
     # Configuration pour production Render
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
