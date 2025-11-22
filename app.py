@@ -512,13 +512,8 @@ def api_events():
 @app.route("/employees", methods=["GET", "POST"])
 @login_required
 def show_employees():
-    if not current_user.is_manager and not current_user.is_super_admin:
+    if not (current_user.is_manager or current_user.is_super_admin):
         flash("Accès refusé", "error")
-        return redirect(url_for("index"))
-
-    est_id = get_current_establishment_id()
-    if est_id is None and not current_user.is_super_admin:
-        flash("Vous n'êtes pas lié à un établissement. Contactez un Ultra-Admin.", "error")
         return redirect(url_for("index"))
         
     if request.method == "POST":
@@ -526,10 +521,14 @@ def show_employees():
         position = request.form.get("position")
         email = request.form.get("email")
         team_id = request.form.get("team_id")
+        
+        # NOUVEAU : Récupérer l'ID de l'établissement
+        establishment_id = request.form.get("establishment_id")
+        
         create_account = "create_account" in request.form
         
         try:
-            # NOUVEAU : Récupérer les heures contractuelles
+            # Récupérer les heures contractuelles
             contract_hours = float(request.form.get("contract_hours", 35.0))
             contract_type = request.form.get("contract_type", "CDI")
             
@@ -537,80 +536,64 @@ def show_employees():
             emp = Employee(
                 full_name=name, 
                 position=position,
-                team_id=int(team_id) if team_id else None,
+                
+                # S'assurer que les IDs sont des entiers valides ou None
+                team_id=int(team_id) if team_id and team_id.isdigit() else None,
+                
+                # NOUVEAU : Affecter directement l'établissement si fourni
+                establishment_id=int(establishment_id) if establishment_id and establishment_id.isdigit() else None,
+                
                 contract_hours_per_week=contract_hours,
-                contract_type=contract_type,
-                establishment_id=est_id # NOUVEAU: Affectation à l'établissement courant
+                contract_type=contract_type
             )
-            emp.update_contract_hours(contract_hours)
-
-# Créer un compte utilisateur si demandé et email fourni
+            
+            # Logique de création de compte
             if create_account and email:
-                # Vérifier que l'email n'existe pas
-                if User.query.filter_by(email=email).first():
-                    flash("Un compte avec cet email existe déjà", "error")
-                    return redirect(url_for("show_employees"))
-                
-                # Créer le nom d'utilisateur
-                username = name.lower().replace(' ', '.').replace('é', 'e').replace('è', 'e').replace('à', 'a')
-                counter = 1
-                original_username = username
-                
-                while User.query.filter_by(username=username).first():
-                    username = f"{original_username}{counter}"
-                    counter += 1
-                
-                # Créer l'utilisateur (par défaut en tant qu'employé simple)
-                user = User(
-                    username=username,
-                    email=email,
-                    is_manager=False,
-                    is_admin=False,
-                    establishment_id=est_id # NOUVEAU: Affectation à l'établissement courant
+                username = name.replace(" ", ".").lower()
+                new_user = User(
+                    username=username, 
+                    email=email, 
+                    is_manager="is_manager" in request.form,
+                    is_admin="is_admin" in request.form,
+                    is_super_admin=False
                 )
-                user.set_password("maihlili123")
-                db.session.add(user)
-                db.session.flush()
-                emp.user_id = user.id
-                
-                flash(f"Employé créé avec compte utilisateur (nom d'utilisateur: {username})", "success")
-            else:
-                flash("Employé créé avec succès", "success")
+                new_user.set_password("motdepasse123") # Mot de passe temporaire
+                db.session.add(new_user)
+                emp.user = new_user
             
             db.session.add(emp)
             db.session.commit()
-            
+            flash(f"Employé {name} créé avec succès.", "success")
             return redirect(url_for("show_employees"))
             
         except Exception as e:
             db.session.rollback()
             flash(f"Erreur lors de la création de l'employé: {e}", "error")
+            print(f"Erreur: {e}")
             return redirect(url_for("show_employees"))
     
     # GET: Afficher seulement les employés gérables
     employees = get_manageable_employees(current_user)
     
-    # Ajouter des attributs pour l'affichage
-    for e in employees:
-        e.avatar = 'USER'
-        e.role = e.position or 'Employe'
-        e.status = 'active' if e.is_active else 'absent'
-        e.hours_summary = e.current_month_hours_summary
-        
-    # Équipes disponibles pour ce manager (Mise à jour du filtre par établissement)
-    teams = []
-    
+    # Équipes disponibles
     if current_user.is_super_admin:
         teams = Team.query.all()
-    elif est_id is not None:
-        if current_user.is_admin:
-            # L'Admin voit toutes les équipes de son établissement
-            teams = Team.query.filter_by(establishment_id=est_id).all()
-        elif current_user.employee:
-            # Le Manager voit seulement les équipes qu'il gère dans son établissement
-            teams = Team.query.filter_by(manager_id=current_user.employee.id, establishment_id=est_id).all()
-        
-    return render_template("employees.html", employees=employees, teams=teams)
+    elif current_user.employee:
+        managed_teams = Team.query.filter_by(manager_id=current_user.employee.id).all()
+        teams = managed_teams
+    else:
+        teams = []
+    
+    # NOUVEAU : Récupérer tous les établissements
+    establishments = Establishment.query.all()
+    
+    # Préparer les données pour le template (nom de l'équipe et de l'établissement)
+    for emp in employees:
+        emp.team_name = emp.team.name if emp.team else "Non assigné"
+        # Utiliser la nouvelle propriété current_establishment de models.py
+        emp.establishment_name = emp.current_establishment.name if emp.current_establishment else "Non assigné"
+
+    return render_template("employees.html", employees=employees, teams=teams, establishments=establishments)
 
 # --- CRUD Shifts ---
 # ... (inchangé, car on suppose les shifts sont globaux ou seront gérés plus tard) ...
@@ -1319,4 +1302,5 @@ if __name__ == "__main__":
     # Configuration pour production Render
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
