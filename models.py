@@ -212,7 +212,7 @@ class Employee(db.Model):
         self.contract_hours_per_month = round(hours_per_week * 52 / 12, 2)
 
     def __repr__(self):
-        return f'<Employee {self.full_name} - {self.contract_hours_per_week}h/sem
+        return f'<Employee {self.full_name} - {self.contract_hours_per_week}h/sem>'
 
 # PROPRIÉTÉ pour déterminer l'établissement actuel (favorise le lien direct si présent)
     @property
@@ -351,4 +351,5 @@ class TimeSheetEntry(db.Model):
         
     def __repr__(self):
         return f'<TimeSheetEntry {self.id} for Assignment {self.assignment_id}>'
+
 
