@@ -1291,6 +1291,36 @@ def internal_error(error):
 </body>
 </html>
 """, 500
+
+# Dans votre fichier app.py (à ajouter)
+
+@app.route('/employees/delete/<int:employee_id>', methods=['POST'])
+@login_required
+@manager_required 
+def delete_employee(employee_id):
+    employee = Employee.query.get_or_404(employee_id)
+
+    # Vérification de la permission
+    if not current_user.is_super_admin and not employee.can_be_managed_by(current_user):
+        flash('Vous n\'avez pas la permission de supprimer cet employé.', 'error')
+        return redirect(url_for('show_employees'))
+
+    try:
+        # Suppression de l'utilisateur lié (si l'employé est aussi un user/manager)
+        if employee.user:
+            db.session.delete(employee.user)
+            
+        # Suppression de l'employé (entraîne la suppression en cascade des Assignments, TimesheetEntries)
+        db.session.delete(employee)
+        db.session.commit()
+        flash(f'L\'employé {employee.full_name} a été supprimé avec succès.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erreur lors de la suppression de l\'employé : {e}', 'error')
+
+    return redirect(url_for('show_employees'))
+
+
 # --- Lancement de l'application ---
 
 if __name__ == "__main__":
@@ -1302,5 +1332,6 @@ if __name__ == "__main__":
     # Configuration pour production Render
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
