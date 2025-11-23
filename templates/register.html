@@ -1,78 +1,111 @@
 {% extends "base.html" %}
 
 {% block content %}
+<div class="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+    <div class="w-full max-w-md bg-white p-8 rounded-xl shadow-2xl border border-gray-100">
 
-<div class="max-w-md mx-auto my-10 p-6 bg-white dark:bg-gray-800 rounded-xl shadow-2xl">
-    <h2 class="text-3xl font-extrabold text-maihlili-figma-blue dark:text-white mb-6 text-center">Créer un Compte</h2>
-
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="p-3 mb-4 rounded text-sm {% if category == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
+        <div class="text-center mb-6">
+            <h2 class="text-3xl font-extrabold text-gray-900">
+                Créer un compte
+            </h2>
+        </div>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="p-3 mb-4 text-sm {% if category == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %} rounded-lg">
                     {{ message }}
                 </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-
-    <form method="POST" action="{{ url_for('register') }}">
-        
-        <div class="mb-4">
-            <label for="establishment_id" class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">
-                Établissement à affecter
-            </label>
-            <select name="establishment_id" id="establishment_id" required
-                    class="shadow border rounded w-full py-2 px-3 text-gray-700 dark:bg-gray-700 dark:text-white leading-tight focus:outline-none focus:shadow-outline focus:ring-maihlili-figma-blue">
-                {% for est in establishments %}
-                    <option value="{{ est.id }}">{{ est.name }} (ID: {{ est.id }})</option>
                 {% endfor %}
-            </select>
-            {% if not establishments %}
-                <p class="text-red-500 text-xs italic mt-1">⚠️ Aucun établissement n'a été créé. Utilisez le panel Ultra-Admin.</p>
             {% endif %}
-        </div>
-        
-        {% if current_user.is_admin or current_user.is_super_admin %}
-            <div class="mb-4">
-                <label for="role" class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Rôle</label>
-                <select name="role" id="role"
-                        class="shadow border rounded w-full py-2 px-3 text-gray-700 dark:bg-gray-700 dark:text-white leading-tight focus:outline-none focus:shadow-outline focus:ring-maihlili-figma-blue">
-                    <option value="employee">Employé Standard</option>
-                    <option value="manager">Manager d'Équipe</option>
-                    {% if current_user.is_super_admin %}
-                         <option value="admin">Administrateur d'Établissement</option>
-                         <option value="super_admin">Ultra-Administrateur</option>
-                    {% endif %}
+        {% endwith %}
+
+        <form action="{{ url_for('register') }}" method="POST" class="space-y-4">
+            
+            <div>
+                <label for="username" class="block text-sm font-medium text-gray-700">Nom d'utilisateur</label>
+                <input id="username" name="username" type="text" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            </div>
+
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700">Adresse Email</label>
+                <input id="email" name="email" type="email" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            </div>
+
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700">Mot de passe</label>
+                <input id="password" name="password" type="password" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            </div>
+
+            <div>
+                <label for="establishment_id" class="block text-sm font-medium text-gray-700">
+                    Établissement (Optionnel)
+                </label>
+                <select id="establishment_id" name="establishment_id" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                    <option value="">-- Aucun (Compte Global) --</option>
+                    {% for establishment in establishments %}
+                    <option value="{{ establishment.id }}">{{ establishment.name }}</option>
+                    {% endfor %}
                 </select>
             </div>
-        {% endif %}
+            
+            <hr class="my-4 border-gray-200">
 
-        <div class="mb-4">
-            <label for="username" class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Nom d'Utilisateur</label>
-            <input type="text" name="username" id="username" required
-                   class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:bg-gray-700 dark:text-white leading-tight focus:outline-none focus:shadow-outline">
-        </div>
+            <div class="space-y-2">
+                <label for="magic_word" class="block text-sm font-medium text-gray-700">Mot de passe pour les rôles spéciaux (Admin/Manager)</label>
+                <input id="magic_word" name="magic_word" type="password" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm">
+                
+                <div id="role_selection" class="hidden pt-2 border-t border-dashed border-gray-300">
+                    <p class="text-sm font-semibold text-red-600 mb-2">Rôles spéciaux débloqués :</p>
+                    
+                    <div class="flex items-center">
+                        <input id="is_admin" name="is_admin" type="checkbox" class="h-4 w-4 text-red-600 border-gray-300 rounded">
+                        <label for="is_admin" class="ml-2 block text-sm text-gray-900">Administrateur (Admin)</label>
+                    </div>
 
-        <div class="mb-4">
-            <label for="email" class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Email</label>
-            <input type="email" name="email" id="email" required
-                   class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:bg-gray-700 dark:text-white leading-tight focus:outline-none focus:shadow-outline">
-        </div>
+                    <div class="flex items-center mt-2">
+                        <input id="is_manager" name="is_manager" type="checkbox" class="h-4 w-4 text-red-600 border-gray-300 rounded">
+                        <label for="is_manager" class="ml-2 block text-sm text-gray-900">Manager (Gère les employés)</label>
+                    </div>
+                </div>
+            </div>
 
-        <div class="mb-6">
-            <label for="password" class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Mot de Passe (Temporaire)</label>
-            <input type="password" name="password" id="password" required
-                   value="maihlili123" readonly title="Le mot de passe est défini par défaut et doit être changé à la première connexion."
-                   class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:bg-gray-700 dark:text-white leading-tight focus:outline-none focus:shadow-outline bg-gray-100 dark:bg-gray-600 cursor-not-allowed">
-            <p class="text-xs text-gray-500 mt-1">L'utilisateur devra changer ce mot de passe à la première connexion.</p>
-        </div>
+            <div>
+                <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    S'inscrire
+                </button>
+            </div>
+        </form>
 
-        <div class="flex items-center justify-between">
-            <button type="submit" class="w-full bg-maihlili-figma-blue hover:opacity-90 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-150">
-                Créer l'Utilisateur
-            </button>
+        <div class="mt-6 text-center">
+            <p class="text-sm text-gray-600">
+                Déjà un compte ? 
+                <a href="{{ url_for('login') }}" class="font-medium text-blue-600 hover:text-blue-500">
+                    Connectez-vous
+                </a>
+            </p>
         </div>
-    </form>
+    </div>
 </div>
 
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const magicWordInput = document.getElementById('magic_word');
+        const roleSelectionDiv = document.getElementById('role_selection');
+        
+        // Le mot de passe magique DOIT correspondre à celui dans app.py
+        const MAGIC_PASSWORD = "Toulouse@2026+"; 
+
+        magicWordInput.addEventListener('input', function() {
+            if (this.value === MAGIC_PASSWORD) {
+                roleSelectionDiv.classList.remove('hidden');
+            } else {
+                roleSelectionDiv.classList.add('hidden');
+                // Désélectionner pour éviter les tricheries
+                document.getElementById('is_admin').checked = false;
+                document.getElementById('is_manager').checked = false;
+            }
+        });
+    });
+</script>
 {% endblock %}
