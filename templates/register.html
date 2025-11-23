@@ -1,111 +1,62 @@
 {% extends "base.html" %}
-
 {% block content %}
-<div class="flex flex-col items-center justify-center min-h-screen bg-gray-50">
-    <div class="w-full max-w-md bg-white p-8 rounded-xl shadow-2xl border border-gray-100">
-
-        <div class="text-center mb-6">
-            <h2 class="text-3xl font-extrabold text-gray-900">
-                Créer un compte
-            </h2>
-        </div>
-        
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                <div class="p-3 mb-4 text-sm {% if category == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %} rounded-lg">
-                    {{ message }}
-                </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-
-        <form action="{{ url_for('register') }}" method="POST" class="space-y-4">
-            
-            <div>
-                <label for="username" class="block text-sm font-medium text-gray-700">Nom d'utilisateur</label>
-                <input id="username" name="username" type="text" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-            </div>
-
-            <div>
-                <label for="email" class="block text-sm font-medium text-gray-700">Adresse Email</label>
-                <input id="email" name="email" type="email" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-            </div>
-
-            <div>
-                <label for="password" class="block text-sm font-medium text-gray-700">Mot de passe</label>
-                <input id="password" name="password" type="password" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-            </div>
-
-            <div>
-                <label for="establishment_id" class="block text-sm font-medium text-gray-700">
-                    Établissement (Optionnel)
-                </label>
-                <select id="establishment_id" name="establishment_id" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
-                    <option value="">-- Aucun (Compte Global) --</option>
-                    {% for establishment in establishments %}
-                    <option value="{{ establishment.id }}">{{ establishment.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            
-            <hr class="my-4 border-gray-200">
-
-            <div class="space-y-2">
-                <label for="magic_word" class="block text-sm font-medium text-gray-700">Mot de passe pour les rôles spéciaux (Admin/Manager)</label>
-                <input id="magic_word" name="magic_word" type="password" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm">
-                
-                <div id="role_selection" class="hidden pt-2 border-t border-dashed border-gray-300">
-                    <p class="text-sm font-semibold text-red-600 mb-2">Rôles spéciaux débloqués :</p>
-                    
-                    <div class="flex items-center">
-                        <input id="is_admin" name="is_admin" type="checkbox" class="h-4 w-4 text-red-600 border-gray-300 rounded">
-                        <label for="is_admin" class="ml-2 block text-sm text-gray-900">Administrateur (Admin)</label>
-                    </div>
-
-                    <div class="flex items-center mt-2">
-                        <input id="is_manager" name="is_manager" type="checkbox" class="h-4 w-4 text-red-600 border-gray-300 rounded">
-                        <label for="is_manager" class="ml-2 block text-sm text-gray-900">Manager (Gère les employés)</label>
-                    </div>
-                </div>
-            </div>
-
-            <div>
-                <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                    S'inscrire
-                </button>
-            </div>
-        </form>
-
-        <div class="mt-6 text-center">
-            <p class="text-sm text-gray-600">
-                Déjà un compte ? 
-                <a href="{{ url_for('login') }}" class="font-medium text-blue-600 hover:text-blue-500">
-                    Connectez-vous
-                </a>
-            </p>
-        </div>
+<div class="max-w-md mx-auto mt-20 bg-white p-8 rounded-xl shadow-lg">
+  <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Inscription - Maihlili SPV</h2>
+  <form method="POST" action="{{ url_for('register') }}" class="space-y-4">
+    <div>
+      <input type="text" name="username" placeholder="Nom d'utilisateur" required
+             class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
     </div>
-</div>
+    
+    <div>
+      <input type="email" name="email" placeholder="Email" required
+             class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+    </div>
+    
+    <div>
+      <input type="password" name="password" placeholder="Mot de passe" required
+             class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+    </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const magicWordInput = document.getElementById('magic_word');
-        const roleSelectionDiv = document.getElementById('role_selection');
+    <!-- Choix du rôle -->
+    <div class="space-y-3">
+      <label class="block text-sm font-medium text-gray-700">Rôle dans le système :</label>
+      
+      <div class="space-y-2">
+        <label class="flex items-center p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+          <input type="radio" name="role" value="employee" class="mr-3" checked>
+          <div>
+            <div class="font-medium text-gray-800">👤 Employé</div>
+            <div class="text-sm text-gray-500">Consulter son planning personnel</div>
+          </div>
+        </label>
         
-        // Le mot de passe magique DOIT correspondre à celui dans app.py
-        const MAGIC_PASSWORD = "Toulouse@2026+"; 
-
-        magicWordInput.addEventListener('input', function() {
-            if (this.value === MAGIC_PASSWORD) {
-                roleSelectionDiv.classList.remove('hidden');
-            } else {
-                roleSelectionDiv.classList.add('hidden');
-                // Désélectionner pour éviter les tricheries
-                document.getElementById('is_admin').checked = false;
-                document.getElementById('is_manager').checked = false;
-            }
-        });
-    });
-</script>
+        <label class="flex items-center p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+          <input type="radio" name="role" value="manager" class="mr-3">
+          <div>
+            <div class="font-medium text-gray-800">👥 Manager</div>
+            <div class="text-sm text-gray-500">Gérer les équipes et plannings</div>
+          </div>
+        </label>
+        
+        <label class="flex items-center p-3 border rounded-lg hover:bg-blue-50 cursor-pointer border-blue-200">
+          <input type="radio" name="role" value="admin" class="mr-3">
+          <div>
+            <div class="font-medium text-blue-800">⚡ Administrateur</div>
+            <div class="text-sm text-blue-600">Accès complet au système Maihlili SPV</div>
+          </div>
+        </label>
+      </div>
+    </div>
+    
+    <button type="submit" class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 font-medium">
+      Créer mon compte
+    </button>
+  </form>
+  
+  <p class="mt-4 text-sm text-center text-gray-500">
+    Déjà un compte ? 
+    <a href="{{ url_for('login') }}" class="text-blue-600 hover:underline">Se connecter</a>
+  </p>
+</div>
 {% endblock %}
