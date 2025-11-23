@@ -6,12 +6,26 @@
       <h1 class="text-2xl font-bold text-gray-800">👤 Gestion des Employés</h1>
       <p class="text-gray-500">Gérez vos équipes et suivez les heures travaillées</p>
     </div>
-    {% if current_user.is_manager %}
-    <button onclick="showAddEmployeeModal()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
-      ➕ Ajouter un employé
-    </button>
-    {% endif %}
-  </div>
+  <div class="space-y-6">
+  <div class="flex justify-between items-center">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">👤 Gestion des Employés</h1>
+      <p class="text-gray-500">Gérez vos équipes et suivez les heures travaillées</p>
+    </div>
+    <div class="flex space-x-2"> 
+      {% if current_user.is_manager %}
+      <button onclick="showAddEmployeeModal()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+        ➕ Ajouter un employé
+      </button>
+      {% endif %}
+      
+      {% if current_user.is_manager %}
+      <button onclick="showLinkUserModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+        🔗 Lier un Compte
+      </button>
+      {% endif %}
+    </div>
+    </div>
 
   <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
     <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
@@ -254,4 +268,56 @@
         });
     });
 </script>
+
+<div id="linkUserModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <h3 class="text-lg font-medium leading-6 text-gray-900">Lier un compte à cet établissement</h3>
+        <form id="linkUserForm" method="POST">
+            <div class="mt-4">
+                <label for="user_id" class="block text-sm font-medium text-gray-700">Sélectionner un utilisateur non lié</label>
+                <select id="user_id" name="user_id" required class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                    {% for user in users_to_link %}
+                    <option value="{{ user.id }}">{{ user.username }} ({{ user.email }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mt-4 flex justify-end space-x-2">
+                <button type="button" onclick="hideLinkUserModal()" class="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg">Annuler</button>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Lier</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function showLinkUserModal() {
+        document.getElementById('linkUserModal').classList.remove('hidden');
+    }
+    function hideLinkUserModal() {
+        document.getElementById('linkUserModal').classList.add('hidden');
+    }
+
+    // Gérer la soumission du formulaire de liaison
+    document.getElementById('linkUserForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+
+        fetch('/api/establishments/link_user', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload(); 
+            } else {
+                alert('Erreur: ' + data.error);
+            }
+        })
+        .catch(error => alert('Erreur lors de la liaison.'));
+    });
+</script>
+
+
 {% endblock %}
+
