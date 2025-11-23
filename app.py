@@ -165,78 +165,73 @@ def get_gantt_data_for_week(start_date, user):
 # --- Auth (Mise à jour de la route /register) ---
 
 @app.route("/register", methods=["GET", "POST"])
+# Dans app.py - NOUVELLE VERSION DE LA ROUTE REGISTER
+@app.route('/register', methods=['GET', 'POST'])
 def register():
-    # Seuls les Admins/SuperAdmins peuvent enregistrer de nouveaux comptes
-    if not current_user.is_authenticated or (not current_user.is_admin and not current_user.is_super_admin):
-        flash("Accès refusé. Seuls les administrateurs peuvent enregistrer de nouveaux utilisateurs.", "error")
-        return redirect(url_for("login"))
-        
-    # On récupère les établissements pour le formulaire
-    establishments = Establishment.query.all()
+    # Récupérer la liste des établissements pour le formulaire
+    establishments = Establishment.query.all() 
     
-    if request.method == "POST":
-        username = request.form["username"]
-        email = request.form.get("email") # Email doit être fourni explicitement
-        password = request.form["password"]
-        establishment_id = request.form.get("establishment_id") # NOUVEAU
-        
-        # Gérer les rôles
-        role = request.form.get("role", "employee")
-        is_manager = (role == "manager")
-        is_admin = (role == "admin")
-        is_super_admin = (role == "super_admin") # NOUVEAU
-        
-        # Sécurité: Seul un Super Admin peut créer un autre Super Admin
-        if is_super_admin and not current_user.is_super_admin:
-             flash("Accès refusé. Seul un Ultra-Admin peut créer un Ultra-Admin.", "error")
-             return render_template("register.html", establishments=establishments)
-        
-        if not email:
-            flash("L'email est requis pour la création de compte.", "error")
-            return render_template("register.html", establishments=establishments)
+    if request.method == 'POST':
+        username = request.form['username']
+        email = request.form['email']
+        password = request.form['password']
+        establishment_id = request.form.get('establishment_id') # Récupérer l'établissement
+        magic_word = request.form.get('magic_word') # Mot de passe spécial
 
-        if User.query.filter_by(email=email).first():
-            flash("Email déjà utilisé", "error")
-            return render_template("register.html", establishments=establishments)
-            
-        if not establishment_id:
-             flash("L'établissement est requis.", "error")
-             return render_template("register.html", establishments=establishments)
+        # Vérification d'unicité
+        if User.query.filter((User.username == username) | (User.email == email)).first():
+            flash('Ce nom d\'utilisateur ou cet email est déjà pris.', 'error')
+            return redirect(url_for('register'))
 
+        # Rôles par défaut
+        is_admin = False
+        is_manager = False
+        
+        # ⭐ VÉRIFICATION DU MOT DE PASSE MAGIQUE
+        MAGIC_PASSWORD = "Toulouse@2026+" 
+        
+        if magic_word == MAGIC_PASSWORD:
+            is_admin = request.form.get('is_admin') == 'on'
+            is_manager = request.form.get('is_manager') == 'on'
+        
+        # Gérer l'établissement_id: None si non sélectionné
+        final_establishment_id = int(establishment_id) if establishment_id else None
+
+        new_user = User(
+            username=username,
+            email=email,
+            is_admin=is_admin,
+            is_manager=is_manager,
+            is_super_admin=False, # Les Super Admin ne peuvent pas être créés par register
+            establishment_id=final_establishment_id # Assignation de l'établissement
+        )
+        new_user.set_password(password)
+        
         try:
-            # Créer l'utilisateur
-            user = User(
-                username=username, 
-                email=email, 
-                is_manager=is_manager, 
-                is_admin=is_admin,
-                is_super_admin=is_super_admin, # NOUVEAU
-                establishment_id=int(establishment_id) # NOUVEAU
-            )
-            user.set_password(password)
-            db.session.add(user)
-            db.session.flush()
-
-            # Créer automatiquement l'employé associé (doit être lié au même établissement)
-            emp = Employee(
-                full_name=username, 
-                user_id=user.id,
-                establishment_id=int(establishment_id) # NOUVEAU
-            )
-            db.session.add(emp)
+            db.session.add(new_user)
             db.session.commit()
             
-            flash("Compte créé avec succès. L'utilisateur devra changer son mot de passe temporaire.", "success")
-            return redirect(url_for("register"))
-            
+            # ⭐ CRÉATION AUTOMATIQUE D'EMPLOYEE
+            # Un utilisateur lié à un établissement doit être un employé
+            if final_establishment_id:
+                 new_employee = Employee(
+                    full_name=username,
+                    user_id=new_user.id,
+                    establishment_id=final_establishment_id,
+                    position="Manager" if is_manager else "Employé"
+                )
+                 db.session.add(new_employee)
+                 db.session.commit()
+                 
+            flash('Compte créé avec succès. Vous pouvez vous connecter.', 'success')
+            return redirect(url_for('login'))
+        
         except Exception as e:
             db.session.rollback()
-            print(f"Erreur lors de la création du compte: {e}")
-            flash(f"Erreur lors de la création du compte: {e}", "error")
-            return render_template("register.html", establishments=establishments)
+            flash(f'Erreur lors de la création du compte : {e}', 'error')
 
-    return render_template("register.html", establishments=establishments)
-
+    return render_template('register.html', establishments=establishments)
+    
 # =================================================================
 # NOUVELLE ROUTE : Ultra-Admin (Gestion Établissements)
 # =================================================================
@@ -1399,6 +1394,7 @@ if __name__ == "__main__":
     # Configuration pour production Render
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
