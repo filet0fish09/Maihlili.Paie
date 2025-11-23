@@ -1331,6 +1331,62 @@ def delete_employee(employee_id):
 
     return redirect(url_for('show_employees'))
 
+@app.route('/api/establishments/link_user', methods=['POST'])
+@login_required
+@manager_required
+def link_user_to_establishment():
+    user_id = request.form.get('user_id', type=int)
+    
+    # 1. Déterminer l'établissement cible (celui du manager/admin actuel)
+    target_establishment_id = current_user.establishment_id
+    
+    if not target_establishment_id:
+        # Seul un super admin sans établissement ou un admin/manager peut faire ça
+        if current_user.is_super_admin:
+            flash('Erreur : Sélectionnez d\'abord un établissement pour vous-même si vous voulez gérer les utilisateurs.', 'error')
+            return jsonify({'success': False, 'error': 'Super Admin doit être lié.'})
+        flash('Erreur : Votre compte n\'est lié à aucun établissement.', 'error')
+        return jsonify({'success': False, 'error': 'Établissement non défini.'})
+
+    user_to_link = User.query.get(user_id)
+    
+    if not user_to_link:
+        return jsonify({'success': False, 'error': 'Utilisateur non trouvé.'})
+
+    if user_to_link.establishment_id is not None and user_to_link.establishment_id != target_establishment_id:
+        return jsonify({'success': False, 'error': 'L\'utilisateur est déjà lié à un autre établissement.'})
+
+    try:
+        # 2. Lier l'utilisateur à l'établissement du manager actuel
+        user_to_link.establishment_id = target_establishment_id
+        db.session.commit()
+        
+        # 3. Créer automatiquement un enregistrement Employee si nécessaire
+        if not user_to_link.employee:
+            new_employee = Employee(
+                full_name=user_to_link.username,
+                user_id=user_to_link.id,
+                establishment_id=target_establishment_id,
+                position="Employé"
+            )
+            db.session.add(new_employee)
+            db.session.commit()
+            flash(f'Compte {user_to_link.username} lié et employé créé.', 'success')
+        else:
+            flash(f'Compte {user_to_link.username} lié à l\'établissement.', 'success')
+            
+        return jsonify({'success': True, 'message': 'Utilisateur lié avec succès.'})
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)})
+
+
+# MAJ : Assurez-vous d'avoir les données nécessaires dans la route /employees (GET)
+# Ajoutez la requête suivante dans la route `show_employees` (GET /employees) :
+# users_to_link = User.query.filter(User.establishment_id == None).all()
+# et passez cette liste au template : render_template('employees.html', ..., users_to_link=users_to_link)
+
 
 # --- Lancement de l'application ---
 
@@ -1343,6 +1399,7 @@ if __name__ == "__main__":
     # Configuration pour production Render
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
