@@ -14,6 +14,7 @@ from reportlab.lib.styles import getSampleStyleSheet      # ✅ CORRIGÉ
 from io import BytesIO
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
 from reportlab.lib.units import cm
+from functools import wraps
 
 # ------------------------------------------
 
@@ -57,6 +58,16 @@ def get_current_establishment_id():
     if current_user.is_authenticated and hasattr(current_user, 'establishment_id') and current_user.establishment_id:
         return current_user.establishment_id
     return None 
+
+def manager_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # La condition vérifie si l'utilisateur est manager OU admin OU super_admin
+        if not current_user.is_manager and not current_user.is_admin and not current_user.is_super_admin:
+            flash('Accès refusé. Cette page nécessite des droits de manager ou d\'administrateur.', 'warning')
+            return redirect(url_for('index'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 def get_manageable_employees(user):
     """Retourne les employés qu'un manager peut gérer, FILTRÉS PAR ÉTABLISSEMENT."""
@@ -1332,6 +1343,7 @@ if __name__ == "__main__":
     # Configuration pour production Render
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
